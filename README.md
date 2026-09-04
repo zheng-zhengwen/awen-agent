@@ -11,10 +11,6 @@
 
 > 设计哲学：**证据驱动 + 标签化结论、确定性护栏不交给模型判断、写操作永远经人工审批、数据私有**。
 
-- **门户网站**：<https://agent.ivyea.com>
-- **仓库**：<https://github.com/Hector-xue/ivyea-agent>
-- **最新 Release**：`v1.4.1`（`main` 分支可能包含尚未打包的新改动）
-
 
 ## 目录
 
