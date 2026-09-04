@@ -100,9 +100,11 @@ def test_service_status_ignores_reused_unrelated_pid(awen_home, monkeypatch):
 def test_service_start_stop_with_fake_process(awen_home, monkeypatch):
     monkeypatch.setattr(self_manage, "_probe_health", lambda *a, **k: {"ok": False, "error": "offline"})
     monkeypatch.setattr(self_manage, "_pid_running", lambda pid: False)
+    popen_kwargs = {}
 
     class FakePopen:
         def __init__(self, *args, **kwargs):
+            popen_kwargs.update(kwargs)
             self.pid = 4321
             self.returncode = None
 
@@ -113,6 +115,10 @@ def test_service_start_stop_with_fake_process(awen_home, monkeypatch):
     started = self_manage.service_start(wait=False)
     assert started["ok"] is True
     assert started["pid"] == 4321
+    # A long-running service must not inherit the installer's stdout pipe as an
+    # unrelated handle.  On Windows that keeps PowerShell/SSE waiting for EOF
+    # forever even though the service is already healthy.
+    assert popen_kwargs["close_fds"] is True
     assert (awen_home / "run" / "awen-agent.pid").exists()
 
     calls = []

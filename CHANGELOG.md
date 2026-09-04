@@ -42,6 +42,9 @@
   Python 3.12 及以下，此前却被所有 Python 版本无条件依赖，导致新版 Python 上 pip 必然报
   `No matching distribution found`。现在按解释器版本选择旧包或仍在维护的 `rapidocr` v3，
   并兼容两代返回结构；CI 同步加入 Python 3.14 的 Linux、macOS、Windows 门禁。
+- **Windows 安装 awenAgent 不再在服务启动后一直转圈。** 后台 `pythonw` 现在关闭无关的继承
+  句柄，避免它永久占住 PowerShell / SSE 的输出管道；服务健康后安装器可以正常收到 EOF 并
+  返回完成状态。
 
 ## [v1.16.8] - 2026-09-03
 
