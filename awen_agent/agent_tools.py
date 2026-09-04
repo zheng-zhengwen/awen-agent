@@ -111,7 +111,8 @@ TOOL_SCHEMAS = [
     {"type": "function", "function": {
         "name": "run_patrol",
         "description": "跑只读广告巡检。数据源三选一：本地 CSV(source)、MCP 服务器(from_mcp)、"
-                       "或领星 OpenAPI 店铺维度(from_lingxing=true + sid，最真实，推荐)。",
+                       "或领星 OpenAPI 店铺维度(from_lingxing=true + sid，最真实，推荐)。"
+                       "嵌入 awenOps 时会自动复用宿主的领星连接，不需要重复配置 awenAgent 凭证。",
         "parameters": {"type": "object", "properties": {
             "source": {"type": "string", "description": "搜索词报告 CSV 路径（用 MCP/领星 时留空）"},
             "from_mcp": {"type": "string", "description": "MCP 服务器名（用 MCP 拉数时填）"},
@@ -386,20 +387,71 @@ def _t_run_patrol(args: dict, ctx: ToolContext) -> str:
     site = args.get("site") or profile.get("site") or "US"
     csv = args.get("source")
     if args.get("from_lingxing"):
+        if not args.get("sid"):
+            return "走领星巡检需要 sid（嵌入 awenOps 时从店铺选择器获取；独立模式可用 `awen lingxing sellers` 查询）。"
+        try:
+            sid = int(args["sid"])
+            days = int(args.get("days") or 30)
+        except (TypeError, ValueError):
+            return "领星巡检参数错误：sid 和 days 必须是整数。"
+        if sid <= 0:
+            return "领星巡检参数错误：sid 必须是正整数。"
+        if not 1 <= days <= 60:
+            return "领星巡检参数错误：days 必须在 1 到 60 之间。"
+
+        # awenOps owns its credentials and deliberately never exposes the secret to the
+        # embedded agent.  Reuse that authenticated server-side connection instead of
+        # consulting the standalone ~/.awen credential store.  Dashboard supplies the
+        # account KPIs; optimizer supplies deterministic, guarded action candidates.
+        bridge = ctx.ops_bridge if isinstance(ctx.ops_bridge, dict) else {}
+        if bridge.get("base_url"):
+            dashboard_response = _ops_bridge_request(
+                ctx,
+                "/call",
+                {"name": "lingxing_dashboard", "arguments": {"sids": str(sid), "days": days}},
+                timeout=300.0,
+            )
+            optimizer_response = _ops_bridge_request(
+                ctx,
+                "/call",
+                {"name": "lingxing_optimizer", "arguments": {"sid": sid, "days": days}},
+                timeout=300.0,
+            )
+
+            def _bridge_result(response: dict[str, Any]) -> Any:
+                return response.get("result") if response.get("ok") else response
+
+            ctx.asin = f"sid:{sid}"
+            # A 14-day dashboard plus its candidates is routinely larger than the
+            # generic 14k board-tool preview.  Keep the complete structured result:
+            # truncating JSON mid-object hides the optimizer tail and makes it invalid.
+            return _compact_json_text({
+                "ok": bool(dashboard_response.get("ok") and optimizer_response.get("ok")),
+                "source": "awenOps_lingxing_bridge",
+                "sid": sid,
+                "site": site,
+                "days": days,
+                "dashboard": _bridge_result(dashboard_response),
+                "optimizer": _bridge_result(optimizer_response),
+                "write_boundary": (
+                    "本结果只包含观测和候选动作；如用户之后确认执行，必须调用 awenOps 的 "
+                    "lingxing_operate 工具并继续遵守工单、审批、审计和回滚护栏。"
+                ),
+            }, limit=60000)
+
         from . import lingxing_optimizer as opt, lingxing_report as lrep
         from .lingxing_openapi import LingXingError, is_configured
         if not is_configured():
-            return "领星 OpenAPI 未配置（请先在终端 `awen lingxing setup`）。"
-        if not args.get("sid"):
-            return "走领星巡检需要 sid（用 `awen lingxing sellers` 查店铺）。"
+            return ("awenAgent 独立模式尚未配置领星 OpenAPI。请在终端运行 `awen lingxing setup`；"
+                    "如果当前是在 awenOps 网页中看到此提示，则说明宿主工具桥没有连接成功。")
         try:
-            result = opt.run_store(int(args["sid"]), days=int(args.get("days", 30)))
+            result = opt.run_store(sid, days=days)
         except LingXingError as e:
             return f"领星拉数失败：{e}"
-        ctx.asin = f"sid:{args['sid']}"
+        ctx.asin = f"sid:{sid}"
         ctx.lingxing_result = result   # 供 execute_actions 写入
         from . import shadow
-        shadow.record(args["sid"], result.get("candidates", []))   # 影子台账
+        shadow.record(sid, result.get("candidates", []))   # 影子台账
         return lrep.render(result, color=False)
     if args.get("from_mcp"):
         from .mcp_source import fetch_to_csv

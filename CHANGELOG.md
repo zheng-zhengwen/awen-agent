@@ -38,6 +38,11 @@
 
 ### 修复
 
+- **awenOps 内的领星广告巡检不再误报“OpenAPI 未配置”。** 内嵌 awenAgent 现在会复用
+  awenOps 已配置的领星连接，分别取得账户大盘和确定性规则候选，不再检查另一套
+  `~/.awen` 独立凭证；“巡检最近 3/7/14 天广告”这类自然语序也会直达领星工具。
+  14 天等较大结果也会完整保留候选，不再被通用预览上限截成无效 JSON。结果仍然只读，
+  后续写操作继续经过 awenOps 工单、审批、审计与回滚护栏。
 - **Python 3.13/3.14 可以正常安装并保留本地 OCR。** 旧的 `rapidocr-onnxruntime` 只支持
   Python 3.12 及以下，此前却被所有 Python 版本无条件依赖，导致新版 Python 上 pip 必然报
   `No matching distribution found`。现在按解释器版本选择旧包或仍在维护的 `rapidocr` v3，

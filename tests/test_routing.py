@@ -65,10 +65,21 @@ def test_board_only_when_bridge_is_on():
 @pytest.mark.parametrize("text,tool", [
     ("给我一个打法", "playbook_generate_report"),
     ("做个关键词竞争分析", "deep_generate_report"),
-    ("跑个广告巡检", "ad_audit_start"),
+    ("跑个广告审计", "ad_audit_start"),
+    ("跑个广告巡检", "lingxing_optimizer"),
+    ("巡检最近 3,7和14 天广告并给出动作", "lingxing_optimizer"),
 ])
 def test_board_intent_table(text, tool):
     assert routing.classify(text, ops_bridge=True).board_tool == tool
+
+
+def test_lingxing_patrol_hint_forbids_the_standalone_path():
+    route = routing.classify("巡检最近 3、7、14 天广告", ops_bridge=True)
+    hint = routing.board_hint(route)
+
+    assert "lingxing_optimizer" in hint
+    assert "run_patrol" in hint and "不要" in hint
+    assert "sid" in hint and "days" in hint
 
 
 def test_injected_blocks_do_not_change_the_lane():
