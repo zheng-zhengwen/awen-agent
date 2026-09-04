@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ivyea_agent import chat_ui
+from awen_agent import chat_ui
 
 
 def test_line_streamer_keeps_fenced_code_with_internal_blank_together(monkeypatch):

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import threading
 
-from ivyea_agent import agent_loop, loop_guard, plan_store
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import agent_loop, loop_guard, plan_store
+from awen_agent.agent_tools import ToolContext
 
 
 def _drive(guard, name, args, *, ok=True, text="一份普通结果", times=1):
@@ -100,7 +100,7 @@ def test_guard_is_thread_safe_under_parallel_dispatch():
 
 
 # ── 与 agent_loop 的接线 ─────────────────────────────────────────────────────
-def test_agent_loop_blocks_a_repeating_tool_call(ivyea_home):
+def test_agent_loop_blocks_a_repeating_tool_call(awen_home):
     ctx = ToolContext(workspace=".", session_id="loop-1")
     guard = loop_guard.LoopGuard(repeat_limit=2, stall_limit=99)
     tc = {"id": "t1", "name": "grep", "arguments": {"pattern": "zzz"}}
@@ -111,7 +111,7 @@ def test_agent_loop_blocks_a_repeating_tool_call(ivyea_home):
     assert "重复调用" in res.text
 
 
-def test_agent_loop_stall_marks_the_plan_for_replanning(ivyea_home):
+def test_agent_loop_stall_marks_the_plan_for_replanning(awen_home):
     ctx = ToolContext(workspace=".", session_id="loop-2")
     plan_store.sync_todos("loop-2", [{"content": "查根因", "status": "in_progress"}])
     guard = loop_guard.LoopGuard(repeat_limit=99, stall_limit=3)
@@ -124,9 +124,9 @@ def test_agent_loop_stall_marks_the_plan_for_replanning(ivyea_home):
     assert "原地打转" in plan_store.replan_reason("loop-2")
 
 
-def test_disabled_thresholds_never_block(ivyea_home, monkeypatch):
+def test_disabled_thresholds_never_block(awen_home, monkeypatch):
     """把阈值设成 0 = 关掉这道守卫，行为回到加它之前。"""
-    from ivyea_agent import config
+    from awen_agent import config
     monkeypatch.setattr(config, "get_setting",
                         lambda key, default=None: 0 if key.startswith("loop_guard_") else default)
     guard = agent_loop._new_loop_guard()
@@ -222,8 +222,8 @@ def test_doing_one_real_thing_clears_the_bookkeeping_streak():
     assert guard.bookkeeping_feedback() is None
 
 
-def test_agent_loop_blocks_the_storm(ivyea_home):
-    from ivyea_agent import plan_store
+def test_agent_loop_blocks_the_storm(awen_home):
+    from awen_agent import plan_store
     # 真实场景里风暴就是 todo_write 刷出来的，所以计划一定已经存在。
     # （mark_replan 对不存在的计划是 no-op —— 一个没有计划的"重规划理由"没有意义。）
     plan_store.sync_todos("churn-1", [{"content": "第一步", "status": "pending"}])

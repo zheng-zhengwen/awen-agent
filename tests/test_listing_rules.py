@@ -42,13 +42,13 @@ class _Src:
         return 600.0
 
     def fetch(self, m, scope, window=None):
-        from ivyea_agent.datasources.lingxing_mcp_source import LingxingMcpSource
+        from awen_agent.datasources.lingxing_mcp_source import LingxingMcpSource
         return [LingxingMcpSource._listing(r, scope.get("sid")) for r in self.rows]
 
 
 @pytest.fixture()
-def wire(ivyea_home, monkeypatch):
-    from ivyea_agent import metrics, datasources
+def wire(awen_home, monkeypatch):
+    from awen_agent import metrics, datasources
 
     def _install(rows):
         for s in list(metrics.registered()):
@@ -56,7 +56,7 @@ def wire(ivyea_home, monkeypatch):
         metrics.register(_Src(rows), priority=1)
         monkeypatch.setattr(datasources, "install_defaults", lambda: None)
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 
@@ -66,22 +66,22 @@ def _codes(res):
 
 
 def _run(sid=1):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
     return store_health.check_l1(sid)
 
 
 # ── 规范化 ──────────────────────────────────────────────────────────────────
-def test_normalization_handles_string_numbers(ivyea_home):
-    from ivyea_agent.datasources.lingxing_mcp_source import LingxingMcpSource
+def test_normalization_handles_string_numbers(awen_home):
+    from awen_agent.datasources.lingxing_mcp_source import LingxingMcpSource
 
     row = LingxingMcpSource._listing(_raw(), 1863)
     assert row["price"] == 35.66 and row["quantity"] == 50.0
     assert row["avg_volume_7"] == 2.0 and row["channel"] == "FBM"
 
 
-def test_unwrap_handles_both_nesting_depths(ivyea_home):
+def test_unwrap_handles_both_nesting_depths(awen_home):
     """erp_listing 是 data.data.list，跟卖监控是 data.list —— 层级不统一。"""
-    from ivyea_agent.datasources import lingxing_mcp_source as src
+    from awen_agent.datasources import lingxing_mcp_source as src
 
     deep = json.dumps({"code": 0, "data": {"data": {"list": [{"msku": "A"}]}}})
     flat = json.dumps({"code": 0, "data": {"list": [{"msku": "B"}]}})
@@ -89,15 +89,15 @@ def test_unwrap_handles_both_nesting_depths(ivyea_home):
     assert src._unwrap(flat)[0]["msku"] == "B"
 
 
-def test_unwrap_prose_response_is_not_an_error(ivyea_home):
+def test_unwrap_prose_response_is_not_an_error(awen_home):
     """get_my_sids 之类返回给人看的文本，解析不出 JSON 不能崩。"""
-    from ivyea_agent.datasources import lingxing_mcp_source as src
+    from awen_agent.datasources import lingxing_mcp_source as src
 
     assert src._unwrap("店铺列表:\n- sid: 1872") == []
 
 
-def test_unwrap_raises_on_business_error(ivyea_home):
-    from ivyea_agent.datasources import lingxing_mcp_source as src
+def test_unwrap_raises_on_business_error(awen_home):
+    from awen_agent.datasources import lingxing_mcp_source as src
 
     with pytest.raises(src.LingxingMcpError):
         src._unwrap(json.dumps({"code": 102, "message": "参数不合法"}))
@@ -248,13 +248,13 @@ class _FollowSrc:
         return 600.0
 
     def fetch(self, m, scope, window=None):
-        from ivyea_agent.datasources.lingxing_mcp_source import LingxingMcpSource
+        from awen_agent.datasources.lingxing_mcp_source import LingxingMcpSource
         return [LingxingMcpSource._follow(r, scope.get("sid")) for r in self.rows]
 
 
 @pytest.fixture()
-def wire_follow(ivyea_home, monkeypatch):
-    from ivyea_agent import metrics, datasources
+def wire_follow(awen_home, monkeypatch):
+    from awen_agent import metrics, datasources
 
     def _install(rows):
         for s in list(metrics.registered()):
@@ -262,7 +262,7 @@ def wire_follow(ivyea_home, monkeypatch):
         metrics.register(_FollowSrc(rows), priority=1)
         monkeypatch.setattr(datasources, "install_defaults", lambda: None)
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 

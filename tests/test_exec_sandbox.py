@@ -6,8 +6,8 @@ import sys
 
 import pytest
 
-from ivyea_agent import tools_general as tg
-from ivyea_agent.agent_tools import ToolContext, dispatch
+from awen_agent import tools_general as tg
+from awen_agent.agent_tools import ToolContext, dispatch
 
 
 def test_make_preexec_none_on_windows(monkeypatch):

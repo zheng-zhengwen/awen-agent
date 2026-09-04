@@ -34,21 +34,21 @@ class _TalkingToolProvider:
 
 
 def _nudges(messages: list) -> list[str]:
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
     return [m["content"] for m in messages
             if m.get("role") == "tool" and agent_loop._NARRATION_MARKER in str(m.get("content") or "")]
 
 
 def _run(provider, ctx, steps=6):
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "介绍一下这个岗位"}]
     agent_loop.run_turn_stream(provider, ctx, msgs, max_steps=steps,
                                render=lambda _s: None, narrate=lambda _s: None)
     return msgs
 
 
-def test_silent_streak_asks_for_a_status_line(ivyea_home):
-    from ivyea_agent import agent_loop, agent_tools
+def test_silent_streak_asks_for_a_status_line(awen_home):
+    from awen_agent import agent_loop, agent_tools
 
     msgs = _run(_SilentToolProvider(), agent_tools.ToolContext())
     got = _nudges(msgs)
@@ -60,15 +60,15 @@ def test_silent_streak_asks_for_a_status_line(ivyea_home):
     assert agent_loop._NARRATION_MARKER in tool_msgs[agent_loop._SILENT_STEPS_BEFORE_NUDGE - 1]["content"]
 
 
-def test_short_run_is_left_alone(ivyea_home):
+def test_short_run_is_left_alone(awen_home):
     """三步以内的普通对话不催 —— 短任务最好的汇报就是直接把答案给出来。"""
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
 
     assert _nudges(_run(_SilentToolProvider(), agent_tools.ToolContext(), steps=3)) == []
 
 
-def test_model_that_already_narrates_is_not_nudged(ivyea_home):
-    from ivyea_agent import agent_tools
+def test_model_that_already_narrates_is_not_nudged(awen_home):
+    from awen_agent import agent_tools
 
     assert _nudges(_run(_TalkingToolProvider(), agent_tools.ToolContext())) == []
 
@@ -80,7 +80,7 @@ def test_progress_lifecycle_turns_are_not_double_prompted():
     （见 run_turn_stream 开头的 prepare_messages），在轮外手工设上去会被它覆盖掉，
     那样的测试只是在测 task_scope 的分类结果，不是在测这里的取舍。
     """
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
 
     msgs = [{"role": "tool", "tool_call_id": "c1", "content": "结果"}]
     ctx = type("C", (), {"progress_required": True})()
@@ -88,8 +88,8 @@ def test_progress_lifecycle_turns_are_not_double_prompted():
     assert msgs[0]["content"] == "结果"
 
 
-def test_nudge_never_lands_twice_on_the_same_results(ivyea_home):
-    from ivyea_agent import agent_loop
+def test_nudge_never_lands_twice_on_the_same_results(awen_home):
+    from awen_agent import agent_loop
 
     msgs = [{"role": "tool", "tool_call_id": "c1", "content": "结果"}]
     ctx = type("C", (), {})()

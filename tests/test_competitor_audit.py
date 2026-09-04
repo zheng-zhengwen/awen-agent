@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def test_competitor_audit_detects_competitor_asin_and_missing_core():
-    from ivyea_agent import competitor_audit
+    from awen_agent import competitor_audit
 
     res = competitor_audit.audit(
         own_terms="karaoke machine,kids microphone",
@@ -20,8 +20,8 @@ def test_competitor_audit_detects_competitor_asin_and_missing_core():
 
 
 def test_competitor_cli_and_agent_tool(capsys):
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
-    from ivyea_agent.cli import main
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
+    from awen_agent.cli import main
 
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "run_competitor_audit" in names

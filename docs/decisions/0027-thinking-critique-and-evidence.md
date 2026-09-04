@@ -58,7 +58,7 @@ board / work 一律维持 `high`；带 `progress_required` 或 `execution_expect
 
 ### 3. 证据台账独立落盘
 
-新增 `evidence_ledger`（`~/.ivyea/evidence.db`），在 `_record_tool_result` 里被动记录
+新增 `evidence_ledger`（`~/.awen/evidence.db`），在 `_record_tool_result` 里被动记录
 命令 / 测试 / 读 / 写 / 接口五类有验证意义的调用，跨轮跨会话可查，30 天过期。
 最终汇报的「验证」一栏把它作为最后一档兜底 —— 前三档（模型自述、阶段报告、本轮工具痕迹）
 都活在这一轮的内存里，台账是唯一落了盘、能事后对账的那份。

@@ -1,8 +1,8 @@
 """Structured tool dispatch result (ok / text / traceback)."""
 from __future__ import annotations
 
-from ivyea_agent import agent_tools
-from ivyea_agent.agent_tools import ToolContext, dispatch, dispatch_result
+from awen_agent import agent_tools
+from awen_agent.agent_tools import ToolContext, dispatch, dispatch_result
 
 
 def test_success_is_ok_without_traceback():

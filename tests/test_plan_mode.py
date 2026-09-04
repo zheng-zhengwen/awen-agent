@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from ivyea_agent.cli import _plan_mode_intent
-from ivyea_agent.tools_general import t_todo_write
+from awen_agent.cli import _plan_mode_intent
+from awen_agent.tools_general import t_todo_write
 
 
 @pytest.mark.parametrize("line,expect", [

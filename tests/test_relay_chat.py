@@ -4,9 +4,9 @@ import json
 import pytest
 
 
-from ivyea_agent.feishu_relay import chat
-from ivyea_agent.feishu_relay import config
-from ivyea_agent.feishu_relay import gates
+from awen_agent.feishu_relay import chat
+from awen_agent.feishu_relay import config
+from awen_agent.feishu_relay import gates
 
 ME = "ou_me"
 
@@ -74,7 +74,7 @@ def test_seen_list_is_capped(monkeypatch):
 # ── 命令 ────────────────────────────────────────────────────────────────────
 def test_help_and_reset(monkeypatch):
     monkeypatch.setattr(chat, "run_turn", lambda *a: "不该被调用")
-    assert "Ivyea Agent" in chat.handle_message(**_msg("/help"))
+    assert "awen Agent" in chat.handle_message(**_msg("/help"))
     chat.set_session("oc_1", "s1")
     assert "已清空" in chat.handle_message(**_msg("/reset", mid="om_2"))
     assert chat.get_session("oc_1") is None
@@ -82,10 +82,10 @@ def test_help_and_reset(monkeypatch):
 
 
 def test_prefix_filter(monkeypatch):
-    monkeypatch.setattr(config, "CHAT_PREFIX", "/ivyea")
+    monkeypatch.setattr(config, "CHAT_PREFIX", "/awen")
     monkeypatch.setattr(chat, "run_turn", lambda cid, t: f"收到:{t}")
     assert chat.handle_message(**_msg("闲聊")) == ""
-    assert chat.handle_message(**_msg("/ivyea 查库存", mid="om_9")) == "收到:查库存"
+    assert chat.handle_message(**_msg("/awen 查库存", mid="om_9")) == "收到:查库存"
 
 
 def test_non_text_message(monkeypatch):

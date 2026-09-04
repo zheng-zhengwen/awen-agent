@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from ivyea_agent.providers import openai_compat as oc
-from ivyea_agent.providers.base import LLMError
-from ivyea_agent.providers.chain import ChainProvider
+from awen_agent.providers import openai_compat as oc
+from awen_agent.providers.base import LLMError
+from awen_agent.providers.chain import ChainProvider
 
 
 class _Resp:
@@ -97,9 +97,9 @@ def test_chain_chat_fallback():
     assert chain.chat([{"role": "user", "content": "x"}])["content"] == "备"
 
 
-def test_build_chain_with_fallback(ivyea_home):
-    from ivyea_agent import config
-    from ivyea_agent.providers import build_chain
+def test_build_chain_with_fallback(awen_home):
+    from awen_agent import config
+    from awen_agent.providers import build_chain
     config.set_env_key("DEEPSEEK_API_KEY", "sk-x")
     config.set_setting("fallback_models", "deepseek-reasoner")   # 同 DEEPSEEK key → 可用
     prov = build_chain({"kind": "openai", "model": "deepseek-chat",
@@ -107,15 +107,15 @@ def test_build_chain_with_fallback(ivyea_home):
     assert isinstance(prov, ChainProvider) and len(prov.members) == 2
 
 
-def test_build_chain_no_fallback_returns_single(ivyea_home):
-    from ivyea_agent.providers import build_chain
+def test_build_chain_no_fallback_returns_single(awen_home):
+    from awen_agent.providers import build_chain
     prov = build_chain({"kind": "openai", "model": "deepseek-chat",
                         "base_url": "https://api.deepseek.com"}, "sk-x")
     assert not isinstance(prov, ChainProvider)   # 无备用 → 不套链
 
 
 def test_oauth_provider_reports_transport_not_member_login():
-    from ivyea_agent.providers import from_settings
+    from awen_agent.providers import from_settings
     with pytest.raises(LLMError) as exc:
         from_settings({"kind": "oauth", "auth_type": "oauth_external",
                        "label": "OpenAI Codex OAuth", "model": "gpt-5-codex"}, "")

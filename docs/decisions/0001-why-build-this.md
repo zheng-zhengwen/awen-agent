@@ -6,7 +6,7 @@
 
 ## 背景
 
-IvyeaAgent 不是凭空立项的。在此之前的两个月，IvyeaOps 工作台的所有 AI 能力都靠外部 CLI
+awenAgent 不是凭空立项的。在此之前的两个月，awenOps 工作台的所有 AI 能力都靠外部 CLI
 驱动 —— Hermes、Codex、Claude Code 各自负责一部分板块。这套组合能跑，但有四个绕不过去的问题：
 
 1. **不可控** —— 外部 CLI 的输出格式、退出行为、超时策略随版本变，工作台只能被动适配。
@@ -19,9 +19,9 @@ IvyeaAgent 不是凭空立项的。在此之前的两个月，IvyeaOps 工作台
 
 ## 决策
 
-自建一个 agent：专做 Amazon 场景、可被 IvyeaOps 编程驱动、能随工作台一起分发。
+自建一个 agent：专做 Amazon 场景、可被 awenOps 编程驱动、能随工作台一起分发。
 
-独立成仓库和独立产品，但打包进 IvyeaOps 一起发布。
+独立成仓库和独立产品，但打包进 awenOps 一起发布。
 
 ## 理由
 
@@ -33,7 +33,7 @@ IvyeaAgent 不是凭空立项的。在此之前的两个月，IvyeaOps 工作台
 
 - 代价是必须自己维护 agent 的全部基础能力：工具循环、上下文压缩、记忆、多 provider、
   权限审批、TUI —— 这些在 2026 年 6–8 月占了绝大部分工作量
-- 两个项目从此互为主线，发版要联动（IvyeaOps 打包 IvyeaAgent 的 release tag，
+- 两个项目从此互为主线，发版要联动（awenOps 打包 awenAgent 的 release tag，
   且解析不到就要让构建失败，不能悄悄回退 main）
 - 三次「摘掉外部依赖」都建立在这个决定之上：自动链路去 Hermes（2026-08-06）、
   知识库摘 GBrain（2026-08-16）、语义检索自带（2026-08-16）

@@ -1,7 +1,7 @@
 """M1+ 内核：SSE 解析、成本核算、计划模式、流式循环。"""
 from __future__ import annotations
 
-from ivyea_agent.providers.openai_compat import parse_sse
+from awen_agent.providers.openai_compat import parse_sse
 
 
 def test_parse_sse_text_and_tool_calls():
@@ -35,8 +35,8 @@ def test_parse_sse_reasoning():
 
 
 def test_run_turn_stream_routes_reasoning():
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     class FakeProv:
         def stream_chat(self, messages, tools=None):
@@ -58,8 +58,8 @@ def test_parse_sse_handles_bytes_and_blank():
     assert events[0]["text"] == "hi" and events[-1]["type"] == "final"
 
 
-def test_pricing_estimate(ivyea_home):
-    from ivyea_agent import pricing
+def test_pricing_estimate(awen_home):
+    from awen_agent import pricing
     # deepseek-chat: input 2, cached 0.5, output 8（¥/1M）
     cost = pricing.estimate("deepseek-chat", {"prompt_tokens": 1_000_000, "completion_tokens": 0})
     assert abs(cost - 2.0) < 1e-9
@@ -68,16 +68,16 @@ def test_pricing_estimate(ivyea_home):
     assert abs(cost2 - 0.5) < 1e-9  # 全缓存命中
 
 
-def test_usage_meter(ivyea_home):
-    from ivyea_agent import pricing
+def test_usage_meter(awen_home):
+    from awen_agent import pricing
     m = pricing.UsageMeter()
     m.add("deepseek-chat", {"prompt_tokens": 1_000_000, "completion_tokens": 1_000_000})
     assert m.turns == 1 and m.prompt == 1_000_000 and m.completion == 1_000_000
     assert abs(m.cost - 10.0) < 1e-9  # 2 + 8
 
 
-def test_plan_mode_blocks_execute(ivyea_home):
-    from ivyea_agent import agent_tools
+def test_plan_mode_blocks_execute(awen_home):
+    from awen_agent import agent_tools
     ctx = agent_tools.ToolContext(plan_mode=True)
     out = agent_tools.dispatch("execute_actions", {}, ctx)
     assert "计划模式" in out
@@ -92,8 +92,8 @@ class _FakeProvider:
                "usage": {"prompt_tokens": 100, "completion_tokens": 20}}
 
 
-def test_run_turn_stream_no_tools(ivyea_home):
-    from ivyea_agent import agent_loop, agent_tools
+def test_run_turn_stream_no_tools(awen_home):
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext()
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "看下广告"}]
     chunks = []
@@ -120,8 +120,8 @@ class _ToolThenDoneProvider:
                    "usage": {"prompt_tokens": 60, "completion_tokens": 8}}
 
 
-def test_run_turn_stream_with_tool(ivyea_home):
-    from ivyea_agent import agent_loop, agent_tools
+def test_run_turn_stream_with_tool(awen_home):
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext()
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "回忆放量"}]
     out = agent_loop.run_turn_stream(_ToolThenDoneProvider(), ctx, msgs,
@@ -139,8 +139,8 @@ class _AlwaysToolProvider:
                "tool_calls": [{"id": f"c{len(messages)}", "name": "recall", "arguments": {"query": "x"}}]}
 
 
-def test_run_turn_stream_uses_configured_tool_step_limit(ivyea_home):
-    from ivyea_agent import agent_loop, agent_tools, config
+def test_run_turn_stream_uses_configured_tool_step_limit(awen_home):
+    from awen_agent import agent_loop, agent_tools, config
     config.set_setting("chat_max_tool_steps", 2)
     ctx = agent_tools.ToolContext()
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "一直查"}]
@@ -155,8 +155,8 @@ def test_run_turn_stream_uses_configured_tool_step_limit(ivyea_home):
     assert any("剩余安全预算" in n for n in notes)
 
 
-def test_run_turn_stream_records_limit_trace(ivyea_home):
-    from ivyea_agent import agent_loop, agent_tools, traces
+def test_run_turn_stream_records_limit_trace(awen_home):
+    from awen_agent import agent_loop, agent_tools, traces
     ctx = agent_tools.ToolContext(session_id="sid-1")
     ctx.turn_id = "turn-1"
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "一直查"}]
@@ -172,8 +172,8 @@ class _AlwaysToolChatProvider:
         return {"content": "", "tool_calls": [{"id": f"c{len(messages)}", "name": "recall", "arguments": {"query": "x"}}]}
 
 
-def test_run_turn_non_stream_limit_adds_resume_context(ivyea_home):
-    from ivyea_agent import agent_loop, agent_tools
+def test_run_turn_non_stream_limit_adds_resume_context(awen_home):
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext()
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "一直查"}]
     notes = []
@@ -184,8 +184,8 @@ def test_run_turn_non_stream_limit_adds_resume_context(ivyea_home):
     assert any("剩余安全预算" in n for n in notes)
 
 
-def test_run_turn_stream_limit_updates_bound_task(ivyea_home, tmp_path, monkeypatch):
-    from ivyea_agent import agent_loop, agent_tools, task_runner
+def test_run_turn_stream_limit_updates_bound_task(awen_home, tmp_path, monkeypatch):
+    from awen_agent import agent_loop, agent_tools, task_runner
     monkeypatch.setattr(task_runner, "TASK_DIR", tmp_path / "tasks")
     task = task_runner.create("Long agent task", steps=["inspect", "finish"])
     task_runner.start_next(task["id"])

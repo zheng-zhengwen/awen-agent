@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from ivyea_agent import agent_loop
-from ivyea_agent.agent_tools import ToolContext, ToolResult
+from awen_agent import agent_loop
+from awen_agent.agent_tools import ToolContext, ToolResult
 
 
 def _call(call_id: str, name: str, **arguments):
@@ -43,7 +43,7 @@ def test_navigation_budget_stops_unbounded_search(tmp_path, monkeypatch):
 
 
 def test_successful_read_resets_navigation_and_can_adopt_repo(tmp_path, monkeypatch):
-    repo = tmp_path / "ivyea-agent"
+    repo = tmp_path / "awen-agent"
     (repo / ".git").mkdir(parents=True)
     target = repo / "main.py"
     target.write_text("print('ok')\n", encoding="utf-8")
@@ -77,7 +77,7 @@ def test_behavioral_write_requires_runtime_validation(monkeypatch):
     assert "真实运行路径" in feedback
 
     status.runtime_validated = True
-    monkeypatch.setattr("ivyea_agent.verify.gate", lambda *_a, **_k: {"ok": True})
+    monkeypatch.setattr("awen_agent.verify.gate", lambda *_a, **_k: {"ok": True})
     assert agent_loop._verify_gate_feedback(ctx, status, lambda _s: None) is None
 
 
@@ -89,7 +89,7 @@ def test_doc_only_write_does_not_demand_runtime_proof(monkeypatch):
                                {"path": "reports/界面优化报告.md"})
     assert status.wrote_code is True          # 自验证门禁照常覆盖
     assert status.wrote_code_files is False   # 但行为门禁不该触发
-    monkeypatch.setattr("ivyea_agent.verify.gate", lambda *_a, **_k: {"ok": True})
+    monkeypatch.setattr("awen_agent.verify.gate", lambda *_a, **_k: {"ok": True})
     assert agent_loop._verify_gate_feedback(ctx, status, lambda _s: None) is None
 
 

@@ -33,7 +33,7 @@ listing 维度的 4 条规则（断流 / 销量下滑 / listing 级 ACOS 超标 
 
 ### 二、节奏改成 1 小时 / 12 小时 / 天 / 周 / 月
 
-默认值集中在 `schedule.PATROL_DEFAULT_MINUTES`，**唯一真源**：CLI、IvyeaOps 界面、
+默认值集中在 `schedule.PATROL_DEFAULT_MINUTES`，**唯一真源**：CLI、awenOps 界面、
 文档都从这里取。界面上每一档可单独开关、可调间隔。
 
 ### 三、周报 / 月报是回顾，**不创建审批项**

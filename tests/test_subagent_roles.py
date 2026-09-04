@@ -1,7 +1,7 @@
 """子 agent 角色：分工、白名单、自定义、以及那条不能破的只读边界。"""
 from __future__ import annotations
 
-from ivyea_agent import agent_tools, subagents
+from awen_agent import agent_tools, subagents
 
 
 def _readonly():
@@ -73,8 +73,8 @@ def _write_agent(home, name, text):
     (d / f"{name}.md").write_text(text, encoding="utf-8")
 
 
-def test_a_custom_role_is_picked_up(ivyea_home):
-    _write_agent(ivyea_home, "pricing-scout",
+def test_a_custom_role_is_picked_up(awen_home):
+    _write_agent(awen_home, "pricing-scout",
                  "---\nname: pricing-scout\ndescription: 盯竞品定价\n"
                  "tools: [read_file, grep]\nmax_steps: 5\n---\n你是定价侦察兵。")
     role = subagents.get_role("pricing-scout")
@@ -85,40 +85,40 @@ def test_a_custom_role_is_picked_up(ivyea_home):
     assert names == {"read_file", "grep"}
 
 
-def test_a_custom_role_overrides_a_builtin_one(ivyea_home):
-    _write_agent(ivyea_home, "researcher",
+def test_a_custom_role_overrides_a_builtin_one(awen_home):
+    _write_agent(awen_home, "researcher",
                  "---\nname: researcher\n---\n我自己的调研员。")
     role = subagents.get_role("researcher")
     assert role.source == "user"
     assert role.system == "我自己的调研员。"
 
 
-def test_a_file_without_frontmatter_still_works(ivyea_home):
-    _write_agent(ivyea_home, "plain", "就是一段 system prompt，没有 frontmatter。")
+def test_a_file_without_frontmatter_still_works(awen_home):
+    _write_agent(awen_home, "plain", "就是一段 system prompt，没有 frontmatter。")
     role = subagents.get_role("plain")
     assert role.source == "user"
     assert "没有 frontmatter" in role.system
 
 
-def test_broken_agent_files_are_skipped_not_fatal(ivyea_home):
-    _write_agent(ivyea_home, "empty", "")
-    _write_agent(ivyea_home, "bad-yaml", "---\n: : :\n---\n正文还在。")
-    _write_agent(ivyea_home, "BADNAME", "---\nname: Not A Name!\n---\n正文")
+def test_broken_agent_files_are_skipped_not_fatal(awen_home):
+    _write_agent(awen_home, "empty", "")
+    _write_agent(awen_home, "bad-yaml", "---\n: : :\n---\n正文还在。")
+    _write_agent(awen_home, "BADNAME", "---\nname: Not A Name!\n---\n正文")
     roles = subagents.user_roles()
     assert "empty" not in roles
     assert "bad-yaml" in roles              # frontmatter 坏了，正文照用
     assert "Not A Name!" not in roles
 
 
-def test_render_list_marks_custom_roles(ivyea_home):
-    _write_agent(ivyea_home, "mine", "---\nname: mine\ndescription: 我的\n---\n正文")
+def test_render_list_marks_custom_roles(awen_home):
+    _write_agent(awen_home, "mine", "---\nname: mine\ndescription: 我的\n---\n正文")
     out = subagents.render_list()
     assert "* mine" in out
     assert "  researcher" in out
 
 
 # ── 派发接线 ─────────────────────────────────────────────────────────────────
-def test_dispatch_uses_the_role_prompt_and_tools(ivyea_home, monkeypatch):
+def test_dispatch_uses_the_role_prompt_and_tools(awen_home, monkeypatch):
     seen = {}
 
     def fake_run_turn(provider, ctx, messages, max_steps=None, narrate=None, tools=None):
@@ -128,7 +128,7 @@ def test_dispatch_uses_the_role_prompt_and_tools(ivyea_home, monkeypatch):
         seen["plan_mode"] = ctx.plan_mode
         return "结论"
 
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
     monkeypatch.setattr(agent_loop, "run_turn", fake_run_turn)
     ctx = agent_tools.ToolContext(workspace=".", provider=object())
     out = agent_tools.t_dispatch_subagent({"task": "查一下", "role": "code_explorer"}, ctx)
@@ -139,7 +139,7 @@ def test_dispatch_uses_the_role_prompt_and_tools(ivyea_home, monkeypatch):
     assert seen["plan_mode"] is True          # 只读边界：子 agent 一律计划模式
 
 
-def test_dispatch_without_a_role_is_unchanged(ivyea_home, monkeypatch):
+def test_dispatch_without_a_role_is_unchanged(awen_home, monkeypatch):
     seen = {}
 
     def fake_run_turn(provider, ctx, messages, max_steps=None, narrate=None, tools=None):
@@ -147,7 +147,7 @@ def test_dispatch_without_a_role_is_unchanged(ivyea_home, monkeypatch):
         seen["max_steps"] = max_steps
         return "结论"
 
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
     monkeypatch.setattr(agent_loop, "run_turn", fake_run_turn)
     ctx = agent_tools.ToolContext(workspace=".", provider=object())
     out = agent_tools.t_dispatch_subagent({"task": "查一下"}, ctx)

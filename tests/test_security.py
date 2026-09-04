@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ivyea_agent import security
+from awen_agent import security
 
 
 def test_redact_text_and_object():
-    from ivyea_agent import security
+    from awen_agent import security
 
     text = "api_key=sk-test1234567890abcdef token: abc123 password='pw'"
     out = security.redact_text(text)
@@ -20,8 +20,8 @@ def test_redact_text_and_object():
     assert red["safe"] == "ok"
 
 
-def test_ui_and_trace_redact(ivyea_home):
-    from ivyea_agent import traces, ui
+def test_ui_and_trace_redact(awen_home):
+    from awen_agent import traces, ui
 
     call = ui.tool_call("web_fetch", {"api_key": "sk-test1234567890abcdef"}, color=False)
     assert "sk-test" not in call                       # 友好动词只显示 url，密钥不泄漏
@@ -83,8 +83,8 @@ def test_redaction_is_idempotent():
 
 def test_source_code_survives_a_round_trip_through_read_file(tmp_path):
     """模型读到的源码必须**和磁盘上一字不差** —— 否则它照抄去 edit_file 会匹配失败。"""
-    from ivyea_agent import tools_general
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import tools_general
+    from awen_agent.agent_tools import ToolContext
 
     script = tmp_path / "run.sh"
     script.write_text('curl -H "X-Token: $REPORT_TOKEN" https://api.example.com\n', encoding="utf-8")

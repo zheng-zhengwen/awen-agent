@@ -13,8 +13,8 @@ import pytest
 
 
 @pytest.fixture()
-def setup_mod(ivyea_home, monkeypatch):
-    from ivyea_agent import config, feishu_client, feishu_setup, schedule
+def setup_mod(awen_home, monkeypatch):
+    from awen_agent import config, feishu_client, feishu_setup, schedule
 
     importlib.reload(schedule)
     importlib.reload(feishu_client)
@@ -27,7 +27,7 @@ def setup_mod(ivyea_home, monkeypatch):
                         lambda: {"state": "unknown", "running": None, "detail": ""})
     monkeypatch.setattr(feishu_setup, "_timer_status",
                         lambda: {"state": "unknown", "running": None, "detail": ""})
-    assert config.IVYEA_DIR == ivyea_home or str(config.IVYEA_DIR) == str(ivyea_home)
+    assert config.AWEN_DIR == awen_home or str(config.AWEN_DIR) == str(awen_home)
     return feishu_setup
 
 
@@ -47,7 +47,7 @@ def test_configure_writes_env_and_process_so_it_takes_effect_now(setup_mod, monk
     """
     import os
 
-    from ivyea_agent import feishu_client
+    from awen_agent import feishu_client
 
     setup_mod.configure({"app_id": "cli_new", "app_secret": "s3cret",
                          "chat_id": "oc_target", "domain": "feishu"})
@@ -86,7 +86,7 @@ def test_whitelist_accepts_a_pasted_line(setup_mod):
 
 def test_changing_credentials_drops_the_cached_token(setup_mod):
     """换了应用还留着旧 token，下一条消息就以旧应用的身份发出去。"""
-    from ivyea_agent import feishu_client
+    from awen_agent import feishu_client
 
     feishu_client._TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
     feishu_client._TOKEN_FILE.write_text('{"token": "old"}', encoding="utf-8")
@@ -119,7 +119,7 @@ def test_configure_patrol_replaces_hand_made_jobs(setup_mod):
 
     留着的话 timer 下一轮会让同一个店巡两遍、飞书里出现两张几乎一样的卡。
     """
-    from ivyea_agent import schedule
+    from awen_agent import schedule
 
     schedule.set_job("l1-1863", "store_l1", args={"sid": "1863", "notify": True,
                                                   "channel": "feishu_app"},
@@ -137,7 +137,7 @@ def test_configure_patrol_replaces_hand_made_jobs(setup_mod):
 
 
 def test_configure_patrol_can_target_specific_stores(setup_mod):
-    from ivyea_agent import schedule
+    from awen_agent import schedule
 
     setup_mod.configure_patrol({"scope": "sids", "sids": ["1863", "1872"],
                                 "l2": {"enabled": True, "every_hours": 1}})
@@ -153,7 +153,7 @@ def test_configure_patrol_refuses_an_empty_store_selection(setup_mod):
 
 def test_turning_everything_off_leaves_no_patrol_job(setup_mod):
     """测试店铺跑完就不想要巡检了 —— 关掉必须是真关掉，不留残留任务。"""
-    from ivyea_agent import schedule
+    from awen_agent import schedule
 
     setup_mod.configure_patrol({"scope": "all", "l1": {"enabled": True, "every_minutes": 20}})
     setup_mod.configure_patrol({"scope": "all"})
@@ -162,7 +162,7 @@ def test_turning_everything_off_leaves_no_patrol_job(setup_mod):
 
 
 def test_send_test_records_only_on_success(setup_mod, monkeypatch):
-    from ivyea_agent import feishu_client
+    from awen_agent import feishu_client
 
     setup_mod.configure({"app_id": "cli_a", "app_secret": "s", "chat_id": "oc_a"})
 

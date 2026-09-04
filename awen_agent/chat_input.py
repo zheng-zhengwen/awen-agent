@@ -1,0 +1,372 @@
+"""Claude Code 风格的输入框（prompt_toolkit）。
+
+默认使用带边框输入区（Frame）：输入框始终钉在底部，提交后把输入回显成一行
+静态历史，对话自上而下在框上方累积——观感与 Claude Code / Codex / Hermes 一致。
+带框模式 + ❯ 提示 + 斜杠补全 + ↑↓历史 + 粘贴(bracketed paste)。
+设置 AWEN_BOXED_INPUT=0 可退回轻量 PromptSession 单行输入。
+三级降级：带框 Application → PromptSession → 内置 input()，保证任何环境可用。
+"""
+from __future__ import annotations
+
+import os
+import re as _re
+import sys
+from typing import Callable
+
+from . import config
+
+EXIT = object()  # 哨兵：用户在框内 Ctrl+C/Ctrl+D 退出
+
+_AT_RE = _re.compile(r"(?<!\S)@([^\s@]*)$")   # 光标前最后一个 @路径片段（用于补全）
+
+
+def slash_aware_autosuggest(slash_commands=None):
+    """ghost 灰字建议：斜杠命令时 = 补全菜单的第一项（与 Tab 补全一致，所见即所得），
+    普通输入时 = 历史建议。chat_input（行式）与 chat_tui（全屏/滚动区）两套输入框共用。
+
+    修复前：输入 `/` 时历史 ghost 灰字建议上次的 `/model`，Tab 却补成菜单第一项 `/help`
+    ——所见（model）非所得（help）。现在斜杠 ghost 直接取当前输入匹配到的第一个命令，
+    Tab / →键 / 菜单三者补的都是它，一致；用户也仍有可见的命令推荐。"""
+    from prompt_toolkit.auto_suggest import AutoSuggest, AutoSuggestFromHistory, Suggestion
+    base = AutoSuggestFromHistory()
+    cmds = [c[0] if isinstance(c, (tuple, list)) else c for c in (slash_commands or [])]
+
+    class _SlashOrHistoryGhost(AutoSuggest):
+        def get_suggestion(self, buffer, document):
+            t = document.text
+            if t.startswith("/"):
+                for cmd in cmds:                       # 第一个 startswith 的命令 = 菜单第一项
+                    if cmd.startswith(t) and cmd != t:
+                        return Suggestion(cmd[len(t):])
+                return None                            # 已完整/无匹配 → 不给 ghost
+            return base.get_suggestion(buffer, document)
+    return _SlashOrHistoryGhost()
+
+
+def _at_completions(frag: str):
+    """@文件引用的路径补全：按当前片段列出目录下匹配的文件/子目录。"""
+    from prompt_toolkit.completion import Completion
+    base = os.path.dirname(frag)
+    prefix = os.path.basename(frag)
+    listdir = base or "."
+    try:
+        entries = sorted(os.listdir(os.path.expanduser(listdir)))
+    except Exception:
+        return
+    for name in entries:
+        if name.startswith(".") and not prefix.startswith("."):
+            continue
+        if not name.startswith(prefix):
+            continue
+        full = os.path.join(base, name) if base else name
+        is_dir = os.path.isdir(os.path.expanduser(full))
+        disp = full + ("/" if is_dir else "")
+        yield Completion(disp, start_position=-len(frag), display=disp,
+                         display_meta="目录" if is_dir else "文件")
+
+
+class ChatInput:
+    def __init__(self, slash_commands: list, status_fn: Callable[[], str],
+                 mode_cycle_fn: Callable[[], str] | None = None,
+                 mode_label_fn: Callable[[], str] | None = None):
+        self.slash = slash_commands
+        self.status_fn = status_fn
+        self.mode_cycle_fn = mode_cycle_fn   # shift+tab 循环模式：普通→自动接受→计划；返回新模式名
+        self.mode_label_fn = mode_label_fn   # ()->当前模式文字，显示在输入框上边线右端（对标 Claude）
+        self._app_factory = None      # 带框 Application（每次新建）
+        self._session = None          # 普通 PromptSession 兜底
+        self._readline = None
+        self._readline_hist = ""
+        self._mode = "plain"
+        # 浏览器终端（awenOps web 终端，xterm.js）：用 readline 行输入，**不接管终端**——
+        # 输出进终端主缓冲区，手机/电脑都能原生滚动看历史 + 框选复制 + 流畅（对标 Claude Code/bash）。
+        # prompt_toolkit 的全屏/钉底 app 会接管终端、拦掉原生滚动与复制，故 web 终端不用它。
+        # 保留 ↑↓ 历史 + Tab 斜杠/@补全。桌面真终端不受影响，仍走下面的带框 app。
+        if os.environ.get("AWEN_OPS_TERMINAL", "").strip().lower() in ("1", "true", "on", "yes"):
+            if sys.stdin.isatty() and self._setup_readline():
+                self._mode = "readline"
+        elif sys.stdin.isatty():
+            self._try_setup()
+
+    def _setup_readline(self) -> bool:
+        """配置 readline：历史文件 + 斜杠/@ Tab 补全。成功返回 True。"""
+        try:
+            import readline
+            config.ensure_dirs()
+            self._readline_hist = str(config.AWEN_DIR / "chat_history")
+            try:
+                readline.read_history_file(self._readline_hist)
+            except (OSError, FileNotFoundError):
+                pass
+            readline.set_history_length(1000)
+            readline.set_completer_delims(" \t\n")   # 只按空白分词，让 /cmd 和 @path 整体补全
+            readline.set_completer(self._readline_completer())
+            readline.parse_and_bind("tab: complete")
+            self._readline = readline
+            return True
+        except Exception:
+            return False
+
+    def _readline_completer(self):
+        """readline 补全器：/斜杠命令（含用户自定义）+ @文件路径。"""
+        slash = self.slash
+
+        def _c(text, state):
+            matches: list[str] = []
+            if text.startswith("/"):
+                matches = [cmd for cmd, _ in slash if cmd.startswith(text)]
+                try:
+                    from . import commands as _cmds
+                    for name in _cmds.list_commands():
+                        c = "/" + name
+                        if c.startswith(text) and c not in matches:
+                            matches.append(c)
+                except Exception:
+                    pass
+            elif text.startswith("@"):
+                import glob
+                frag = os.path.expanduser(text[1:])
+                for p in sorted(glob.glob(frag + "*"))[:50]:
+                    matches.append("@" + p + ("/" if os.path.isdir(p) else ""))
+            return matches[state] if state < len(matches) else None
+        return _c
+
+    def _completer(self):
+        from prompt_toolkit.completion import Completer, Completion
+        slash = self.slash
+
+        class _C(Completer):
+            def get_completions(s, document, complete_event):
+                t = document.text_before_cursor
+                m = _AT_RE.search(t)             # @路径补全（@文件引用）
+                if m:
+                    yield from _at_completions(m.group(1))
+                    return
+                if not t.startswith("/"):
+                    return
+                seen = set()
+                for cmd, desc in slash:
+                    if cmd.startswith(t):
+                        seen.add(cmd)
+                        yield Completion(cmd, start_position=-len(t), display=cmd, display_meta=desc)
+                try:   # 用户自定义命令 ~/.awen/commands/*.md
+                    from . import commands as _cmds
+                    for name, summary in _cmds.list_commands().items():
+                        cmd = "/" + name
+                        if cmd.startswith(t) and cmd not in seen:
+                            yield Completion(cmd, start_position=-len(t), display=cmd,
+                                             display_meta=summary or "自定义命令")
+                except Exception:
+                    pass
+        return _C()
+
+    def _try_setup(self):
+        try:
+            from prompt_toolkit.history import FileHistory
+            config.ensure_dirs()
+            self._history = FileHistory(str(config.AWEN_DIR / "chat_history"))
+            self._setup_session()          # 始终建好 PromptSession，作为带框模式的兜底
+            if self._boxed_enabled():
+                from prompt_toolkit.widgets import Frame, TextArea  # noqa: F401 探测可用性
+                from prompt_toolkit.application import Application   # noqa: F401
+                self._mode = "boxed"
+        except Exception:
+            self._mode = "plain"
+
+    @staticmethod
+    def _boxed_enabled() -> bool:
+        # 默认开启带框输入；AWEN_BOXED_INPUT=0/false/off/no 可退回轻量单行
+        return os.environ.get("AWEN_BOXED_INPUT", "").strip().lower() not in ("0", "false", "off", "no")
+
+    def _setup_session(self) -> None:
+        from prompt_toolkit import PromptSession
+        from prompt_toolkit.styles import Style
+        from prompt_toolkit.shortcuts.prompt import CompleteStyle
+        self._session = PromptSession(
+            history=self._history,
+            completer=self._completer(), complete_while_typing=True,
+            auto_suggest=slash_aware_autosuggest(self.slash),            # 历史 ghost 建议（斜杠命令除外，→/Ctrl-E 接受）
+            complete_style=CompleteStyle.MULTI_COLUMN,   # 输入 / 即弹下拉菜单（带描述）
+            bottom_toolbar=lambda: self.status_fn(),     # 常驻底部状态栏
+            style=Style.from_dict(self._style_dict()))
+        self._mode = "session"
+
+    @staticmethod
+    def _style_dict() -> dict[str, str]:
+        return {
+            "frame.border": "ansicyan",
+            "hint": "ansibrightblack",
+            "prompt": "ansicyan bold",
+            "mode": "ansicyan bold",                      # 输入框边线右端的模式标签
+
+            "auto-suggestion": "ansibrightblack",        # 历史建议的灰字 ghost text
+            "completion-menu": "#d1d5db",
+            "completion-menu.completion": "#d1d5db",
+            "completion-menu.completion.current": "ansicyan bold",
+            "completion-menu.meta.completion": "ansibrightblack",
+            "completion-menu.meta.completion.current": "ansicyan",
+            "scrollbar.background": "ansibrightblack",
+            "scrollbar.button": "ansicyan",
+            "bottom-toolbar": "noreverse ansibrightblack",
+            "bottom-toolbar.text": "ansibrightblack",
+        }
+
+    def _rounded_frame(self, body):
+        """圆角边框（╭╮╰╯），与欢迎框/Claude·Codex 风格统一；ptk 自带 Frame 是方角。
+        顶边线右端嵌当前模式标签（⏸ 计划模式 / ⚡ 自动接受编辑），对标 Claude 边线标签。"""
+        from prompt_toolkit.layout.containers import HSplit, VSplit, Window
+        from prompt_toolkit.layout.controls import FormattedTextControl
+
+        def fill(char, width=None, height=None):
+            return Window(char=char, style="class:frame.border", width=width, height=height)
+
+        def _label():
+            m = (self.mode_label_fn() if self.mode_label_fn else "") or ""
+            if not m:
+                return [("class:frame.border", "──")]
+            return [("class:frame.border", "─ "), ("class:mode", m), ("class:frame.border", " ─")]
+
+        top = VSplit([
+            fill("╭", 1, 1),
+            fill("─", height=1),                                              # 左侧铺满
+            Window(FormattedTextControl(_label), height=1, dont_extend_width=True),
+            fill("╮", 1, 1),
+        ], height=1)
+        mid = VSplit([fill("│", 1), body, fill("│", 1)])
+        bot = VSplit([fill("╰", 1, 1), fill("─", height=1), fill("╯", 1, 1)], height=1)
+        return HSplit([top, mid, bot])
+
+    def _read_boxed(self) -> object:
+        from prompt_toolkit.application import Application
+        from prompt_toolkit.layout import Layout
+        from prompt_toolkit.layout.containers import HSplit, Window
+        from prompt_toolkit.layout.controls import FormattedTextControl
+        from prompt_toolkit.widgets import TextArea
+        from prompt_toolkit.key_binding import KeyBindings
+        from prompt_toolkit.styles import Style
+
+        ta = TextArea(prompt=[("class:prompt", "❯ ")], multiline=True, wrap_lines=True,
+                      completer=self._completer(), complete_while_typing=True,
+                      auto_suggest=slash_aware_autosuggest(self.slash),   # 历史 ghost 建议（斜杠命令除外）
+                      history=self._history)
+        # 输入框高度按内容行数固定(空=1行,封顶8行):不支持 CPR 的终端(如手机浏览器)会
+        # 按整屏预留空间→多行 TextArea 会撑满屏幕,固定高度可避免。
+        from prompt_toolkit.layout.dimension import Dimension
+        ta.window.height = lambda: Dimension.exact(min(8, max(1, ta.document.line_count)))
+        frame = self._rounded_frame(ta)
+        hint = Window(FormattedTextControl(lambda: self.status_fn()), height=1, style="class:hint")
+        root = HSplit([frame, hint])
+        kb = KeyBindings()
+
+        @kb.add("enter", eager=True)
+        def _(event):
+            # 补全菜单已选中某项（Tab/↑↓）→ 定稿该项并**直接提交**（一次 Enter 即可，
+            # 不再要求「先 Enter 定稿、再 Enter 提交」两段式）；否则直接提交整段输入。
+            buf = ta.buffer
+            if buf.complete_state and buf.complete_state.current_completion:
+                buf.apply_completion(buf.complete_state.current_completion)
+            event.app.exit(result=ta.text)
+
+        @kb.add("escape", "enter")   # Alt/Option+Enter
+        @kb.add("c-j")               # Ctrl+J，部分终端的 Shift+Enter 也映射到这里
+        def _(event):
+            ta.buffer.insert_text("\n")
+
+        @kb.add("right")             # →/Ctrl-E：光标在行尾且有历史建议时整段接受，否则正常右移
+        @kb.add("c-e")
+        def _(event):
+            buf = ta.buffer
+            if buf.suggestion and buf.suggestion.text and buf.cursor_position == len(buf.text):
+                buf.insert_text(buf.suggestion.text)
+            else:
+                buf.cursor_right()
+
+        @kb.add("tab")              # Tab：有补全菜单则循环候选（斜杠/@），否则接受历史 ghost 建议
+        def _(event):
+            buf = ta.buffer
+            if buf.complete_state:
+                buf.complete_next()
+            elif buf.suggestion and buf.suggestion.text:
+                buf.insert_text(buf.suggestion.text)
+            elif buf.text.startswith("/"):
+                buf.start_completion(select_first=True)
+
+        @kb.add("c-c")
+        @kb.add("c-d")
+        def _(event):
+            event.app.exit(result=EXIT)
+
+        if self.mode_cycle_fn is not None:
+            @kb.add("s-tab")     # Shift+Tab：循环 普通 → 自动接受编辑 → 计划模式 → 普通
+            def _(event):
+                self.mode_cycle_fn()
+                event.app.invalidate()   # 底部状态行实时反映新模式
+
+        style = Style.from_dict(self._style_dict())
+        app = Application(layout=Layout(root), key_bindings=kb, style=style,
+                          full_screen=False, mouse_support=False,
+                          erase_when_done=True)   # 提交后擦掉输入框,避免与下方灰底带回显重复
+        result = app.run()
+        if result is EXIT:
+            return EXIT
+        # 输入框已擦除；把刚提交的指令回显成 Claude 风格灰底带（唯一的一次显示），
+        # 让对话自上而下在其上方累积、输出不再“贴底”。
+        self._echo_submitted(result or "")
+        return result
+
+    @staticmethod
+    def _echo_submitted(text: str) -> None:
+        """把刚提交的指令回显成 Claude 风格：`>` + 淡灰整行背景带，视觉上独立出来。"""
+        if not text.strip():
+            return
+        lines = text.split("\n")
+        if os.environ.get("NO_COLOR"):
+            body = "".join((f"> {ln}\n" if i == 0 else f"  {ln}\n") for i, ln in enumerate(lines))
+            sys.stdout.write("\n" + body + "\n"); sys.stdout.flush(); return
+        try:
+            from prompt_toolkit.utils import get_cwidth
+            dw = lambda s: sum(get_cwidth(c) for c in s)   # noqa: E731
+        except Exception:
+            dw = len
+        import shutil
+        width = max(20, shutil.get_terminal_size((80, 24)).columns)
+        BG, MK, FG, X = "\033[48;5;236m", "\033[38;5;45m", "\033[38;5;252m", "\033[0m"
+        sys.stdout.write("\n")   # 与上文留一空行
+        for i, ln in enumerate(lines):
+            head = f"{MK}> {FG}" if i == 0 else f"{FG}  "   # 首行 > 标记，续行缩进对齐
+            pad = " " * max(0, width - 2 - dw(ln))
+            sys.stdout.write(f"{BG}{head}{ln}{pad}{X}\n")
+        sys.stdout.write("\n")   # 指令带与回答之间留白
+        sys.stdout.flush()
+
+    def read(self, plain_prompt: str = "❯ ") -> object:
+        """返回输入字符串；用户退出返回 EXIT 哨兵。"""
+        if self._mode == "readline":     # 浏览器终端：普通行输入（不接管终端，保留 ↑↓/Tab）
+            try:
+                line = input(plain_prompt)
+            except (EOFError, KeyboardInterrupt):
+                return EXIT
+            if self._readline is not None:
+                try:
+                    self._readline.write_history_file(self._readline_hist)
+                except Exception:
+                    pass
+            return line.strip()
+        if self._mode == "boxed":
+            try:
+                r = self._read_boxed()
+                return r if r is EXIT else (r or "").strip()
+            except (EOFError, KeyboardInterrupt):
+                return EXIT
+            except Exception:
+                self._mode = "session" if self._session else "plain"  # 出错降级
+        if self._mode == "session" and self._session is not None:
+            try:
+                from prompt_toolkit.formatted_text import ANSI
+                return self._session.prompt(ANSI(plain_prompt)).strip()
+            except (EOFError, KeyboardInterrupt):
+                return EXIT
+        try:
+            return input(plain_prompt).strip()
+        except (EOFError, KeyboardInterrupt):
+            return EXIT

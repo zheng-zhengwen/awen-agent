@@ -15,8 +15,8 @@ def _load_script():
 
 def test_offline_bundle_selects_current_version_wheel(tmp_path):
     mod = _load_script()
-    (tmp_path / "ivyea_agent-0.5.5-py3-none-any.whl").touch()
-    current = tmp_path / "ivyea_agent-1.0.18-py3-none-any.whl"
+    (tmp_path / "awen_agent-0.5.5-py3-none-any.whl").touch()
+    current = tmp_path / "awen_agent-1.0.18-py3-none-any.whl"
     current.touch()
 
     assert mod.project_wheel_path(tmp_path, "1.0.18") == current
@@ -24,7 +24,7 @@ def test_offline_bundle_selects_current_version_wheel(tmp_path):
 
 def test_offline_bundle_requires_current_version_wheel(tmp_path):
     mod = _load_script()
-    (tmp_path / "ivyea_agent-0.5.5-py3-none-any.whl").touch()
+    (tmp_path / "awen_agent-0.5.5-py3-none-any.whl").touch()
 
     try:
         mod.project_wheel_path(tmp_path, "1.0.18")

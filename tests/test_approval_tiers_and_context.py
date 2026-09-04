@@ -27,7 +27,7 @@ class _EchoProvider:
 
 
 def _run(message: str, **payload):
-    from ivyea_agent import service
+    from awen_agent import service
 
     provider = _EchoProvider()
     events: list[tuple[str, dict]] = []
@@ -46,7 +46,7 @@ def _system_text(messages: list[dict]) -> str:
 # ── 审批三档 ───────────────────────────────────────────────────────────────
 
 def test_approval_mode_normalizes_aliases():
-    from ivyea_agent import service
+    from awen_agent import service
 
     assert service._approval_mode(None) == "none"
     assert service._approval_mode("remote") == "remote"
@@ -57,7 +57,7 @@ def test_approval_mode_normalizes_aliases():
     assert service._approval_mode("yolo") == "none"
 
 
-def test_readonly_is_still_the_default(ivyea_home):
+def test_readonly_is_still_the_default(awen_home):
     """不传 approval：只读，系统提示词照旧说只读。"""
     _, provider, events = _run("帮我把预算调低")
     start = next(d for e, d in events if e == "start")
@@ -66,7 +66,7 @@ def test_readonly_is_still_the_default(ivyea_home):
     assert "当前只读" in _system_text(provider.calls[0][0])
 
 
-def test_remote_approval_tells_the_model_it_may_execute(ivyea_home):
+def test_remote_approval_tells_the_model_it_may_execute(awen_home):
     """逐项审批：execute 开，且提示词不再让它退回「只给方案」。"""
     _, provider, events = _run("帮我把预算调低", approval="remote", plan_mode=False)
     start = next(d for e, d in events if e == "start")
@@ -77,7 +77,7 @@ def test_remote_approval_tells_the_model_it_may_execute(ivyea_home):
     assert "当前只读" not in system
 
 
-def test_auto_approval_tells_the_model_it_is_authorized(ivyea_home):
+def test_auto_approval_tells_the_model_it_is_authorized(awen_home):
     """完全放行：提示词说清已获授权，别再逐条问人要不要执行。"""
     _, provider, events = _run("把这几个词否掉", approval="auto", plan_mode=False)
     start = next(d for e, d in events if e == "start")
@@ -88,7 +88,7 @@ def test_auto_approval_tells_the_model_it_is_authorized(ivyea_home):
     assert "当前只读" not in system
 
 
-def test_auto_approval_in_plan_mode_stays_readonly(ivyea_home):
+def test_auto_approval_in_plan_mode_stays_readonly(awen_home):
     """完全放行 + 计划模式 = 仍然只读。两个开关打架时，安全的那个赢。"""
     _, provider, events = _run("把这几个词否掉", approval="auto", plan_mode=True)
     start = next(d for e, d in events if e == "start")
@@ -98,7 +98,7 @@ def test_auto_approval_in_plan_mode_stays_readonly(ivyea_home):
 
 def test_auto_approval_opens_execute_on_the_context():
     """直接盯 ToolContext：execute / accept_edits 必须真的打开，光看提示词不算数。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     captured: list = []
     real_messages = service._chat_messages
@@ -122,9 +122,9 @@ def test_auto_approval_opens_execute_on_the_context():
     assert (readonly_ctx.execute, readonly_ctx.perm.accept_edits) == (False, False)
 
 
-def test_chat_run_only_executes_on_auto(ivyea_home):
+def test_chat_run_only_executes_on_auto(awen_home):
     """非流式入口没有确认卡通道：remote 在这里仍然只读，只有 auto 能开写。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     captured: list = []
     real_messages = service._chat_messages
@@ -149,8 +149,8 @@ def test_chat_run_only_executes_on_auto(ivyea_home):
 
 # ── 上下文快照 ─────────────────────────────────────────────────────────────
 
-def test_window_for_known_and_unknown_models(ivyea_home):
-    from ivyea_agent import context
+def test_window_for_known_and_unknown_models(awen_home):
+    from awen_agent import context
 
     assert context.window_for("claude-opus-4-8") == 200_000
     assert context.window_for("deepseek-v4-pro") == 128_000
@@ -158,15 +158,15 @@ def test_window_for_known_and_unknown_models(ivyea_home):
     assert context.window_for("某个自建模型") == context.DEFAULT_WINDOW
 
 
-def test_window_override_from_config(ivyea_home):
-    from ivyea_agent import config, context
+def test_window_override_from_config(awen_home):
+    from awen_agent import config, context
 
     config.set_setting("context_window", 32_000)
     assert context.window_for("deepseek-v4-pro") == 32_000
 
 
-def test_snapshot_splits_system_tools_and_messages(ivyea_home):
-    from ivyea_agent import context
+def test_snapshot_splits_system_tools_and_messages(awen_home):
+    from awen_agent import context
 
     messages = [{"role": "system", "content": "系统提示" * 200},
                 {"role": "user", "content": "帮我看下广告"}]
@@ -182,22 +182,22 @@ def test_snapshot_splits_system_tools_and_messages(ivyea_home):
     assert snap["estimated"] is True
 
 
-def test_snapshot_counts_full_tool_table_when_tools_is_none(ivyea_home):
+def test_snapshot_counts_full_tool_table_when_tools_is_none(awen_home):
     """tools=None 表示"交给 agent_loop 兜底成全量"。跟着按全量算，否则最大的一块被漏掉。"""
-    from ivyea_agent import context
+    from awen_agent import context
 
     messages = [{"role": "user", "content": "你好"}]
     assert context.snapshot(messages, None, "x")["breakdown"]["tools"] > 1000
     assert context.snapshot(messages, [], "x")["breakdown"]["tools"] == 0
 
 
-def test_session_detail_carries_a_context_snapshot(ivyea_home):
+def test_session_detail_carries_a_context_snapshot(awen_home):
     """打开历史会话时进度条要能立刻画出来 —— 不然它只在"刚跑过一轮"的会话里存在，
     切到别的会话还会留着上一条的数（看起来有效、其实是别人的）。
 
     按**整份存档**算，不是按这一页：分页只决定界面显示多少轮，下一轮带进模型的
     是整份历史。"""
-    from ivyea_agent import service, sessions
+    from awen_agent import service, sessions
 
     sid = sessions.new_id()
     sessions.save(sid, [
@@ -220,7 +220,7 @@ def test_session_detail_carries_a_context_snapshot(ivyea_home):
     assert full["context"]["used"] == snap["used"], "快照不该跟着分页变"
 
 
-def test_chat_stream_emits_context_before_tokens_and_in_final(ivyea_home):
+def test_chat_stream_emits_context_before_tokens_and_in_final(awen_home):
     """进度条要在第一个字之前就能画出来，收尾时再更新到本轮之后的位置。"""
     result, _, events = _run("新卖家注册身份验证失败怎么办")
 
@@ -242,7 +242,7 @@ def test_chat_stream_emits_context_before_tokens_and_in_final(ivyea_home):
 
 # ── 主脑要挂到 ctx 上 ───────────────────────────────────────────────────────
 
-def test_serve_attaches_the_provider_to_the_context(ivyea_home):
+def test_serve_attaches_the_provider_to_the_context(awen_home):
     """serve 必须把主脑挂到 ctx 上，两条入口都要。
 
     这一行缺失时没有任何报错：三个消费方都是 `getattr(ctx, "provider", None)`
@@ -250,7 +250,7 @@ def test_serve_attaches_the_provider_to_the_context(ivyea_home):
     `dispatch_subagent` 回"当前环境无可用主脑 provider"。于是同一个能力在终端里
     好好的，网页端从来没生效过，而且看不出来。
     """
-    from ivyea_agent import service
+    from awen_agent import service
 
     captured: list = []
     real_messages = service._chat_messages

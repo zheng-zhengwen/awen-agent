@@ -4,7 +4,7 @@
 """
 from __future__ import annotations
 
-from ivyea_agent.providers import anthropic_provider as ap
+from awen_agent.providers import anthropic_provider as ap
 
 
 def test_split_system_and_user():
@@ -101,8 +101,8 @@ def test_extract_text_and_tool_use():
     assert ex["usage"]["prompt_cache_hit_tokens"] == 80
 
 
-def test_pricing_for_claude(ivyea_home):
-    from ivyea_agent import pricing
+def test_pricing_for_claude(awen_home):
+    from awen_agent import pricing
     # opus 4.8: input ¥36/M, output ¥180/M
     c = pricing.estimate("claude-opus-4-8", {"prompt_tokens": 1_000_000, "completion_tokens": 0})
     assert abs(c - 36.0) < 1e-6
@@ -113,8 +113,8 @@ def test_pricing_for_claude(ivyea_home):
     assert abs(c2 - 3.6) < 1e-6
 
 
-def test_from_settings_builds_anthropic(ivyea_home):
-    from ivyea_agent.providers import from_settings
+def test_from_settings_builds_anthropic(awen_home):
+    from awen_agent.providers import from_settings
     p = from_settings({"kind": "anthropic", "model": "claude-opus-4-8",
                        "base_url": "https://api.deepseek.com"}, "sk-test")
     # 切换残留的 deepseek base_url 必须被忽略（不会发到 Anthropic SDK）

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def test_review_audit_detects_quality_offer_risks():
-    from ivyea_agent import review_audit
+    from awen_agent import review_audit
 
     res = review_audit.audit(
         reviews="Poor quality, stopped working after one week. Missing cable.",
@@ -23,8 +23,8 @@ def test_review_audit_detects_quality_offer_risks():
 
 
 def test_review_cli_and_agent_tool(capsys):
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
-    from ivyea_agent.cli import main
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
+    from awen_agent.cli import main
 
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "run_review_audit" in names

@@ -12,13 +12,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def project_version() -> str:
-    # Single source of truth: ivyea_agent/__init__.py.__version__ (pyproject.toml
+    # Single source of truth: awen_agent/__init__.py.__version__ (pyproject.toml
     # declares version dynamically from this same attr, so it's no longer static).
-    for line in (ROOT / "ivyea_agent" / "__init__.py").read_text(encoding="utf-8").splitlines():
+    for line in (ROOT / "awen_agent" / "__init__.py").read_text(encoding="utf-8").splitlines():
         s = line.strip()
         if s.startswith("__version__"):
             return s.split("=", 1)[1].strip().strip('"').strip("'")
-    raise SystemExit("could not read __version__ from ivyea_agent/__init__.py")
+    raise SystemExit("could not read __version__ from awen_agent/__init__.py")
 
 
 def replace_versions(text: str, version: str) -> str:
@@ -32,7 +32,7 @@ def extract_commands(markdown: str) -> list[str]:
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
-            if stripped.startswith(("ivyea ", "curl ", "iwr ", "python scripts/")):
+            if stripped.startswith(("awen ", "curl ", "iwr ", "python scripts/")):
                 commands.append(stripped)
     seen = set()
     out = []
@@ -84,8 +84,8 @@ def sync_site(site_dir: Path | None = None) -> list[Path]:
 # 标注（如「（v1.0.21–v1.0.22）」那种描述某能力何时引入的版本区间）。
 _README_VERSION_SUBS = [
     (r"(最新 Release：`)v\d+\.\d+\.\d+(`)", r"\g<1>{v}\g<2>"),
-    (r"(IVYEA_VERSION=)v\d+\.\d+\.\d+", r"\g<1>{v}"),
-    (r'(IVYEA_VERSION=")v\d+\.\d+\.\d+(")', r"\g<1>{v}\g<2>"),
+    (r"(AWEN_VERSION=)v\d+\.\d+\.\d+", r"\g<1>{v}"),
+    (r'(AWEN_VERSION=")v\d+\.\d+\.\d+(")', r"\g<1>{v}\g<2>"),
     (r"(当前文档按 \*\*)v\d+\.\d+\.\d+(\*\* 示例维护)", r"\g<1>{v}\g<2>"),
 ]
 

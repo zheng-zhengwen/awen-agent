@@ -20,8 +20,8 @@ class _Resp:
         }
 
 
-def test_from_settings_builds_gemini_code_assist(ivyea_home):
-    from ivyea_agent.providers import from_settings
+def test_from_settings_builds_gemini_code_assist(awen_home):
+    from awen_agent.providers import from_settings
     p = from_settings({"kind": "oauth", "api_mode": "gemini_code_assist",
                        "model": "gemini-3-pro-preview",
                        "base_url": "cloudcode-pa://google"}, "tok")
@@ -30,7 +30,7 @@ def test_from_settings_builds_gemini_code_assist(ivyea_home):
 
 
 def test_gemini_code_assist_payload_and_response(monkeypatch):
-    from ivyea_agent.providers.gemini_code_assist_provider import GeminiCodeAssistProvider
+    from awen_agent.providers.gemini_code_assist_provider import GeminiCodeAssistProvider
     captured = {}
 
     def fake_post(url, headers=None, json=None, timeout=None):
@@ -39,8 +39,8 @@ def test_gemini_code_assist_payload_and_response(monkeypatch):
         captured["json"] = json
         return _Resp()
 
-    from ivyea_agent.providers import gemini_code_assist_provider as mod
-    monkeypatch.setenv("IVYEA_GEMINI_PROJECT_ID", "project-1")
+    from awen_agent.providers import gemini_code_assist_provider as mod
+    monkeypatch.setenv("AWEN_GEMINI_PROJECT_ID", "project-1")
     monkeypatch.setattr(mod.httpx, "post", fake_post)
     p = GeminiCodeAssistProvider("google-token", "gemini-3-pro-preview")
     out = p.chat(
@@ -61,16 +61,16 @@ def test_gemini_code_assist_payload_and_response(monkeypatch):
     assert out["tool_calls"][0]["arguments"] == {"q": "ads"}
 
 
-def test_gemini_code_assist_uses_saved_project(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
-    from ivyea_agent.providers.gemini_code_assist_provider import GeminiCodeAssistProvider
+def test_gemini_code_assist_uses_saved_project(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
+    from awen_agent.providers.gemini_code_assist_provider import GeminiCodeAssistProvider
     captured = {}
 
     def fake_post(url, headers=None, json=None, timeout=None):
         captured["json"] = json
         return _Resp()
 
-    from ivyea_agent.providers import gemini_code_assist_provider as mod
+    from awen_agent.providers import gemini_code_assist_provider as mod
     oauth_auth.set_google_project_id("saved-project")
     monkeypatch.setattr(mod.httpx, "post", fake_post)
     GeminiCodeAssistProvider("google-token", "gemini-3-pro-preview").chat(
@@ -79,10 +79,10 @@ def test_gemini_code_assist_uses_saved_project(ivyea_home, monkeypatch):
     assert captured["json"]["project"] == "saved-project"
 
 
-def test_probe_gemini_code_assist(ivyea_home, monkeypatch):
-    from ivyea_agent.providers import gemini_code_assist_provider as mod
+def test_probe_gemini_code_assist(awen_home, monkeypatch):
+    from awen_agent.providers import gemini_code_assist_provider as mod
 
-    monkeypatch.setenv("IVYEA_GEMINI_PROJECT_ID", "project-1")
+    monkeypatch.setenv("AWEN_GEMINI_PROJECT_ID", "project-1")
     monkeypatch.setattr(mod.httpx, "post", lambda *a, **k: _Resp())
     result = mod.probe_gemini_code_assist("google-token", model="gemini-3-pro-preview")
     assert result["ok"] is True
@@ -92,7 +92,7 @@ def test_probe_gemini_code_assist(ivyea_home, monkeypatch):
 
 
 def test_gemini_code_assist_http_error_is_diagnosable(monkeypatch):
-    from ivyea_agent.providers.gemini_code_assist_provider import (
+    from awen_agent.providers.gemini_code_assist_provider import (
         GeminiCodeAssistError,
         GeminiCodeAssistProvider,
         diagnose_gemini_code_assist_error,
@@ -102,7 +102,7 @@ def test_gemini_code_assist_http_error_is_diagnosable(monkeypatch):
         status_code = 404
         text = '{"error":"project not found"}'
 
-    from ivyea_agent.providers import gemini_code_assist_provider as mod
+    from awen_agent.providers import gemini_code_assist_provider as mod
     monkeypatch.setattr(mod.httpx, "post", lambda *a, **k: _ErrResp())
     try:
         GeminiCodeAssistProvider("google-token", "gemini-3-pro-preview").chat(

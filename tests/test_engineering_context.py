@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ivyea_agent import engineering_context
+from awen_agent import engineering_context
 
 
 def test_should_include_engineering_terms():
@@ -10,9 +10,9 @@ def test_should_include_engineering_terms():
 
 
 def test_build_engineering_context(tmp_path, monkeypatch):
-    from ivyea_agent import workspace
+    from awen_agent import workspace
 
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "pkg").mkdir()
     (tmp_path / "tests").mkdir()
     (tmp_path / "pkg" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
@@ -28,9 +28,9 @@ def test_build_engineering_context(tmp_path, monkeypatch):
 
 
 def test_repo_conventions_extracts_project_instructions(tmp_path, monkeypatch):
-    from ivyea_agent import workspace
+    from awen_agent import workspace
 
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "test_ok.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
     (tmp_path / "AGENTS.md").write_text("# 约定\n\n提交前运行 python -m pytest。\n不要自动 push。\n", encoding="utf-8")

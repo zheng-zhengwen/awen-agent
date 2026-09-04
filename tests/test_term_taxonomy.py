@@ -1,7 +1,7 @@
 """否词护栏：「不能否」清单的判定。"""
 from __future__ import annotations
 
-from ivyea_agent import term_taxonomy as tt
+from awen_agent import term_taxonomy as tt
 
 
 def _ctx(**kw):
@@ -16,8 +16,8 @@ def _metrics(clicks=20, orders=0, spend=30.0, impressions=400):
 
 def test_brand_term_is_never_negated():
     """自家品牌词是最贵的误伤——否掉直接掐掉品牌搜索流量。"""
-    ctx = _ctx(brand_tokens={"ivyea"})
-    verdict = tt.negation_guard("ivyea karaoke machine", _metrics(), ctx)
+    ctx = _ctx(brand_tokens={"awen"})
+    verdict = tt.negation_guard("awen karaoke machine", _metrics(), ctx)
     assert verdict["allowed"] is False
     assert verdict["category"] == "brand_term"
     assert "品牌词" in verdict["reason"]
@@ -25,8 +25,8 @@ def test_brand_term_is_never_negated():
 
 def test_brand_match_tolerates_spelling_variants():
     """买家把品牌拼错照样是品牌搜索。"""
-    ctx = _ctx(brand_tokens={"ivyea"})
-    assert tt.classify("ivyeah speaker", ctx) == "brand_term"
+    ctx = _ctx(brand_tokens={"awen"})
+    assert tt.classify("awenh speaker", ctx) == "brand_term"
 
 
 def test_short_tokens_do_not_fuzzy_match():
@@ -69,7 +69,7 @@ def test_high_ctr_zero_order_routes_to_listing_feedback():
 # ---- 放行 + 警告：判不了的不能假装安全 ----
 
 def test_generic_waste_term_is_allowed():
-    ctx = _ctx(brand_tokens={"ivyea"}, account_ctr=0.02, account_cvr=0.10)
+    ctx = _ctx(brand_tokens={"awen"}, account_ctr=0.02, account_cvr=0.10)
     verdict = tt.negation_guard(
         "free music download", _metrics(clicks=40, impressions=4000), ctx,
     )
@@ -86,7 +86,7 @@ def test_missing_brand_config_warns_instead_of_silently_passing():
 
 def test_inferred_competitor_only_warns():
     """推断出来的竞品词噪音大，只警告不硬拦——硬拦会把否词杠杆废掉。"""
-    ctx = _ctx(brand_tokens={"ivyea"}, inferred_competitor_tokens={"soundcore"})
+    ctx = _ctx(brand_tokens={"awen"}, inferred_competitor_tokens={"soundcore"})
     verdict = tt.negation_guard("soundcore mic", _metrics(), ctx)
     assert verdict["allowed"] is True
     assert any("疑似竞品词" in w for w in verdict["warnings"])
@@ -101,20 +101,20 @@ def test_asin_term_warns_for_manual_review():
 
 def test_statistically_thin_evidence_is_flagged():
     """账户 CVR 2% 时，15 次点击 0 单说明不了问题——要说清楚依据是花费不是转化差异。"""
-    ctx = _ctx(brand_tokens={"ivyea"}, account_cvr=0.02)
+    ctx = _ctx(brand_tokens={"awen"}, account_cvr=0.02)
     verdict = tt.negation_guard("some term", _metrics(clicks=15, impressions=3000), ctx)
     assert verdict["allowed"] is True
     assert any("统计上还不够" in w for w in verdict["warnings"])
 
 
 def test_enough_clicks_clears_the_statistical_warning():
-    ctx = _ctx(brand_tokens={"ivyea"}, account_cvr=0.10)
+    ctx = _ctx(brand_tokens={"awen"}, account_cvr=0.10)
     verdict = tt.negation_guard("some term", _metrics(clicks=60, impressions=6000), ctx)
     assert not any("统计上还不够" in w for w in verdict["warnings"])
 
 
 def test_spend_below_unit_profit_is_flagged():
-    ctx = _ctx(brand_tokens={"ivyea"}, profit_per_order=50.0)
+    ctx = _ctx(brand_tokens={"awen"}, profit_per_order=50.0)
     verdict = tt.negation_guard("some term", _metrics(spend=12.0), ctx)
     assert any("经济上还不够" in w for w in verdict["warnings"])
 
@@ -130,15 +130,15 @@ def test_clicks_for_confidence_matches_the_binomial():
 def _term_corpus() -> list[str]:
     """一份接近真实体量的搜索词集（比例判据要有足够样本才有意义）。"""
     filler = [f"karaoke machine model {i}" for i in range(28)]
-    return ["ivyea karaoke machine", "soundcore karaoke", "soundcore speaker",
+    return ["awen karaoke machine", "soundcore karaoke", "soundcore speaker",
             "best karaoke machine", "cheap karaoke"] + filler
 
 
 def test_infer_competitor_tokens_skips_stopwords_and_own_brand():
-    ctx = _ctx(brand_tokens={"ivyea"})
+    ctx = _ctx(brand_tokens={"awen"})
     inferred = tt.infer_competitor_tokens(_term_corpus(), ctx)
     assert "soundcore" in inferred
-    assert "ivyea" not in inferred       # 自家品牌
+    assert "awen" not in inferred       # 自家品牌
     assert "best" not in inferred        # 泛词
     assert "cheap" not in inferred
 
@@ -155,9 +155,9 @@ def test_multiword_brand_config_is_matched():
 
     只按单 token 匹配的话，这类配置永远不会命中——护栏静默失效，用户还以为开着。
     """
-    ctx = _ctx(brand_tokens={"ivyea audio"})
-    assert tt.classify("ivyea audio karaoke", ctx) == "brand_term"
-    verdict = tt.negation_guard("buy ivyea audio mic", _metrics(), ctx)
+    ctx = _ctx(brand_tokens={"awen audio"})
+    assert tt.classify("awen audio karaoke", ctx) == "brand_term"
+    verdict = tt.negation_guard("buy awen audio mic", _metrics(), ctx)
     assert verdict["allowed"] is False
 
 
@@ -175,7 +175,7 @@ def test_inference_skips_category_vocabulary():
 
     没有这道上限，几乎每条候选都会挂上"疑似竞品词"，警告就没人看了。
     """
-    ctx = _ctx(brand_tokens={"ivyea"})
+    ctx = _ctx(brand_tokens={"awen"})
     inferred = tt.infer_competitor_tokens(_term_corpus(), ctx)
     assert "karaoke" not in inferred      # 满屏都是 = 品类词，不是品牌
     assert "machine" not in inferred      # 同上

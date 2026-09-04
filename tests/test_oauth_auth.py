@@ -34,8 +34,8 @@ class _Client:
         return self.responses.pop(0)
 
 
-def test_oauth_token_roundtrip(ivyea_home):
-    from ivyea_agent import oauth_auth
+def test_oauth_token_roundtrip(awen_home):
+    from awen_agent import oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "tok", refresh_token="ref", expires_at=time.time() + 3600)
     assert oauth_auth.get_token("qwen-oauth") == "tok"
     assert oauth_auth.token_status("qwen-oauth") == "authenticated+refresh"
@@ -44,14 +44,14 @@ def test_oauth_token_roundtrip(ivyea_home):
     assert oauth_auth.clear_auth("qwen-oauth") is False
 
 
-def test_oauth_token_expired(ivyea_home):
-    from ivyea_agent import oauth_auth
+def test_oauth_token_expired(awen_home):
+    from awen_agent import oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "tok", expires_at=time.time() - 1)
     assert oauth_auth.token_status("qwen-oauth") == "expired"
 
 
-def test_import_qwen_cli_tokens(ivyea_home, tmp_path):
-    from ivyea_agent import oauth_auth
+def test_import_qwen_cli_tokens(awen_home, tmp_path):
+    from awen_agent import oauth_auth
     src = tmp_path / "oauth_creds.json"
     src.write_text(
         '{"access_token":"tok","refresh_token":"ref","expiry_date":1893456000000}',
@@ -65,14 +65,14 @@ def test_import_qwen_cli_tokens(ivyea_home, tmp_path):
     assert item["source"].startswith("qwen-cli:")
 
 
-def test_qwen_cli_auth_path_respects_home_env(ivyea_home, tmp_path, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_qwen_cli_auth_path_respects_home_env(awen_home, tmp_path, monkeypatch):
+    from awen_agent import oauth_auth
     monkeypatch.setenv("HOME", str(tmp_path))
     assert oauth_auth.qwen_cli_auth_path() == tmp_path / ".qwen" / "oauth_creds.json"
 
 
-def test_qwen_cli_login_runs_command_and_imports(ivyea_home, tmp_path, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_qwen_cli_login_runs_command_and_imports(awen_home, tmp_path, monkeypatch):
+    from awen_agent import oauth_auth
     qwen_dir = tmp_path / ".qwen"
     qwen_dir.mkdir()
     (qwen_dir / "oauth_creds.json").write_text(
@@ -96,8 +96,8 @@ def test_qwen_cli_login_runs_command_and_imports(ivyea_home, tmp_path, monkeypat
     assert oauth_auth.get_token("qwen-oauth") == "tok"
 
 
-def test_qwen_refresh_updates_auth_store(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_qwen_refresh_updates_auth_store(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "old", refresh_token="ref", expires_at=time.time() - 1)
 
     calls = {}
@@ -117,8 +117,8 @@ def test_qwen_refresh_updates_auth_store(ivyea_home, monkeypatch):
     assert calls["data"]["client_id"] == oauth_auth.QWEN_OAUTH_CLIENT_ID
 
 
-def test_qwen_device_code_login_stores_tokens(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_qwen_device_code_login_stores_tokens(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     responses = [
         _Resp(payload={
             "device_code": "dev",
@@ -150,8 +150,8 @@ def test_qwen_device_code_login_stores_tokens(ivyea_home, monkeypatch):
     assert any("Qwen OAuth" in text for text in seen)
 
 
-def test_get_active_key_refreshes_qwen_oauth(ivyea_home, monkeypatch):
-    from ivyea_agent import config, models, oauth_auth
+def test_get_active_key_refreshes_qwen_oauth(awen_home, monkeypatch):
+    from awen_agent import config, models, oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "old", refresh_token="ref", expires_at=time.time() - 1)
     config.apply_model(models.by_id("qwen-oauth:qwen3-coder-plus"))
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(
@@ -160,8 +160,8 @@ def test_get_active_key_refreshes_qwen_oauth(ivyea_home, monkeypatch):
     assert config.get_active_key() == "new"
 
 
-def test_codex_refresh_updates_auth_store(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_codex_refresh_updates_auth_store(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     oauth_auth.set_auth_token("openai-codex", "old", refresh_token="ref", expires_at=time.time() - 1)
 
     def fake_post(url, headers=None, data=None, timeout=None):
@@ -175,8 +175,8 @@ def test_codex_refresh_updates_auth_store(ivyea_home, monkeypatch):
     assert item["expires_at"] > int(time.time())
 
 
-def test_get_active_key_refreshes_codex(ivyea_home, monkeypatch):
-    from ivyea_agent import config, models, oauth_auth
+def test_get_active_key_refreshes_codex(awen_home, monkeypatch):
+    from awen_agent import config, models, oauth_auth
     oauth_auth.set_auth_token("openai-codex", "old", refresh_token="ref", expires_at=time.time() - 1)
     config.apply_model(models.by_id("openai-codex:gpt-5-codex"))
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(
@@ -185,8 +185,8 @@ def test_get_active_key_refreshes_codex(ivyea_home, monkeypatch):
     assert config.get_active_key() == "codex-new"
 
 
-def test_codex_device_code_login_stores_tokens(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_codex_device_code_login_stores_tokens(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     clients = [
         _Client([_Resp(payload={"user_code": "ABCD", "device_auth_id": "dev", "interval": 3})]),
         _Client([_Resp(payload={"authorization_code": "code", "code_verifier": "verifier"})]),
@@ -209,7 +209,7 @@ def test_codex_device_code_login_stores_tokens(ivyea_home, monkeypatch):
 
 
 def test_copilot_token_validation():
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
     assert oauth_auth.validate_copilot_github_token("gho_x")[0] is True
     assert oauth_auth.validate_copilot_github_token("github_pat_x")[0] is True
     assert oauth_auth.validate_copilot_github_token("ghu_x")[0] is True
@@ -219,7 +219,7 @@ def test_copilot_token_validation():
 
 
 def test_copilot_exchange(monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
     oauth_auth.COPILOT_TOKEN_CACHE.clear()
 
     def fake_get(url, headers=None, timeout=None):
@@ -232,15 +232,15 @@ def test_copilot_exchange(monkeypatch):
     assert expires_at > time.time()
 
 
-def test_resolve_copilot_api_token_from_env(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_resolve_copilot_api_token_from_env(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     monkeypatch.setenv("GH_TOKEN", "gho_raw")
     monkeypatch.setattr(oauth_auth, "exchange_copilot_token", lambda raw: ("copilot-api", time.time() + 3600))
     assert oauth_auth.resolve_copilot_api_token(strict=True) == "copilot-api"
 
 
-def test_google_refresh_updates_auth_store(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_google_refresh_updates_auth_store(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     oauth_auth.set_auth_token("google-gemini-cli", "old", refresh_token="ref", expires_at=time.time() - 1)
 
     def fake_post(url, headers=None, data=None, timeout=None):
@@ -256,7 +256,7 @@ def test_google_refresh_updates_auth_store(ivyea_home, monkeypatch):
 
 
 def test_google_oauth_url_contains_pkce_params():
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
     url = oauth_auth.google_oauth_url(
         redirect_uri="http://127.0.0.1:8085/oauth2callback",
         state="state",
@@ -267,8 +267,8 @@ def test_google_oauth_url_contains_pkce_params():
     assert "access_type=offline" in url
 
 
-def test_exchange_google_code_stores_tokens(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_exchange_google_code_stores_tokens(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
 
     def fake_post(url, headers=None, data=None, timeout=None):
         assert data["grant_type"] == "authorization_code"
@@ -284,8 +284,8 @@ def test_exchange_google_code_stores_tokens(ivyea_home, monkeypatch):
     assert item["source"] == "google-oauth"
 
 
-def test_google_oauth_login_paste_mode(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_google_oauth_login_paste_mode(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.webbrowser, "open", lambda *a, **k: None)
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(
@@ -298,16 +298,16 @@ def test_google_oauth_login_paste_mode(ivyea_home, monkeypatch):
     assert oauth_auth.get_token("google-gemini-cli") == "google-token"
 
 
-def test_google_project_id_prefers_auth_metadata(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_google_project_id_prefers_auth_metadata(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
 
-    monkeypatch.setenv("IVYEA_GEMINI_PROJECT_ID", "env-project")
+    monkeypatch.setenv("AWEN_GEMINI_PROJECT_ID", "env-project")
     oauth_auth.set_google_project_id("saved-project")
     assert oauth_auth.google_project_id() == "saved-project"
 
 
-def test_google_project_id_reads_gcloud_active_config(ivyea_home, tmp_path, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_google_project_id_reads_gcloud_active_config(awen_home, tmp_path, monkeypatch):
+    from awen_agent import oauth_auth
 
     gcloud = tmp_path / "gcloud"
     configs = gcloud / "configurations"
@@ -321,18 +321,18 @@ def test_google_project_id_reads_gcloud_active_config(ivyea_home, tmp_path, monk
 
 
 @pytest.mark.skipif(_os.name == "nt", reason="Windows 无 POSIX 文件权限位")
-def test_oauth_file_permissions(ivyea_home):
-    from ivyea_agent import oauth_auth
+def test_oauth_file_permissions(awen_home):
+    from awen_agent import oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "tok")
     mode = oauth_auth.auth_path().stat().st_mode
     assert stat.S_IMODE(mode) == 0o600
 
 
-def test_qwen_requests_carry_a_user_agent(ivyea_home, monkeypatch):
+def test_qwen_requests_carry_a_user_agent(awen_home, monkeypatch):
     """chat.qwen.ai 挂在阿里云 WAF 后面：不带 User-Agent（httpx 默认那个）会拿到一张
     **HTTP 200 的 HTML 挑战页**，报错长成"invalid JSON"，完全指不到真正的原因。
     实测过：同样的请求 curl 好好的、httpx 就是不行。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     seen = {}
 

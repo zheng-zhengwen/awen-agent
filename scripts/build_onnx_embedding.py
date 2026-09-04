@@ -1,4 +1,4 @@
-"""构建随包发布的 embedding 模型（ivyea_agent/data/embedding_int8.onnx）。
+"""构建随包发布的 embedding 模型（awen_agent/data/embedding_int8.onnx）。
 
 这是"装完就有语义检索"的全部输入：bge-small-zh-v1.5 导出成 ONNX 并做 int8 动态量化，
 24MB 进 wheel，运行时只要 onnxruntime（纯 CPU 轮子，约 19MB），**不需要 torch**
@@ -9,7 +9,7 @@ transformers + onnx（仅此脚本需要）：
 
     pip install torch --index-url https://download.pytorch.org/whl/cpu
     pip install transformers onnx onnxruntime
-    python scripts/build_onnx_embedding.py --model ~/.ivyea/models/embedding/bge-small-zh-v1.5
+    python scripts/build_onnx_embedding.py --model ~/.awen/models/embedding/bge-small-zh-v1.5
 
 两个不能改错的地方（都是实测踩出来的）：
 
@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-DATA = REPO / "ivyea_agent" / "data"
+DATA = REPO / "awen_agent" / "data"
 MAX_SEQ = 512
 
 

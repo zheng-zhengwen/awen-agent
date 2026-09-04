@@ -9,10 +9,10 @@ import pytest
 # ── 6a run_command 超长输出全量落盘 ──
 
 @pytest.mark.skipif(os.name == "nt", reason="命令用 python3，Windows 上无该别名")
-def test_run_command_long_output_spilled_to_disk(ivyea_home):
-    from ivyea_agent import tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
-    from ivyea_agent.permission import PermissionState
+def test_run_command_long_output_spilled_to_disk(awen_home):
+    from awen_agent import tools_general as tg
+    from awen_agent.agent_tools import ToolContext
+    from awen_agent.permission import PermissionState
     ctx = ToolContext(perm=PermissionState(accept_edits=True), session_id="sid-spill")
     out = tg.t_run_command({"command": "python3 -c \"print('x' * 9000)\""}, ctx)
     assert "已截断" in out and "完整输出已保存" in out
@@ -23,10 +23,10 @@ def test_run_command_long_output_spilled_to_disk(ivyea_home):
     assert "sid-spill" in path                # 按会话分目录
 
 
-def test_run_command_short_output_no_spill(ivyea_home):
-    from ivyea_agent import tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
-    from ivyea_agent.permission import PermissionState
+def test_run_command_short_output_no_spill(awen_home):
+    from awen_agent import tools_general as tg
+    from awen_agent.agent_tools import ToolContext
+    from awen_agent.permission import PermissionState
     ctx = ToolContext(perm=PermissionState(accept_edits=True))
     out = tg.t_run_command({"command": "echo hi"}, ctx)
     assert "hi" in out and "完整输出已保存" not in out
@@ -36,12 +36,12 @@ def test_run_command_short_output_no_spill(ivyea_home):
 
 def _no_tui(monkeypatch):
     """policy 档绝不弹交互：tui.select 被调用即失败。"""
-    from ivyea_agent import tui
+    from awen_agent import tui
     monkeypatch.setattr(tui, "select", lambda *a, **k: pytest.fail("policy 档不应弹交互审批"))
 
 
-def test_policy_auto_run_command_allow_and_deny(ivyea_home, monkeypatch):
-    from ivyea_agent import permission
+def test_policy_auto_run_command_allow_and_deny(awen_home, monkeypatch):
+    from awen_agent import permission
     _no_tui(monkeypatch)
     st = permission.PermissionState(policy_auto=True)
     assert permission.request_intent({"op_type": "run_command", "command": "ls -la"},
@@ -51,12 +51,12 @@ def test_policy_auto_run_command_allow_and_deny(ivyea_home, monkeypatch):
     assert st.aborted is False                 # 拒绝不终止整轮
 
 
-def test_policy_auto_write_path_scope(ivyea_home, monkeypatch, tmp_path):
-    from ivyea_agent import config, permission
+def test_policy_auto_write_path_scope(awen_home, monkeypatch, tmp_path):
+    from awen_agent import config, permission
     import json as _json
     _no_tui(monkeypatch)
-    (config.IVYEA_DIR).mkdir(parents=True, exist_ok=True)
-    (config.IVYEA_DIR / "policy.json").write_text(_json.dumps(
+    (config.AWEN_DIR).mkdir(parents=True, exist_ok=True)
+    (config.AWEN_DIR / "policy.json").write_text(_json.dumps(
         {"file_write_roots": [str(tmp_path / "ok")]}), encoding="utf-8")
     st = permission.PermissionState(policy_auto=True)
     assert permission.request_intent({"op_type": "write_file", "path": str(tmp_path / "ok" / "a.txt")},
@@ -65,9 +65,9 @@ def test_policy_auto_write_path_scope(ivyea_home, monkeypatch, tmp_path):
                                      "写文件", st) == permission.DENY
 
 
-def test_policy_auto_denies_domain_and_unknown_writes(ivyea_home, monkeypatch):
-    from ivyea_agent import permission
-    from ivyea_agent.actions import Action
+def test_policy_auto_denies_domain_and_unknown_writes(awen_home, monkeypatch):
+    from awen_agent import permission
+    from awen_agent.actions import Action
     _no_tui(monkeypatch)
     st = permission.PermissionState(policy_auto=True)
     assert permission.request_intent({"op_type": "lingxing_write"}, "领星写", st) == permission.DENY
@@ -76,10 +76,10 @@ def test_policy_auto_denies_domain_and_unknown_writes(ivyea_home, monkeypatch):
     assert permission.request(a, st) == permission.DENY   # 广告域 Action 一律 DENY
 
 
-def test_permission_mode_cli_flags(ivyea_home, monkeypatch, capsys):
+def test_permission_mode_cli_flags(awen_home, monkeypatch, capsys):
     """--permission-mode policy 设 policy_auto；--approve-all 别名仍生效。"""
-    from ivyea_agent import providers
-    from ivyea_agent.cli import build_parser
+    from awen_agent import providers
+    from awen_agent.cli import build_parser
     seen = {}
 
     class _P:
@@ -91,7 +91,7 @@ def test_permission_mode_cli_flags(ivyea_home, monkeypatch, capsys):
 
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
     monkeypatch.setattr(providers, "build_chain", _capture)
-    import ivyea_agent.agent_loop as al
+    import awen_agent.agent_loop as al
     orig = al.run_turn_stream
 
     def _spy(provider, ctx, messages, **kw):
@@ -111,8 +111,8 @@ def test_permission_mode_cli_flags(ivyea_home, monkeypatch, capsys):
 
 # ── 6c estimate_tokens CJK 校准 ──
 
-def test_estimate_tokens_cjk_weighted(ivyea_home):
-    from ivyea_agent import context
+def test_estimate_tokens_cjk_weighted(awen_home):
+    from awen_agent import context
     cn = [{"role": "user", "content": "中" * 1000}]
     en = [{"role": "user", "content": "a" * 1000}]
     est_cn = context.estimate_tokens(cn)
@@ -121,8 +121,8 @@ def test_estimate_tokens_cjk_weighted(ivyea_home):
     assert 240 <= est_en <= 290                 # 1000 英文字符 ≈ 263 tok
 
 
-def test_estimate_tokens_multimodal_skips_image_blocks(ivyea_home):
-    from ivyea_agent import context
+def test_estimate_tokens_multimodal_skips_image_blocks(awen_home):
+    from awen_agent import context
     msgs = [{"role": "user", "content": [
         {"type": "text", "text": "看图" * 10},
         {"type": "image_url", "image_url": {"url": "data:image/png;base64," + "A" * 100000}}]}]

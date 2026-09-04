@@ -2,7 +2,7 @@
 
 - **日期**：2026-08-18（v1.15.0 之后）
 - **状态**：已采纳（已落地）
-- **依据**：2026-08-18 会话；IvyeaOps 任务台的档位选择器；对 `service.chat_stream`
+- **依据**：2026-08-18 会话；awenOps 任务台的档位选择器；对 `service.chat_stream`
   与 `permission.PermissionState` 的实读
 
 ## 背景
@@ -15,7 +15,7 @@ serve 侧此前只有两档：不传 `approval` 就是只读（`plan_mode=true`�
 （`--permission-mode approve-all` / `/auto-edit on` → `PermissionState.accept_edits`），
 **只有网页这条路没有**——同一个 agent，从终端能一次性授权，从工作台不能。
 
-还有一个更隐蔽的 bug：`_chat_messages` 里那句「[IvyeaOps 嵌入模式] 当前默认只读。……
+还有一个更隐蔽的 bug：`_chat_messages` 里那句「[awenOps 嵌入模式] 当前默认只读。……
 不要在本轮直接执行」是**无条件**拼进系统提示词的。用户在界面上选了「逐项审批」，
 模型收到的却仍是"你现在只读"，于是它只给方案不动手——开关看着变了，行为没变。
 
@@ -47,8 +47,8 @@ serve 侧此前只有两档：不传 `approval` 就是只读（`plan_mode=true`�
 ## 后果
 
 - 前端多了一档明显危险的选项，所以它在界面上是**红色 + 闪电图标**的芯片，
-  简约皮肤里也强制保留边框和底色（见 IvyeaOps `quiet-skin.css`）。
+  简约皮肤里也强制保留边框和底色（见 awenOps `quiet-skin.css`）。
 - `auto` 会让一轮里的所有写入静默发生。审计仍然照走（`audit.py` / 文件变更事件），
   这是事后可查的唯一凭据。
-- 消费方契约变了：IvyeaOps 的 `ChatBody.approval` 与预设表的档位校验同步放开到三档，
+- 消费方契约变了：awenOps 的 `ChatBody.approval` 与预设表的档位校验同步放开到三档，
   两处都补了用例——档位判错的方向只能是"少做"。

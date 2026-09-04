@@ -3,18 +3,18 @@ from __future__ import annotations
 import json
 
 
-def test_policy_default_and_init(ivyea_home):
-    from ivyea_agent import policy
+def test_policy_default_and_init(awen_home):
+    from awen_agent import policy
 
     assert policy.check_command("echo ok") == (True, "")
     created, path = policy.init()
     assert created is True
-    assert str(ivyea_home / "policy.json") == path
-    assert "Ivyea Policy" in policy.render()
+    assert str(awen_home / "policy.json") == path
+    assert "awen Policy" in policy.render()
 
 
-def test_policy_path_and_command_rules(ivyea_home, tmp_path):
-    from ivyea_agent import policy
+def test_policy_path_and_command_rules(awen_home, tmp_path):
+    from awen_agent import policy
 
     allowed = tmp_path / "allowed"
     denied = tmp_path / "denied"
@@ -35,8 +35,8 @@ def test_policy_path_and_command_rules(ivyea_home, tmp_path):
     assert policy.check_command("python -V")[0] is False
 
 
-def test_policy_command_assessment(ivyea_home):
-    from ivyea_agent import policy
+def test_policy_command_assessment(awen_home):
+    from awen_agent import policy
 
     low = policy.assess_command("git status --short")
     assert low["ok"] is True
@@ -49,13 +49,13 @@ def test_policy_command_assessment(ivyea_home):
     high = policy.assess_command("rm -rf /")
     assert high["ok"] is False
     assert high["risk"] == "blocked"
-    assert "Ivyea Command Policy" in policy.render_command_assessment("git status")
+    assert "awen Command Policy" in policy.render_command_assessment("git status")
 
 
-def test_policy_cli_and_tools(ivyea_home, tmp_path, capsys):
-    from ivyea_agent import policy, tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
-    from ivyea_agent.cli import main
+def test_policy_cli_and_tools(awen_home, tmp_path, capsys):
+    from awen_agent import policy, tools_general as tg
+    from awen_agent.agent_tools import ToolContext
+    from awen_agent.cli import main
 
     allowed = tmp_path / "allowed"
     denied = tmp_path / "denied"
@@ -76,7 +76,7 @@ def test_policy_cli_and_tools(ivyea_home, tmp_path, capsys):
     assert "policy 拒绝" in tg.t_run_command({"command": "git reset --hard"}, ToolContext())
 
     assert main(["policy", "show"]) == 0
-    assert "Ivyea Policy" in capsys.readouterr().out
+    assert "awen Policy" in capsys.readouterr().out
     assert main(["policy", "check-path", str(ok_file)]) == 0
     assert "OK" in capsys.readouterr().out
     assert main(["policy", "explain-command", "git status --short"]) == 0

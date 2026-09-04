@@ -58,7 +58,7 @@ class _FakeSource:
         return 0.0
 
     def fetch(self, metric, scope, window=None):
-        from ivyea_agent.datasources.lingxing_source import LingxingSource
+        from awen_agent.datasources.lingxing_source import LingxingSource
         raw = self.data[metric]
         sid = scope.get("sid")
         if metric == "inventory.fba_snapshot":
@@ -69,9 +69,9 @@ class _FakeSource:
 
 
 @pytest.fixture()
-def wire(ivyea_home, monkeypatch):
+def wire(awen_home, monkeypatch):
     """把假数据源装进指标层，屏蔽真实网络。"""
-    from ivyea_agent import metrics, datasources
+    from awen_agent import metrics, datasources
 
     def _install(inventory=(), campaigns=()):
         for s in list(metrics.registered()):
@@ -82,7 +82,7 @@ def wire(ivyea_home, monkeypatch):
         }), priority=1)
         monkeypatch.setattr(datasources, "install_defaults", lambda: None)
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 
@@ -92,8 +92,8 @@ def _codes(result):
 
 
 # ── 规范化 ──────────────────────────────────────────────────────────────────
-def test_string_numbers_are_normalized(ivyea_home):
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+def test_string_numbers_are_normalized(awen_home):
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     row = LingxingSource._inventory(_raw_inventory(), 1863)
     assert row["days_of_supply"] == 30.0        # "30.00" → float
@@ -106,7 +106,7 @@ def test_string_numbers_are_normalized(ivyea_home):
 def test_fbm_rows_never_trigger_stock_rules(wire):
     """实测教训：FBA 接口会返回 FBM 商品，其库存恒为 0。
     不过滤 channel 就会对每一个自发货商品误报断货。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     fbm = [_raw_inventory(msku=f"M{i}", fulfillment_channel_name="FBM",
                           afn_fulfillable_quantity=0,
@@ -118,7 +118,7 @@ def test_fbm_rows_never_trigger_stock_rules(wire):
 
 
 def test_out_of_stock_detected(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(afn_fulfillable_quantity=0,
                                    historical_days_of_supply="0.00")])
@@ -131,7 +131,7 @@ def test_out_of_stock_detected(wire):
 
 def test_out_of_stock_not_reported_when_inbound_exists(wire):
     """有在途就不是断货——补货在路上，报 crit 是噪音。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(afn_fulfillable_quantity=0,
                                    afn_inbound_shipped_quantity=200,
@@ -147,7 +147,7 @@ def test_out_of_stock_not_reported_when_inbound_exists(wire):
     ("6.90", "crit"),                     # 跌破 crit
 ])
 def test_days_low_boundaries(wire, dos, expected):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(historical_days_of_supply=dos)])
     res = store_health.check_l1(1)
@@ -160,21 +160,21 @@ def test_days_low_boundaries(wire, dos, expected):
 
 def test_empty_health_status_never_alerts(wire):
     """实测该字段可能是空串；空值报警会让每个商品都出一条噪音。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(fba_inventory_level_health_status="")])
     assert "stock.health_bad" not in _codes(store_health.check_l1(1))
 
 
 def test_bad_health_status_alerts(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(fba_inventory_level_health_status="Excess")])
     assert "stock.health_bad" in _codes(store_health.check_l1(1))
 
 
 def test_excess_inventory(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(estimated_excess_quantity="42.00")])
     hits = [f for f in store_health.check_l1(1).findings if f.code == "stock.excess"]
@@ -182,7 +182,7 @@ def test_excess_inventory(wire):
 
 
 def test_unsellable_spike_needs_baseline_then_fires(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(afn_unsellable_quantity=10)])
     first = store_health.check_l1(1)
@@ -198,7 +198,7 @@ def test_unsellable_spike_needs_baseline_then_fires(wire):
 
 def test_unsellable_spike_ignores_tiny_base(wire):
     """1 → 2 是 +100%，但绝对量太小，报了就是噪音。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(inventory=[_raw_inventory(afn_unsellable_quantity=1)])
     store_health.check_l1(1)
@@ -208,7 +208,7 @@ def test_unsellable_spike_ignores_tiny_base(wire):
 
 # ── 广告活动规则 ────────────────────────────────────────────────────────────
 def test_out_of_budget_produces_executable_intent(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(campaigns=[_raw_campaign(serving_status="CAMPAIGN_OUT_OF_BUDGET",
                                   daily_budget=100.0)])
@@ -226,7 +226,7 @@ def test_out_of_budget_produces_executable_intent(wire):
 
 def test_stanch_intent_passes_write_magnitude_gate(wire):
     """止血建议必须能过 lingxing_write 的幅度硬闸，否则点了批准也会被拦。"""
-    from ivyea_agent import store_health, lingxing_write
+    from awen_agent import store_health, lingxing_write
 
     wire(campaigns=[_raw_campaign(serving_status="CAMPAIGN_OUT_OF_BUDGET",
                                   daily_budget=100.0)])
@@ -237,7 +237,7 @@ def test_stanch_intent_passes_write_magnitude_gate(wire):
 
 
 def test_campaign_pause_and_budget_change_need_baseline(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(campaigns=[_raw_campaign(state="enabled", daily_budget=100.0)])
     first = store_health.check_l1(1)
@@ -252,7 +252,7 @@ def test_campaign_pause_and_budget_change_need_baseline(wire):
 
 
 def test_small_budget_change_is_ignored(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(campaigns=[_raw_campaign(daily_budget=100.0)])
     store_health.check_l1(1)
@@ -262,7 +262,7 @@ def test_small_budget_change_is_ignored(wire):
 
 def test_own_write_suppresses_external_change_alert(wire, monkeypatch):
     """agent 自己刚改过的预算，不该反过来告警说"被外部改动"。"""
-    from ivyea_agent import store_health, audit
+    from awen_agent import store_health, audit
 
     wire(campaigns=[_raw_campaign(daily_budget=100.0)])
     store_health.check_l1(1)
@@ -272,8 +272,8 @@ def test_own_write_suppresses_external_change_alert(wire, monkeypatch):
 
 
 # ── 数据缺口不得被静默吞掉 ──────────────────────────────────────────────────
-def test_missing_source_surfaces_as_gap(ivyea_home, monkeypatch):
-    from ivyea_agent import metrics, store_health, datasources
+def test_missing_source_surfaces_as_gap(awen_home, monkeypatch):
+    from awen_agent import metrics, store_health, datasources
 
     for s in list(metrics.registered()):
         metrics.unregister(s.name)

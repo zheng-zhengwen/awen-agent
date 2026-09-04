@@ -38,13 +38,13 @@ class _GateProvider:
 
 def _web_ctx():
     """网页/serve 的形状：defer 关掉，边生成边流式。"""
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent.agent_tools import ToolContext
     return ToolContext(knowledge_citations=[_citation()],
                        knowledge_retrieval_expected=True, knowledge_risk="high")
 
 
 def test_gate_rewrite_reports_answer_reset_once():
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
 
     rendered: list[str] = []
     resets: list[str] = []
@@ -66,9 +66,9 @@ def test_gate_rewrite_reports_answer_reset_once():
     assert "[K1]" in out["text"]
 
 
-def test_tool_preamble_is_superseded_by_the_answer(ivyea_home):
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+def test_tool_preamble_is_superseded_by_the_answer(awen_home):
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     class Provider:
         def __init__(self):
@@ -95,7 +95,7 @@ def test_tool_preamble_is_superseded_by_the_answer(ivyea_home):
 
 def test_render_sequence_unchanged_without_callback():
     """CLI 路径零回归：不传 on_answer_reset 时逐字与改动前一致。"""
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
 
     def run(**extra):
         rendered: list[str] = []
@@ -110,7 +110,7 @@ def test_render_sequence_unchanged_without_callback():
 
 def test_reset_callback_failure_never_breaks_the_turn():
     """通知失败（前端断开、序列化炸了）不许打断正在跑的轮次。"""
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
 
     def boom(_reason):
         raise RuntimeError("client gone")
@@ -122,13 +122,13 @@ def test_reset_callback_failure_never_breaks_the_turn():
     assert "[K1]" in out["text"]
 
 
-def test_service_stream_emits_answer_reset_frame(ivyea_home):
+def test_service_stream_emits_answer_reset_frame(awen_home):
     """serve 侧：这条边界要真的以 `answer_reset` 事件发到 SSE 上（前端按事件名分流）。
 
     走真实检索（inject_retrieval 默认开）—— 注意 `inject_retrieval: False` 会**清空**
     ctx.knowledge_citations，那样引用门禁根本不会触发，这条用例也就测了个寂寞。
     """
-    from ivyea_agent import service
+    from awen_agent import service
 
     events: list[tuple[str, dict]] = []
     result = service.chat_stream(
@@ -150,7 +150,7 @@ def test_service_stream_emits_answer_reset_frame(ivyea_home):
 
 def test_deferred_path_also_reports_reset():
     """defer 模式（CLI 默认）下门禁重写同样要给出边界 —— 只是 CLI 不接。"""
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
 
     resets: list[str] = []
     rendered: list[str] = []

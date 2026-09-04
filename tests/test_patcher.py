@@ -4,7 +4,7 @@ import json
 import re
 import subprocess
 
-from ivyea_agent import patcher
+from awen_agent import patcher
 
 
 def _plain(s: str) -> str:
@@ -55,7 +55,7 @@ def test_suggested_tests(tmp_path):
 
 
 def test_patch_cli(tmp_path, capsys):
-    from ivyea_agent.cli import main
+    from awen_agent.cli import main
 
     f = tmp_path / "a.txt"
     f.write_text("hello\n", encoding="utf-8")

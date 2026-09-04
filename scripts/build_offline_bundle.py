@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a self-contained Ivyea Agent offline installer bundle."""
+"""Build a self-contained awen Agent offline installer bundle."""
 from __future__ import annotations
 
 import argparse
@@ -22,13 +22,13 @@ def run(cmd: list[str]) -> None:
 
 
 def project_version() -> str:
-    # Single source of truth: ivyea_agent/__init__.py.__version__ (pyproject.toml
+    # Single source of truth: awen_agent/__init__.py.__version__ (pyproject.toml
     # declares version dynamically from this same attr, so it's no longer static).
-    for line in (ROOT / "ivyea_agent" / "__init__.py").read_text(encoding="utf-8").splitlines():
+    for line in (ROOT / "awen_agent" / "__init__.py").read_text(encoding="utf-8").splitlines():
         s = line.strip()
         if s.startswith("__version__"):
             return s.split("=", 1)[1].strip().strip('"').strip("'")
-    raise SystemExit("could not read __version__ from ivyea_agent/__init__.py")
+    raise SystemExit("could not read __version__ from awen_agent/__init__.py")
 
 
 def copy_tree(src: Path, dst: Path) -> None:
@@ -53,9 +53,9 @@ def archive_dir(bundle_dir: Path, out_dir: Path) -> None:
 
 
 def project_wheel_path(dist_dir: Path, version: str) -> Path:
-    wheels = sorted(dist_dir.glob(f"ivyea_agent-{version}-*.whl"))
+    wheels = sorted(dist_dir.glob(f"awen_agent-{version}-*.whl"))
     if not wheels:
-        raise SystemExit(f"No ivyea_agent {version} wheel produced in dist/")
+        raise SystemExit(f"No awen_agent {version} wheel produced in dist/")
     return wheels[-1]
 
 
@@ -89,14 +89,14 @@ def main() -> int:
     parser.add_argument("--python", default=sys.executable, help="Python executable used for build/download")
     parser.add_argument("--with-semantic", action="store_true", help="Include optional sentence-transformers wheels")
     parser.add_argument("--semantic-model-dir", help="Pre-bundled local sentence-transformers model directory")
-    parser.add_argument("--semantic-model-name", default="", help="Model name written into Ivyea settings")
+    parser.add_argument("--semantic-model-name", default="", help="Model name written into awen settings")
     parser.add_argument("--no-archive", action="store_true", help="Only create directory, skip zip/tar.gz")
     args = parser.parse_args()
 
     version = project_version()
     dist_dir = ROOT / "dist"
     out_dir = ROOT / args.output
-    wheelhouse = out_dir / f"ivyea-agent-offline-{version}" / "wheelhouse"
+    wheelhouse = out_dir / f"awen-agent-offline-{version}" / "wheelhouse"
     bundle_dir = wheelhouse.parent
 
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -114,7 +114,7 @@ def main() -> int:
     semantic_manifest = None
     if include_semantic:
         run([args.python, "-m", "pip", "download", "sentence-transformers>=3.0", "-d", str(wheelhouse)])
-        (wheelhouse / ".ivyea-semantic").write_text("sentence-transformers\n", encoding="utf-8")
+        (wheelhouse / ".awen-semantic").write_text("sentence-transformers\n", encoding="utf-8")
     if args.semantic_model_dir:
         semantic_manifest = copy_semantic_model(bundle_dir, Path(args.semantic_model_dir), args.semantic_model_name)
 
@@ -123,7 +123,7 @@ def main() -> int:
     (bundle_dir / "README.txt").write_text(
         "\n".join(
             [
-                f"Ivyea Agent offline installer v{version}",
+                f"awen Agent offline installer v{version}",
                 "",
                 "Linux/macOS:",
                 "  bash install.sh",
@@ -133,8 +133,8 @@ def main() -> int:
                 "",
                 "The installer uses ./wheelhouse and does not download Python packages.",
                 "If this bundle was built with --with-semantic, it also installs the local semantic retrieval dependency.",
-                "If semantic-manifest.json is present, the installer copies the bundled embedding model into ~/.ivyea/models/embedding,",
-                "configures retrieval_embedding_model_path, and runs ivyea retrieval sync after install.",
+                "If semantic-manifest.json is present, the installer copies the bundled embedding model into ~/.awen/models/embedding,",
+                "configures retrieval_embedding_model_path, and runs awen retrieval sync after install.",
                 "If Python 3.9+ is not installed, install Python first or allow the online installer to bootstrap it.",
                 f"Bundled semantic model: {semantic_manifest['model']} ({semantic_manifest['model_dir']})" if semantic_manifest else "",
                 "",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def test_listing_audit_detects_intent_gaps_and_risks():
-    from ivyea_agent import listing_audit
+    from awen_agent import listing_audit
 
     res = listing_audit.audit(
         title="Wireless Karaoke Microphone",
@@ -21,8 +21,8 @@ def test_listing_audit_detects_intent_gaps_and_risks():
 
 
 def test_listing_cli_and_agent_tool(capsys):
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
-    from ivyea_agent.cli import main
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
+    from awen_agent.cli import main
 
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "run_listing_audit" in names

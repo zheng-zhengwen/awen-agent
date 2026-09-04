@@ -1,8 +1,8 @@
 """Chat-exposed structured code-edit tools (code_apply_patch / run_tests / code_repair)."""
 from __future__ import annotations
 
-from ivyea_agent import permission
-from ivyea_agent.agent_tools import TOOL_SCHEMAS, ToolContext, dispatch
+from awen_agent import permission
+from awen_agent.agent_tools import TOOL_SCHEMAS, ToolContext, dispatch
 
 
 def _repo(tmp_path):

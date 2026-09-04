@@ -12,16 +12,16 @@ import sys
 
 
 def _mods():
-    """conftest 的 ivyea_home 会重载 sessions —— 必须重新取那一份，
-    否则写进去的是旧模块记着的老目录（也就是真实 ~/.ivyea）。"""
-    sessions = importlib.reload(sys.modules["ivyea_agent.sessions"]) \
-        if "ivyea_agent.sessions" in sys.modules else importlib.import_module("ivyea_agent.sessions")
-    service = importlib.import_module("ivyea_agent.service")
+    """conftest 的 awen_home 会重载 sessions —— 必须重新取那一份，
+    否则写进去的是旧模块记着的老目录（也就是真实 ~/.awen）。"""
+    sessions = importlib.reload(sys.modules["awen_agent.sessions"]) \
+        if "awen_agent.sessions" in sys.modules else importlib.import_module("awen_agent.sessions")
+    service = importlib.import_module("awen_agent.service")
     service.sessions = sessions
     return sessions, service
 
 
-def test_append_turn_accumulates_across_turns(ivyea_home):
+def test_append_turn_accumulates_across_turns(awen_home):
     sessions, service = _mods()
     sid = "20260820-000000-000-test"
 
@@ -43,7 +43,7 @@ def test_append_turn_accumulates_across_turns(ivyea_home):
     assert stats["usage"] == {"prompt_tokens": 250, "completion_tokens": 50, "llm_ms": 1200}
 
 
-def test_stats_survive_a_plain_save(ivyea_home):
+def test_stats_survive_a_plain_save(awen_home):
     """save() 是整份覆盖语义（CLI 每轮就这么写），但它不该顺手把累计账抹掉 ——
     和 steps/skill_matches 同一条理由：不知道 ≠ 要清空。"""
     sessions, service = _mods()
@@ -55,7 +55,7 @@ def test_stats_survive_a_plain_save(ivyea_home):
     assert stats["turns"] == 1 and stats["elapsed_ms"] == 500
 
 
-def test_missing_measurements_are_not_counted_as_zero(ivyea_home):
+def test_missing_measurements_are_not_counted_as_zero(awen_home):
     sessions, service = _mods()
     sid = "20260820-000000-002-test"
     # 老 provider：一个数都不回报。轮数照数，别的项一个都不该凭空长出来。
@@ -66,7 +66,7 @@ def test_missing_measurements_are_not_counted_as_zero(ivyea_home):
     assert "elapsed_ms" not in stats and "steps" not in stats and "usage" not in stats
 
 
-def test_detail_exposes_stats(ivyea_home):
+def test_detail_exposes_stats(awen_home):
     sessions, service = _mods()
     sid = "20260820-000000-003-test"
     sessions.append_turn(sid, "sys",

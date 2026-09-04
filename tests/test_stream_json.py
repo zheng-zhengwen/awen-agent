@@ -20,15 +20,15 @@ class _ToolThenTextProvider:
                    "usage": {"prompt_tokens": 60, "completion_tokens": 8}}
 
 
-def test_emit_event_sequence(ivyea_home):
+def test_emit_event_sequence(awen_home):
     """事件序列：assistant(tool_use) → tool_result(id 配对) → assistant(text)。
 
-    step 事件是后加的、供 UI 画执行时间线用；已有消费方（IvyeaOps 的
-    runners.IvyeaStreamJsonParser、agents 板块的 ivyea_driver）只认
+    step 事件是后加的、供 UI 画执行时间线用；已有消费方（awenOps 的
+    runners.awenStreamJsonParser、agents 板块的 awen_driver）只认
     system/assistant/user/result，会忽略它。所以这里刻意**滤掉 step 之后**再断言
     骨架，把"老消费方看到的东西一个字没变"这条契约钉死。
     """
-    from ivyea_agent import agent_loop, agent_tools
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext(session_id="sid-sj")
     events = []
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "回忆放量"}]
@@ -49,9 +49,9 @@ def test_emit_event_sequence(ivyea_home):
     assert all(e["session_id"] == "sid-sj" for e in events)
 
 
-def test_step_events_pair_and_carry_duration(ivyea_home):
+def test_step_events_pair_and_carry_duration(awen_home):
     """step 事件：每个工具一对 running→ok，用 tool_use id 配对，收尾带耗时。"""
-    from ivyea_agent import agent_loop, agent_tools
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext(session_id="sid-step", turn_id="t1")
     events = []
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "回忆放量"}]
@@ -71,7 +71,7 @@ def test_step_events_pair_and_carry_duration(ivyea_home):
 
 def test_step_event_unwraps_mcp_and_board_tools():
     """MCP / 板块能力的真实工具藏在参数里，事件必须提到顶层，UI 才能显示人话。"""
-    from ivyea_agent import stream_json
+    from awen_agent import stream_json
     mcp = stream_json.step_event(
         "s", "t", "c1", 1, "mcp_call_tool",
         {"server": "sorftime", "tool": "keyword_analysis", "arguments": {"keyword": "hose"}},
@@ -80,7 +80,7 @@ def test_step_event_unwraps_mcp_and_board_tools():
     assert mcp["tool"] == "keyword_analysis" and mcp["args"] == {"keyword": "hose"}
 
     board = stream_json.step_event(
-        "s", "t", "c2", 2, "ivyea_ops_call_tool",
+        "s", "t", "c2", 2, "awen_ops_call_tool",
         {"name": "market_generate_report", "arguments": {"query": "garden hose", "marketplace": "US"}},
         "ok", 5210)
     assert board["phase"] == "board" and board["tool"] == "market_generate_report"
@@ -90,7 +90,7 @@ def test_step_event_unwraps_mcp_and_board_tools():
 
 def test_step_event_classifies_planning_calls_apart():
     """规划/汇报类调用单列一类，UI 才能折起来，不把真正干活的步埋掉。"""
-    from ivyea_agent import stream_json
+    from awen_agent import stream_json
     for name in ("todo_write", "progress_update", "self_critique"):
         assert stream_json.step_event("s", "t", "c", 1, name, {}, "ok", 1)["phase"] == "plan"
     assert stream_json.step_event("s", "t", "c", 1, "read_file", {}, "ok", 1)["phase"] == "tool"
@@ -102,8 +102,8 @@ def test_guard_rejection_reports_blocked_not_error(tmp_path):
     直接驱动 _dispatch_tool_calls：走完整 run_turn_stream 的话，进场准备会按用户
     问题重算 progress_required，把这里刻意摆好的护栏条件冲掉。
     """
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     ctx = ToolContext(workspace=str(tmp_path), progress_required=True, session_id="sid-guard")
     events = []
@@ -124,7 +124,7 @@ def test_guard_rejection_reports_blocked_not_error(tmp_path):
 
 def test_step_event_drops_bulky_arguments():
     """事件是给 UI 画一行芯片的，别把整个文件内容塞进流里。"""
-    from ivyea_agent import stream_json
+    from awen_agent import stream_json
     ev = stream_json.step_event("s", "t", "c1", 1, "write_file",
                                 {"path": "/root/a.py", "content": "x" * 50000}, "ok", 3)
     assert ev["args"] == {"path": "/root/a.py"}
@@ -148,8 +148,8 @@ class _ParallelToolsProvider:
             yield {"type": "final", "content": "done", "tool_calls": [], "usage": {}}
 
 
-def test_parallel_tool_results_in_order(ivyea_home, tmp_path):
-    from ivyea_agent import agent_loop, agent_tools
+def test_parallel_tool_results_in_order(awen_home, tmp_path):
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext(session_id="sid-par")
     events = []
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "看目录"}]
@@ -160,9 +160,9 @@ def test_parallel_tool_results_in_order(ivyea_home, tmp_path):
     assert trs == ["a1", "a2"]
 
 
-def test_emit_exception_does_not_break_turn(ivyea_home):
+def test_emit_exception_does_not_break_turn(awen_home):
     """emit 回调抛异常（如消费端断管）不打断主循环。"""
-    from ivyea_agent import agent_loop, agent_tools
+    from awen_agent import agent_loop, agent_tools
     ctx = agent_tools.ToolContext()
 
     def _boom(ev):
@@ -175,9 +175,9 @@ def test_emit_exception_does_not_break_turn(ivyea_home):
 
 
 def _run_chat_p(monkeypatch, argv, provider):
-    """跑 `ivyea chat -p ...`：假 key + 假 provider 链。"""
-    from ivyea_agent import providers
-    from ivyea_agent.cli import build_parser
+    """跑 `awen chat -p ...`：假 key + 假 provider 链。"""
+    from awen_agent import providers
+    from awen_agent.cli import build_parser
     monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
     monkeypatch.setattr(providers, "build_chain", lambda mcfg, key, narrate=None: provider)
     parser = build_parser()
@@ -185,9 +185,9 @@ def _run_chat_p(monkeypatch, argv, provider):
     return args.func(args)
 
 
-def test_cli_stream_json_stdout_pure_ndjson(ivyea_home, monkeypatch, capsys):
+def test_cli_stream_json_stdout_pure_ndjson(awen_home, monkeypatch, capsys):
     """CLI 集成：stdout 每行都是 JSON，首行 init、末行 result，且会话已落盘可续接。"""
-    from ivyea_agent import sessions
+    from awen_agent import sessions
     rc = _run_chat_p(monkeypatch, ["chat", "-p", "回忆放量", "--output-format", "stream-json"],
                      _ToolThenTextProvider())
     assert rc == 0
@@ -206,7 +206,7 @@ def test_cli_stream_json_stdout_pure_ndjson(ivyea_home, monkeypatch, capsys):
     assert data and any(m.get("role") == "user" for m in data.get("messages") or [])
 
 
-def test_cli_stream_json_progress_stderr_separate(ivyea_home, monkeypatch, capsys):
+def test_cli_stream_json_progress_stderr_separate(awen_home, monkeypatch, capsys):
     """--progress 时 stderr 有人读进度，stdout 仍全为 JSON。"""
     rc = _run_chat_p(monkeypatch,
                      ["chat", "-p", "回忆放量", "--output-format", "stream-json", "--progress"],
@@ -219,7 +219,7 @@ def test_cli_stream_json_progress_stderr_separate(ivyea_home, monkeypatch, capsy
     assert cap.err.strip()          # 进度进了 stderr
 
 
-def test_cli_default_text_output_unchanged(ivyea_home, monkeypatch, capsys):
+def test_cli_default_text_output_unchanged(awen_home, monkeypatch, capsys):
     """回归：不带 --output-format 时仍输出纯文本最终答案。"""
     rc = _run_chat_p(monkeypatch, ["chat", "-p", "回忆放量"], _ToolThenTextProvider())
     assert rc == 0

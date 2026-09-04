@@ -2,7 +2,7 @@
 
 
 
-from ivyea_agent.feishu_relay import gates
+from awen_agent.feishu_relay import gates
 
 
 def test_empty_whitelist_denies_everyone():

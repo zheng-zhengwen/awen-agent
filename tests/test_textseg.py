@@ -4,7 +4,7 @@
 """
 from __future__ import annotations
 
-from ivyea_agent import textseg
+from awen_agent import textseg
 
 
 def test_cjk_bigram():

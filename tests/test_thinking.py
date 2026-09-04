@@ -1,8 +1,8 @@
 """思考深度自适应：只在 adaptive 档生效，其余一律照旧。"""
 from __future__ import annotations
 
-from ivyea_agent import agent_loop, thinking
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import agent_loop, thinking
+from awen_agent.agent_tools import ToolContext
 
 
 class FakeProvider:
@@ -41,8 +41,8 @@ def test_unknown_setting_falls_back_to_the_default():
     assert thinking.resolve("", lane="work") == thinking.DEFAULT_EFFORT
 
 
-def test_apply_to_sets_the_provider_knob(ivyea_home):
-    from ivyea_agent import config
+def test_apply_to_sets_the_provider_knob(awen_home):
+    from awen_agent import config
     config.set_setting("reasoning_effort", "adaptive")
     provider = FakeProvider()
     ctx = ToolContext(workspace=".", route_lane="chat")
@@ -51,7 +51,7 @@ def test_apply_to_sets_the_provider_knob(ivyea_home):
     assert ctx.thinking_effort == "low"
 
 
-def test_default_setting_changes_nothing(ivyea_home):
+def test_default_setting_changes_nothing(awen_home):
     """不做任何设置的老用户：每一条路线都还是 high。"""
     provider = FakeProvider()
     for lane in ("chat", "board", "work"):
@@ -66,9 +66,9 @@ def test_apply_to_tolerates_a_frozen_provider():
     assert thinking.apply_to(None, ToolContext(workspace=".")) == ""
 
 
-def test_turn_loop_applies_thinking(ivyea_home, monkeypatch):
+def test_turn_loop_applies_thinking(awen_home, monkeypatch):
     """接线验证：跑一轮就会按路线把旋钮拧好。"""
-    from ivyea_agent import config
+    from awen_agent import config
     config.set_setting("reasoning_effort", "adaptive")
 
     class OneShot(FakeProvider):
@@ -85,10 +85,10 @@ def test_turn_loop_applies_thinking(ivyea_home, monkeypatch):
 
 
 # ── 共享 provider（复核时发现的潜在问题） ───────────────────────────────────
-def test_a_subagent_turn_does_not_clobber_the_main_lane_setting(ivyea_home):
+def test_a_subagent_turn_does_not_clobber_the_main_lane_setting(awen_home):
     """provider 是整条会话共用的一个对象，子 agent 也拿它去跑。
     子 agent 那一轮不该把主线刚定好的档位覆盖掉。"""
-    from ivyea_agent import config
+    from awen_agent import config
     config.set_setting("reasoning_effort", "adaptive")
     provider = FakeProvider()
 
@@ -102,7 +102,7 @@ def test_a_subagent_turn_does_not_clobber_the_main_lane_setting(ivyea_home):
     assert sub.thinking_effort == "low"
 
 
-def test_apply_to_is_a_no_op_when_the_value_is_unchanged(ivyea_home):
+def test_apply_to_is_a_no_op_when_the_value_is_unchanged(awen_home):
     """并行派发时多个线程会写同一个属性；值没变就干脆不写。"""
     class Counting:
         def __init__(self):

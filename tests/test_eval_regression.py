@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import tempfile
 
-from ivyea_agent import rule_engine
+from awen_agent import rule_engine
 
 # 样例 search-term-report 的冻结决策快照（实现退化即变红）
 GOLDEN = {

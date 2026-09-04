@@ -1,7 +1,7 @@
 """serve 侧的记忆接线：注入 / opt-out / 情景记录。
 
 **这个文件存在的理由**：记忆的算法层一直是好的，坏的是 serve 这条路上一行记忆代码
-都没有——用户在 IvyeaOps、飞书、任务台里聊天时，模型根本不知道记忆库里有什么。
+都没有——用户在 awenOps、飞书、任务台里聊天时，模型根本不知道记忆库里有什么。
 下面每一条用例都对应一个"如果哪天有人把它改回去，就又变成没记忆"的点。
 """
 from __future__ import annotations
@@ -11,14 +11,14 @@ import pytest
 
 def _chat_route():
     """真的闲聊路由 —— 用真 Route 而不是替身，免得哪天 Route 长出新字段测试还在过。"""
-    from ivyea_agent.routing import Route
+    from awen_agent.routing import Route
     return Route(lane="chat")
 
 
 @pytest.fixture()
-def wired(ivyea_home, monkeypatch):
+def wired(awen_home, monkeypatch):
     """备好一条核心记忆 + 一条分类记忆，并掐掉知识检索（它要读知识库、与本文件无关）。"""
-    from ivyea_agent import knowledge, memory_core, memory_store, service
+    from awen_agent import knowledge, memory_core, memory_store, service
     memory_core.edit("user", "append", content="用户叫 Hector，汇报一律用中文。")
     memory_store.apply("add", name="领星广告方法论", content="规则引擎 + LLM 复核。",
                        category="domain", description="领星广告优化怎么做")
@@ -34,7 +34,7 @@ def _system_of(service, payload, ctx, route=None):
 
 
 def _ctx(service, **kw):
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent.agent_tools import ToolContext
     kw.setdefault("plan_mode", True)
     return ToolContext(**kw)
 
@@ -75,7 +75,7 @@ def test_injection_opt_out(wired, payload_extra, why):
 
 def test_injection_can_be_switched_off_globally(wired):
     """默认值纪律：关掉开关必须完全回到"没有这个特性"的样子。"""
-    from ivyea_agent import config
+    from awen_agent import config
     service = wired
     config.set_setting("memory_serve_inject", False)
     system = _system_of(service, {"message": "x"}, _ctx(service, session_id="s4"))
@@ -88,12 +88,12 @@ def test_write_gate_excludes_task_turns(wired):
     assert service._memory_write_on({"task_id": "t1"}, _ctx(service)) is False
     assert service._memory_write_on({}, _ctx(service, task_id="t1")) is False
     assert service._memory_write_on({"no_memory": True}, _ctx(service)) is False
-    # 关掉检索注入的轮次（ivyea code）仍然是真实发生过的对话，该记
+    # 关掉检索注入的轮次（awen code）仍然是真实发生过的对话，该记
     assert service._memory_write_on({"inject_retrieval": False}, _ctx(service)) is True
 
 
 def test_record_turn_writes_episodes(wired):
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     before = len(memory.episodes_since(0.0))
     service._record_turn_memory({}, _ctx(service, session_id="s5"), "帮我否个词", "已经否了。")
@@ -102,7 +102,7 @@ def test_record_turn_writes_episodes(wired):
 
 def test_record_turn_skips_empty_answer(wired):
     """半截/空回答不是"发生过的事实" —— 记进去只会污染以后的召回和反思。"""
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     before = len(memory.episodes_since(0.0))
     service._record_turn_memory({}, _ctx(service, session_id="s6"), "问题", "   ")
@@ -110,7 +110,7 @@ def test_record_turn_skips_empty_answer(wired):
 
 
 def test_record_turn_respects_no_memory(wired):
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     before = len(memory.episodes_since(0.0))
     service._record_turn_memory({"no_memory": True}, _ctx(service, session_id="s7"), "问", "答")
@@ -120,14 +120,14 @@ def test_record_turn_respects_no_memory(wired):
 def test_scope_defaults_off(wired):
     """作用域默认关：开了会表现为"以前想得起来的现在想不起来"，先观察一版。"""
     service = wired
-    assert service._memory_scope(_ctx(service, workspace="/root/ivyea-ops")) == ""
+    assert service._memory_scope(_ctx(service, workspace="/root/awen-ops")) == ""
 
 
 def test_scope_from_workspace_when_enabled(wired):
-    from ivyea_agent import config
+    from awen_agent import config
     service = wired
     config.set_setting("memory_scope_from_workspace", True)
-    assert service._memory_scope(_ctx(service, workspace="/root/ivyea-ops")) == "ivyea-ops"
+    assert service._memory_scope(_ctx(service, workspace="/root/awen-ops")) == "awen-ops"
     assert service._memory_scope(_ctx(service, workspace="")) == ""
 
 
@@ -139,13 +139,13 @@ def _user_content(service, payload, ctx, route=None):
 
 
 def test_auto_recall_injected_as_suffix(wired):
-    """注入形态必须是**后缀**（拼在用户这句话尾巴上），和 [Ivyea 本地知识检索] 并排。
+    """注入形态必须是**后缀**（拼在用户这句话尾巴上），和 [awen 本地知识检索] 并排。
 
     独立消息是"门禁类"注入的形态，要走 transcript.gate_text + _USER_MARKERS；
-    上下文类走后缀 + 展示端截断。选错约定的后果是用户在 IvyeaOps 里
+    上下文类走后缀 + 展示端截断。选错约定的后果是用户在 awenOps 里
     看到自己"发"了一大段记忆。
     """
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     ctx = _ctx(service, session_id="r1")
     content = _user_content(service, {"message": "领星广告怎么优化"}, ctx)
@@ -157,7 +157,7 @@ def test_auto_recall_injected_as_suffix(wired):
 
 def test_auto_recall_skips_trivial_prompt(wired):
     """"好的"查不出东西，还会把上个话题的残留带进来。"""
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     ctx = _ctx(service, session_id="r2")
     content = _user_content(service, {"message": "好的"}, ctx)
@@ -166,7 +166,7 @@ def test_auto_recall_skips_trivial_prompt(wired):
 
 
 def test_auto_recall_respects_opt_out(wired):
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     for extra in ({"no_memory": True}, {"task_id": "t9"}, {"inject_retrieval": False}):
         ctx = _ctx(service, session_id="r3")
@@ -176,7 +176,7 @@ def test_auto_recall_respects_opt_out(wired):
 
 def test_auto_recall_dedupes_across_turns(wired):
     """第二轮问同一件事时不该再注入同一条 —— 召回块是跟着落盘的，会堆起来。"""
-    from ivyea_agent import memory
+    from awen_agent import memory
     service = wired
     ctx = _ctx(service, session_id="r4")
     messages, _c, _b = service._chat_messages("领星广告怎么优化", {"message": "x"}, ctx)
@@ -185,7 +185,7 @@ def test_auto_recall_dedupes_across_turns(wired):
     messages.append({"role": "assistant", "content": "好的。"})
     payload = {"message": "y", "history": []}
     ctx2 = _ctx(service, session_id="r4")
-    import ivyea_agent.sessions as sessions
+    import awen_agent.sessions as sessions
     sessions.save("r4", messages)
     content2 = _user_content(service, {**payload, "message": "领星广告怎么优化"}, ctx2)
     assert memory.RECALL_MARKER not in content2
@@ -193,7 +193,7 @@ def test_auto_recall_dedupes_across_turns(wired):
 
 def test_trivial_prompt_also_skips_knowledge_retrieval(wired, monkeypatch):
     """顺手收掉的一笔浪费：说一句"好的"，此前照样跑一次知识证据检索。"""
-    from ivyea_agent import knowledge
+    from awen_agent import knowledge
     service = wired
     calls = []
     monkeypatch.setattr(knowledge, "evidence_context",
@@ -206,7 +206,7 @@ def test_trivial_prompt_also_skips_knowledge_retrieval(wired, monkeypatch):
 
 def test_auto_recall_can_be_switched_off(wired):
     """默认值纪律：CHANGELOG 里承诺的开关必须真的存在且真的能关掉。"""
-    from ivyea_agent import config, memory
+    from awen_agent import config, memory
     service = wired
     config.set_setting("memory_auto_recall", False)
     content = _user_content(service, {"message": "领星广告怎么优化"},

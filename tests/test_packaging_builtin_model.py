@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-MODEL_REL = "ivyea_agent/data/embedding_int8.onnx"
-VOCAB_REL = "ivyea_agent/data/embedding_vocab.txt"
+MODEL_REL = "awen_agent/data/embedding_int8.onnx"
+VOCAB_REL = "awen_agent/data/embedding_vocab.txt"
 
 
 def test_model_exists_in_repo():

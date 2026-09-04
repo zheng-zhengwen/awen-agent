@@ -4,7 +4,7 @@ from tests.test_image_audit import _png
 
 
 def test_build_vision_packages(tmp_path):
-    from ivyea_agent import vision
+    from awen_agent import vision
 
     img = tmp_path / "main.png"
     _png(img, 1200, 1200)
@@ -19,7 +19,7 @@ def test_build_vision_packages(tmp_path):
 
 
 def test_image_vision_cli(tmp_path, capsys):
-    from ivyea_agent.cli import main
+    from awen_agent.cli import main
 
     img = tmp_path / "main.png"
     _png(img, 1200, 1200)
@@ -38,7 +38,7 @@ def test_image_vision_cli(tmp_path, capsys):
 
 
 def test_build_general_vision_package(tmp_path):
-    from ivyea_agent import vision
+    from awen_agent import vision
 
     img = tmp_path / "screen.png"
     _png(img, 800, 1200)
@@ -46,19 +46,19 @@ def test_build_general_vision_package(tmp_path):
         "openai",
         [str(tmp_path)],
         task="检查手机端是否需要横向滚动",
-        context="agent.ivyea.com mobile screenshot",
+        context="agent.awen.com mobile screenshot",
         max_images=1,
     )
     assert pkg["mode"] == "general"
     assert "通用多模态视觉分析器" in pkg["prompt"]
     assert "横向滚动" in pkg["prompt"]
     out = vision.render_package(pkg, include_payload=True)
-    assert "agent.ivyea.com" in out
+    assert "agent.awen.com" in out
     assert "<base64 truncated>" in out
 
 
 def test_general_vision_cli(tmp_path, capsys):
-    from ivyea_agent.cli import main
+    from awen_agent.cli import main
 
     img = tmp_path / "screen.png"
     _png(img, 800, 1200)
@@ -76,7 +76,7 @@ def test_general_vision_cli(tmp_path, capsys):
 
 
 def test_call_openai_vision(monkeypatch, tmp_path):
-    from ivyea_agent import vision
+    from awen_agent import vision
 
     img = tmp_path / "main.png"
     _png(img, 1200, 1200)
@@ -105,7 +105,7 @@ def test_call_openai_vision(monkeypatch, tmp_path):
 
 
 def test_call_gemini_vision(monkeypatch, tmp_path):
-    from ivyea_agent import vision
+    from awen_agent import vision
 
     img = tmp_path / "main.png"
     _png(img, 1200, 1200)
@@ -133,8 +133,8 @@ def test_call_gemini_vision(monkeypatch, tmp_path):
 
 
 def test_image_vision_cli_call(monkeypatch, tmp_path, capsys):
-    from ivyea_agent import vision
-    from ivyea_agent.cli import main
+    from awen_agent import vision
+    from awen_agent.cli import main
 
     img = tmp_path / "main.png"
     _png(img, 1200, 1200)
@@ -176,8 +176,8 @@ class _SeenProvider:
         return {"content": self.reply, "tool_calls": []}
 
 
-def test_route_images_passthrough_when_main_has_vision(tmp_path, monkeypatch, ivyea_home):
-    from ivyea_agent import vision
+def test_route_images_passthrough_when_main_has_vision(tmp_path, monkeypatch, awen_home):
+    from awen_agent import vision
     img = tmp_path / "a.png"
     _png(img)
     # 判定改成按**模型**而非按 provider：同一个 openai，gpt-4o 能看图、
@@ -189,8 +189,8 @@ def test_route_images_passthrough_when_main_has_vision(tmp_path, monkeypatch, iv
     assert tier["tier"] == vision.TIER_MAIN
 
 
-def test_route_images_sidecar_injects_and_strips(tmp_path, monkeypatch, ivyea_home):
-    from ivyea_agent import vision, providers
+def test_route_images_sidecar_injects_and_strips(tmp_path, monkeypatch, awen_home):
+    from awen_agent import vision, providers
     img = tmp_path / "a.png"
     _png(img)
     prov = _SeenProvider()
@@ -210,13 +210,13 @@ def test_route_images_sidecar_injects_and_strips(tmp_path, monkeypatch, ivyea_ho
     assert "这图说明什么" in user["content"][0]["text"]
 
 
-def test_route_images_falls_to_local_cv_when_no_vision_model(tmp_path, monkeypatch, ivyea_home):
+def test_route_images_falls_to_local_cv_when_no_vision_model(tmp_path, monkeypatch, awen_home):
     """T3：没有任何视觉模型时**不再丢图**，改用本地 CV 量化回灌。
 
     旧行为是 warn 一句然后把图片扔掉，模型对着空气编结论——这比降级更糟，
     也正是 Listing 图片分析长期静默空转的根因。
     """
-    from ivyea_agent import vision
+    from awen_agent import vision
     img = tmp_path / "a.png"
     _png(img, 1200, 1200)
     monkeypatch.setattr(vision, "pick_vision_model", lambda: None)
@@ -230,9 +230,9 @@ def test_route_images_falls_to_local_cv_when_no_vision_model(tmp_path, monkeypat
     assert any("本地 CV" in n for n in notes)
 
 
-def test_route_images_sidecar_error_degrades_to_local_cv(tmp_path, monkeypatch, ivyea_home):
+def test_route_images_sidecar_error_degrades_to_local_cv(tmp_path, monkeypatch, awen_home):
     """视觉旁路挂了要继续往下降到 T3，而不是直接放弃图片。"""
-    from ivyea_agent import vision
+    from awen_agent import vision
     img = tmp_path / "a.png"
     _png(img, 1000, 1000)
     monkeypatch.setattr(vision, "pick_vision_model", _fake_pick)
@@ -244,9 +244,9 @@ def test_route_images_sidecar_error_degrades_to_local_cv(tmp_path, monkeypatch, 
     assert any("视觉旁路调用失败" in n for n in notes)
 
 
-def test_route_images_gives_up_only_when_local_cv_also_dead(tmp_path, monkeypatch, ivyea_home):
+def test_route_images_gives_up_only_when_local_cv_also_dead(tmp_path, monkeypatch, awen_home):
     """三档全灭才回到"忽略图片"，且必须明确 warn。"""
-    from ivyea_agent import vision
+    from awen_agent import vision
     img = tmp_path / "a.png"
     _png(img)
     monkeypatch.setattr(vision, "pick_vision_model", lambda: None)
@@ -257,9 +257,9 @@ def test_route_images_gives_up_only_when_local_cv_also_dead(tmp_path, monkeypatc
     assert any("忽略图片" in n for n in notes)
 
 
-def test_chain_status_reports_tier(monkeypatch, ivyea_home):
+def test_chain_status_reports_tier(monkeypatch, awen_home):
     """/health 的 vision_chain：ops 靠它判 agent 能不能接带图任务。"""
-    from ivyea_agent import vision
+    from awen_agent import vision
     monkeypatch.setattr(vision, "pick_vision_model", lambda: None)
     st = vision.chain_status({"provider_id": "deepseek", "model": "deepseek-chat",
                               "api_mode": "chat_completions"})
@@ -273,8 +273,8 @@ def test_chain_status_reports_tier(monkeypatch, ivyea_home):
     assert st1["tier"] == vision.TIER_MAIN
 
 
-def test_pick_vision_model_prefers_config_key(monkeypatch, ivyea_home):
-    from ivyea_agent import config, vision
+def test_pick_vision_model_prefers_config_key(monkeypatch, awen_home):
+    from awen_agent import config, vision
     monkeypatch.setenv("GEMINI_API_KEY", "g-key")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "a-key")
     config.set_setting("vision_model", "gemini")
@@ -282,8 +282,8 @@ def test_pick_vision_model_prefers_config_key(monkeypatch, ivyea_home):
     assert got and got["cfg"]["provider_id"] == "gemini" and got["key"] == "g-key"
 
 
-def test_pick_vision_model_auto_detects_first_configured(monkeypatch, ivyea_home):
-    from ivyea_agent import models, vision
+def test_pick_vision_model_auto_detects_first_configured(monkeypatch, awen_home):
+    from awen_agent import models, vision
     # 现在**任何**带视觉模型的 provider 配了 key 都算数（不再是三家白名单），
     # 所以要清空全部候选的 key_env 才能构造"全未配"。
     for p in models.providers():
@@ -296,13 +296,13 @@ def test_pick_vision_model_auto_detects_first_configured(monkeypatch, ivyea_home
     assert got and got["cfg"]["provider_id"] == "anthropic"
 
 
-def test_pick_vision_model_picks_a_vision_model_not_the_default(monkeypatch, ivyea_home):
+def test_pick_vision_model_picks_a_vision_model_not_the_default(monkeypatch, awen_home):
     """选中的必须是该 provider 的**视觉**模型，不能是它的默认文本旗舰。
 
     旧实现直接取 default_model，于是 OpenRouter 被选中时会拿
     default_model 去当 sidecar；provider 的默认模型多半是文本模型，必 400。
     """
-    from ivyea_agent import models, vision
+    from awen_agent import models, vision
     for p in models.providers():
         env = str(p.get("key_env") or "")
         if env:
@@ -313,13 +313,13 @@ def test_pick_vision_model_picks_a_vision_model_not_the_default(monkeypatch, ivy
     assert models.model_name_has_vision(got["cfg"]["model"]) is True
 
 
-def test_vision_slot_overrides_everything(monkeypatch, ivyea_home):
-    """IvyeaOps 下推的显式视觉槽最优先，且不复核模型名。
+def test_vision_slot_overrides_everything(monkeypatch, awen_home):
+    """awenOps 下推的显式视觉槽最优先，且不复核模型名。
 
     自建网关/私有部署的模型名可能完全不带视觉特征词（如 "vlm-prod-v3"），
     再拿模型名判定一次就会把用户明确配好的槽位否掉。
     """
-    from ivyea_agent import config, vision
+    from awen_agent import config, vision
     monkeypatch.setenv("ANTHROPIC_API_KEY", "a-key")
     config.set_setting("vision_slot", {"provider": "custom", "model": "vlm-prod-v3",
                                        "base_url": "https://gw.internal/v1", "api_key": "k-1"})

@@ -1,4 +1,4 @@
-# IvyeaAgent 协作规约
+# awenAgent 协作规约
 
 面向在这个仓库里干活的**任何** AI 编码助手（Claude Code / Codex / Hermes / Cursor / Kiro …），
 以及未来的自己。
@@ -8,8 +8,8 @@
 
 ## 这是什么
 
-一个专做 Amazon 场景的 agent，既能在终端里对话使用（`ivyea chat`），也能被
-[IvyeaOps](https://github.com/Hector-xue/IvyeaOps) 当成服务编程驱动。Python，随 IvyeaOps
+一个专做 Amazon 场景的 agent，既能在终端里对话使用（`awen chat`），也能被
+[awenOps](https://github.com/zheng-zhengwen/wen-System) 当成服务编程驱动。Python，随 awenOps
 一起打包分发。
 
 立项理由见 [ADR-0001](./docs/decisions/0001-why-build-this.md)。
@@ -20,9 +20,9 @@
 python3 -m pytest                    # 全量测试
 python3 -m pytest -m "not slow"      # 跳过真跑构建/模型的重测试
 python3 -m ruff check .              # lint（CI 会卡）
-ivyea chat                           # 交互式对话
-ivyea chat -p "..." --output-format stream-json   # 非交互，结构化输出（IvyeaOps 走这条）
-systemctl restart ivyea-agent        # 生产 serve（127.0.0.1:8765）改完重启
+awen chat                           # 交互式对话
+awen chat -p "..." --output-format stream-json   # 非交互，结构化输出（awenOps 走这条）
+systemctl restart awen-agent        # 生产 serve（127.0.0.1:8765）改完重启
 ```
 
 生产的 `agent-serve` 由 systemd 托管，**不要手工 nohup / setsid 起**。
@@ -68,7 +68,7 @@ systemctl restart ivyea-agent        # 生产 serve（127.0.0.1:8765）改完重
 - **未经明确批准不要 push / 开 PR / 合并 / 打 tag 发版。** 改完本地 commit 后停下汇报。
 - 发版走 **GitHub Release 资产，不发 PyPI**。`self update` 也按这个前提设计：源码装的走
   `git pull`，其余回落 pip / pipx。
-- 版本号只有一个来源（`ivyea_agent.__version__`），打 tag 时会校验版本与 tag 一致。
+- 版本号只有一个来源（`awen_agent.__version__`），打 tag 时会校验版本与 tag 一致。
   历史上 `__version__` 漂移导致过「永远提示有更新」。
 
 ## 几条容易再犯的坑
@@ -86,4 +86,4 @@ systemctl restart ivyea-agent        # 生产 serve（127.0.0.1:8765）改完重
 ## 想了解这个项目怎么走到今天
 
 - [CHANGELOG.md](./CHANGELOG.md) —— 81 个版本的人话说明
-- [docs/decisions/](./docs/decisions/) —— 8 份 ADR，为什么这么选
+- [docs/decisions/](./docs/decisions/) —— 40 份 ADR，为什么这么选

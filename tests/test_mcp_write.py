@@ -6,7 +6,7 @@ import json
 
 
 def test_mcp_write_template_validates():
-    from ivyea_agent import mcp_write
+    from awen_agent import mcp_write
 
     spec = dict(mcp_write.WRITE_ACTIONS_TEMPLATE)
     assert mcp_write.validate_spec(spec) == []
@@ -16,16 +16,16 @@ def test_mcp_write_template_validates():
 
 
 def test_mcp_write_validation_errors():
-    from ivyea_agent import mcp_write
+    from awen_agent import mcp_write
 
     errors = mcp_write.validate_spec({"writeActions": {"negative": {"args": {}}}})
     assert "writeActions.negative.tool 为空" in errors
     assert "缺少 writeActions.bid" in errors
 
 
-def test_cli_mcp_template_and_validate(ivyea_home, capsys):
-    from ivyea_agent import config, mcp_write
-    from ivyea_agent.cli import build_parser
+def test_cli_mcp_template_and_validate(awen_home, capsys):
+    from awen_agent import config, mcp_write
+    from awen_agent.cli import build_parser
 
     parser = build_parser()
     args = parser.parse_args(["mcp", "template"])
@@ -39,7 +39,7 @@ def test_cli_mcp_template_and_validate(ivyea_home, capsys):
 
 
 def test_mcp_data_source_suggestion():
-    from ivyea_agent import mcp_source
+    from awen_agent import mcp_source
 
     result = {
         "structuredContent": {
@@ -65,9 +65,9 @@ def test_mcp_data_source_suggestion():
     assert suggestion["coverage"]["mapped"] >= 7
 
 
-def test_cli_mcp_suggest(ivyea_home, monkeypatch, capsys):
-    from ivyea_agent import config, mcp_client
-    from ivyea_agent.cli import build_parser
+def test_cli_mcp_suggest(awen_home, monkeypatch, capsys):
+    from awen_agent import config, mcp_client
+    from awen_agent.cli import build_parser
 
     config.mcp_set_server("reporter", {"transport": "http", "url": "http://mcp.test"})
     calls = []
@@ -108,7 +108,7 @@ def test_cli_mcp_suggest(ivyea_home, monkeypatch, capsys):
 
 
 def test_mcp_stdio_client(tmp_path):
-    from ivyea_agent.mcp_client import MCPClient
+    from awen_agent.mcp_client import MCPClient
 
     server = tmp_path / "server.py"
     server.write_text(
@@ -138,9 +138,9 @@ def test_mcp_stdio_client(tmp_path):
         client.close()
 
 
-def test_mcp_doctor(ivyea_home, capsys):
-    from ivyea_agent import config, mcp_status, mcp_write
-    from ivyea_agent.cli import build_parser
+def test_mcp_doctor(awen_home, capsys):
+    from awen_agent import config, mcp_status, mcp_write
+    from awen_agent.cli import build_parser
 
     config.mcp_set_server("stdio", {"transport": "stdio", "command": "python", **mcp_write.WRITE_ACTIONS_TEMPLATE})
     config.mcp_set_server("broken", {"transport": "http"})
@@ -157,7 +157,7 @@ def test_mcp_doctor(ivyea_home, capsys):
 
 
 def test_mcp_doctor_security_hints():
-    from ivyea_agent import mcp_status, mcp_write
+    from awen_agent import mcp_status, mcp_write
 
     row = mcp_status.check_server("plain", {
         "transport": "http",
@@ -180,19 +180,19 @@ def test_mcp_doctor_security_hints():
     assert "writeActions 已配置" in rendered
 
 
-def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
-    from ivyea_agent import mcp_server, task_runner, traces
+def test_awen_mcp_server_lists_and_calls_readonly_tools(awen_home):
+    from awen_agent import mcp_server, task_runner, traces
 
     tools = mcp_server.list_tools()
     names = {tool["name"] for tool in tools}
-    assert "ivyea_knowledge_search" in names
-    assert "ivyea_code_plan" in names
-    assert "ivyea_code_bundle" in names
-    assert "ivyea_task_list" in names
-    assert "ivyea_task_detail" in names
-    assert "ivyea_task_resume" in names
-    assert "ivyea_trace_list" in names
-    assert "ivyea_trace_stats" in names
+    assert "awen_knowledge_search" in names
+    assert "awen_code_plan" in names
+    assert "awen_code_bundle" in names
+    assert "awen_task_list" in names
+    assert "awen_task_detail" in names
+    assert "awen_task_resume" in names
+    assert "awen_trace_list" in names
+    assert "awen_trace_stats" in names
     assert "execute_actions" not in names
 
     task = task_runner.create("MCP task", steps=["inspect", "finish"])
@@ -201,17 +201,17 @@ def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
     traces.record("mcp-session", "turn-1", "tool_call", "bad_tool", ok=False, duration_ms=7, summary="fail")
 
     init = mcp_server.handle_message({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-    assert init["result"]["serverInfo"]["name"] == "ivyea-agent"
+    assert init["result"]["serverInfo"]["name"] == "awen-agent"
 
     listed = mcp_server.handle_message({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
-    assert any(tool["name"] == "ivyea_retrieval_search" for tool in listed["result"]["tools"])
-    assert any(tool["name"] == "ivyea_code_bundle" for tool in listed["result"]["tools"])
+    assert any(tool["name"] == "awen_retrieval_search" for tool in listed["result"]["tools"])
+    assert any(tool["name"] == "awen_code_bundle" for tool in listed["result"]["tools"])
 
     called = mcp_server.handle_message({
         "jsonrpc": "2.0",
         "id": 3,
         "method": "tools/call",
-        "params": {"name": "ivyea_knowledge_search", "arguments": {"query": "否词", "limit": 2}},
+        "params": {"name": "awen_knowledge_search", "arguments": {"query": "否词", "limit": 2}},
     })
     assert called["result"]["structuredContent"]["ok"] is True
     assert called["result"]["structuredContent"]["results"]
@@ -221,7 +221,7 @@ def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
         "jsonrpc": "2.0",
         "id": 5,
         "method": "tools/call",
-        "params": {"name": "ivyea_task_list", "arguments": {"limit": 5}},
+        "params": {"name": "awen_task_list", "arguments": {"limit": 5}},
     })
     assert any(row["id"] == task["id"] for row in tasks["result"]["structuredContent"]["tasks"])
 
@@ -229,7 +229,7 @@ def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
         "jsonrpc": "2.0",
         "id": 6,
         "method": "tools/call",
-        "params": {"name": "ivyea_task_detail", "arguments": {"id": task["id"]}},
+        "params": {"name": "awen_task_detail", "arguments": {"id": task["id"]}},
     })
     assert detail["result"]["structuredContent"]["task"]["id"] == task["id"]
 
@@ -237,16 +237,16 @@ def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
         "jsonrpc": "2.0",
         "id": 7,
         "method": "tools/call",
-        "params": {"name": "ivyea_task_resume", "arguments": {"id": task["id"]}},
+        "params": {"name": "awen_task_resume", "arguments": {"id": task["id"]}},
     })
-    assert "Ivyea Task Resume" in resume["result"]["structuredContent"]["resume"]
+    assert "awen Task Resume" in resume["result"]["structuredContent"]["resume"]
     assert resume["result"]["structuredContent"]["next_step"]["title"] == "inspect"
 
     trace_rows = mcp_server.handle_message({
         "jsonrpc": "2.0",
         "id": 8,
         "method": "tools/call",
-        "params": {"name": "ivyea_trace_list", "arguments": {"session_id": "mcp-session", "limit": 5}},
+        "params": {"name": "awen_trace_list", "arguments": {"session_id": "mcp-session", "limit": 5}},
     })
     assert len(trace_rows["result"]["structuredContent"]["traces"]) == 2
 
@@ -254,7 +254,7 @@ def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
         "jsonrpc": "2.0",
         "id": 9,
         "method": "tools/call",
-        "params": {"name": "ivyea_trace_stats", "arguments": {"limit": 10}},
+        "params": {"name": "awen_trace_stats", "arguments": {"limit": 10}},
     })
     assert trace_stats["result"]["structuredContent"]["stats"]["failures"] >= 1
 
@@ -262,13 +262,13 @@ def test_ivyea_mcp_server_lists_and_calls_readonly_tools(ivyea_home):
         "jsonrpc": "2.0",
         "id": 10,
         "method": "tools/call",
-        "params": {"name": "ivyea_missing", "arguments": {}},
+        "params": {"name": "awen_missing", "arguments": {}},
     })
     assert missing["result"]["isError"] is True
 
 
-def test_ivyea_mcp_server_stdio_loop(ivyea_home):
-    from ivyea_agent import mcp_server
+def test_awen_mcp_server_stdio_loop(awen_home):
+    from awen_agent import mcp_server
 
     stdin = io.StringIO(
         json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}) + "\n" +
@@ -277,12 +277,12 @@ def test_ivyea_mcp_server_stdio_loop(ivyea_home):
     stdout = io.StringIO()
     assert mcp_server.serve_stdio(stdin, stdout) == 0
     rows = [json.loads(line) for line in stdout.getvalue().splitlines()]
-    assert rows[0]["result"]["serverInfo"]["name"] == "ivyea-agent"
-    assert any(tool["name"] == "ivyea_health" for tool in rows[1]["result"]["tools"])
+    assert rows[0]["result"]["serverInfo"]["name"] == "awen-agent"
+    assert any(tool["name"] == "awen_health" for tool in rows[1]["result"]["tools"])
 
 
-def test_cli_mcp_self_config(ivyea_home, capsys):
-    from ivyea_agent.cli import build_parser
+def test_cli_mcp_self_config(awen_home, capsys):
+    from awen_agent.cli import build_parser
 
     parser = build_parser()
     args = parser.parse_args(["mcp", "self-config"])

@@ -35,8 +35,8 @@ def _touch(memory_decay, entry, *, hits=1, days_ago=0.0, first_days_ago=None):
 
 
 # ── 打分 ────────────────────────────────────────────────────────────────────
-def test_recent_beats_old(ivyea_home):
-    from ivyea_agent import memory_decay, memory_store
+def test_recent_beats_old(awen_home):
+    from awen_agent import memory_decay, memory_store
     a = _mk(memory_store, "最近用过")
     b = _mk(memory_store, "很久没用")
     _touch(memory_decay, a, hits=3, days_ago=1)
@@ -45,8 +45,8 @@ def test_recent_beats_old(ivyea_home):
     assert memory_decay.score(a, stats)["score"] > memory_decay.score(b, stats)["score"]
 
 
-def test_frequent_beats_rare(ivyea_home):
-    from ivyea_agent import memory_decay, memory_store
+def test_frequent_beats_rare(awen_home):
+    from awen_agent import memory_decay, memory_store
     a = _mk(memory_store, "常用", description="库存周转与备货", content="补货节奏")
     b = _mk(memory_store, "偶尔", description="广告竞价调整", content="降低出价")
     _touch(memory_decay, a, hits=20, days_ago=5)
@@ -55,16 +55,16 @@ def test_frequent_beats_rare(ivyea_home):
     assert memory_decay.score(a, stats)["score"] > memory_decay.score(b, stats)["score"]
 
 
-def test_frequency_is_log_compressed(ivyea_home):
+def test_frequency_is_log_compressed(awen_home):
     """第 1 次到第 5 次的差别，远比第 50 次到第 55 次重要。"""
-    from ivyea_agent import memory_decay
+    from awen_agent import memory_decay
     d_low = memory_decay._frequency(5) - memory_decay._frequency(1)
     d_high = memory_decay._frequency(55) - memory_decay._frequency(50)
     assert d_low > d_high
 
 
-def test_halflife_behaviour(ivyea_home):
-    from ivyea_agent import memory_decay
+def test_halflife_behaviour(awen_home):
+    from awen_agent import memory_decay
     now = time.time()
     fresh = memory_decay._recency(now, now)
     half = memory_decay._recency(now - memory_decay.HALFLIFE_DAYS * DAY, now)
@@ -73,9 +73,9 @@ def test_halflife_behaviour(ivyea_home):
     assert memory_decay._recency(None, now) == 0.0
 
 
-def test_confidence_has_lowest_weight(ivyea_home):
+def test_confidence_has_lowest_weight(awen_home):
     """低置信但天天用得上的记忆，不该输给高置信但没人用的。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     hot = _mk(memory_store, "低置信但常用", description="库存周转与备货",
               content="补货节奏", source="reflection", confidence=0.4)
     cold = _mk(memory_store, "高置信但冷门", description="广告竞价调整", content="降低出价")
@@ -86,25 +86,25 @@ def test_confidence_has_lowest_weight(ivyea_home):
 
 
 # ── 保护与钉住 ──────────────────────────────────────────────────────────────
-def test_new_memory_protected_by_grace_period(ivyea_home):
+def test_new_memory_protected_by_grace_period(awen_home):
     """刚记下来还没机会被召回，不能因为"从没用过"就判低分踢出去。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     e = _mk(memory_store, "刚记的")
     s = memory_decay.score(e, memory_decay.usage())
     assert s["keep"] and s["fresh"] and s["reason"] == "保护期内"
 
 
-def test_old_unused_memory_archived(ivyea_home):
-    from ivyea_agent import memory_decay, memory_store
+def test_old_unused_memory_archived(awen_home):
+    from awen_agent import memory_decay, memory_store
     e = _mk(memory_store, "老且没人用")
     _touch(memory_decay, e, hits=0, days_ago=300, first_days_ago=400)
     s = memory_decay.score(e, memory_decay.usage())
     assert not s["keep"] and "降级" in s["reason"]
 
 
-def test_pinned_never_archived(ivyea_home):
+def test_pinned_never_archived(awen_home):
     """红线规则平时不会被问起，可正因如此才更不能忘。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     e = _mk(memory_store, "红线规则")
     _touch(memory_decay, e, hits=0, days_ago=999, first_days_ago=1000)
     assert not memory_decay.score(e, memory_decay.usage())["keep"]
@@ -113,8 +113,8 @@ def test_pinned_never_archived(ivyea_home):
     assert s["keep"] and s["pinned"] and s["reason"] == "钉住"
 
 
-def test_unpin_works(ivyea_home):
-    from ivyea_agent import memory_decay, memory_store
+def test_unpin_works(awen_home):
+    from awen_agent import memory_decay, memory_store
     e = _mk(memory_store, "项")
     memory_decay.set_pinned(e.category, e.name, True)
     memory_decay.set_pinned(e.category, e.name, False)
@@ -122,9 +122,9 @@ def test_unpin_works(ivyea_home):
 
 
 # ── 索引层与检索 ────────────────────────────────────────────────────────────
-def test_archived_entry_leaves_index_but_stays_searchable(ivyea_home):
+def test_archived_entry_leaves_index_but_stays_searchable(awen_home):
     """降级 ≠ 删除：不再常驻上下文，但检索仍要能找到。这是整个设计的安全底线。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     e = _mk(memory_store, "冷门打法", description="冷门的关键词")
     _touch(memory_decay, e, hits=0, days_ago=300, first_days_ago=400)
     assert "冷门打法" not in memory_store.index_digest()
@@ -132,9 +132,9 @@ def test_archived_entry_leaves_index_but_stays_searchable(ivyea_home):
     assert [h["name"] for h in memory_store.search("冷门的关键词")] == ["冷门打法"]
 
 
-def test_search_records_hits(ivyea_home):
+def test_search_records_hits(awen_home):
     """使用统计是遗忘打分的唯一数据来源，检索必须真的在记。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     _mk(memory_store, "被搜的", description="独特关键词")
     memory_store.search("独特关键词")
     memory_store.search("独特关键词")
@@ -142,18 +142,18 @@ def test_search_records_hits(ivyea_home):
     assert u["hits"] == 2 and u["last_hit"]
 
 
-def test_hit_recording_failure_does_not_break_search(ivyea_home, monkeypatch):
+def test_hit_recording_failure_does_not_break_search(awen_home, monkeypatch):
     """统计挂了绝不能影响检索本身——它是辅助数据，不是关键路径。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     _mk(memory_store, "项", description="关键词")
     monkeypatch.setattr(memory_decay, "_conn",
                         lambda: (_ for _ in ()).throw(RuntimeError("boom")))
     assert memory_store.search("关键词")
 
 
-def test_index_prefers_active_over_recent(ivyea_home):
+def test_index_prefers_active_over_recent(awen_home):
     """核心命题：索引名额给"最近还在用的"，不是"最近才写的"。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     hot = _mk(memory_store, "每周都用的打法", description="库存周转与备货", content="补货节奏")
     cold = _mk(memory_store, "写得晚但没人用", description="广告竞价调整", content="降低出价")
     _touch(memory_decay, hot, hits=30, days_ago=1, first_days_ago=200)
@@ -163,17 +163,17 @@ def test_index_prefers_active_over_recent(ivyea_home):
     assert "写得晚但没人用" not in digest
 
 
-def test_report_shape(ivyea_home):
-    from ivyea_agent import memory_decay, memory_store
+def test_report_shape(awen_home):
+    from awen_agent import memory_decay, memory_store
     _mk(memory_store, "甲")
     rep = memory_decay.report(memory_store.list_entries())
     assert rep["total"] == 1 and rep["active"] == 1
     assert rep["rows"][0]["name"] == "甲"
 
 
-def test_ranking_is_stable(ivyea_home):
+def test_ranking_is_stable(awen_home):
     """同分要按名字稳定破平，否则索引层每次组装顺序都不一样，没法排查。"""
-    from ivyea_agent import memory_decay, memory_store
+    from awen_agent import memory_decay, memory_store
     for n in ("丙", "甲", "乙"):
         _mk(memory_store, n)
     a = [e.name for e, _ in memory_decay.rank(memory_store.list_entries())]

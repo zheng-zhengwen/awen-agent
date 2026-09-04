@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from argparse import Namespace
 
-from ivyea_agent import task_runner
+from awen_agent import task_runner
 
 
 def test_task_lifecycle(tmp_path, monkeypatch):
@@ -90,7 +90,7 @@ def test_resume_payload_for_plain_task(tmp_path, monkeypatch):
 
 
 def test_cli_task_continue_prints_top_level_error(monkeypatch, capsys):
-    from ivyea_agent import cli, service
+    from awen_agent import cli, service
 
     monkeypatch.setattr(service, "task_continue", lambda task_id, payload: {
         "ok": False,

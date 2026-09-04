@@ -25,8 +25,8 @@ def _get_json(url: str, *, retries: int = 40, delay: float = 0.2, timeout: float
     raise AssertionError(f"service did not become ready at {url}: {last}")
 
 
-def test_retrieval_combines_knowledge_and_memory(ivyea_home):
-    from ivyea_agent import memory, retrieval
+def test_retrieval_combines_knowledge_and_memory(awen_home):
+    from awen_agent import memory, retrieval
 
     memory.remember("Prime Day 预算要保护品牌词，不要误否核心词。", asin="B0LOCAL")
     result = retrieval.search("预算 品牌词", limit=8)
@@ -44,8 +44,8 @@ def test_retrieval_combines_knowledge_and_memory(ivyea_home):
     assert caps["semantic_vectors"]["enabled"] is True
 
 
-def test_retrieval_index_rebuild_and_status(ivyea_home):
-    from ivyea_agent import memory, retrieval, retrieval_index
+def test_retrieval_index_rebuild_and_status(awen_home):
+    from awen_agent import memory, retrieval, retrieval_index
 
     memory.remember("Prime Day 前品牌词预算必须保护，不能误否。", asin="B0MEM")
 
@@ -88,15 +88,15 @@ def test_retrieval_index_rebuild_and_status(ivyea_home):
     assert fresh["changed"] is False
 
 
-def test_retrieval_embeddings_status_and_config(ivyea_home):
-    from ivyea_agent import retrieval
+def test_retrieval_embeddings_status_and_config(awen_home):
+    from awen_agent import retrieval
 
     default = retrieval.embeddings_status()
     assert default["configured_backend"] == "builtin"
     assert default["active_backend"] == "builtin"
     assert default["semantic_enabled"] is True
     assert default["offline_safe"] is True
-    local_model = ivyea_home / "models" / "embedding" / "bge-small"
+    local_model = awen_home / "models" / "embedding" / "bge-small"
     local_model.mkdir(parents=True)
     with_candidate = retrieval.embeddings_status()
     assert with_candidate["offline_model_available"] is True
@@ -122,8 +122,8 @@ def test_retrieval_embeddings_status_and_config(ivyea_home):
     assert rebuilt["embeddings"]["configured_backend"] == "sentence-transformers"
 
 
-def test_embedding_encode_falls_back_when_dense_model_fails(ivyea_home, monkeypatch):
-    from ivyea_agent import retrieval_embeddings
+def test_embedding_encode_falls_back_when_dense_model_fails(awen_home, monkeypatch):
+    from awen_agent import retrieval_embeddings
 
     monkeypatch.setattr(retrieval_embeddings, "status", lambda: {
         "semantic_enabled": True,
@@ -146,8 +146,8 @@ def test_embedding_encode_falls_back_when_dense_model_fails(ivyea_home, monkeypa
     assert probe["active_backend"] == "local_hash_embedding_v1"
 
 
-def test_retrieval_cli_outputs_json(ivyea_home, capsys):
-    from ivyea_agent.cli import main
+def test_retrieval_cli_outputs_json(awen_home, capsys):
+    from awen_agent.cli import main
 
     assert main(["retrieval", "embeddings", "--json"]) == 0
     emb = json.loads(capsys.readouterr().out)
@@ -185,20 +185,20 @@ def test_retrieval_cli_outputs_json(ivyea_home, capsys):
 
     assert main(["retrieval", "capabilities"]) == 0
     out = capsys.readouterr().out
-    assert "Ivyea 本地检索能力" in out
+    assert "awen 本地检索能力" in out
 
 
-def test_serve_cli_rejects_remote_bind_by_default(ivyea_home, capsys):
-    from ivyea_agent.cli import main
+def test_serve_cli_rejects_remote_bind_by_default(awen_home, capsys):
+    from awen_agent.cli import main
 
     assert main(["serve", "--host", "0.0.0.0"]) == 2
     err = capsys.readouterr().err
     assert "--allow-remote" in err
 
 
-def test_serve_cli_requires_token_for_remote_bind(ivyea_home, capsys, monkeypatch):
-    from ivyea_agent import service
-    from ivyea_agent.cli import main
+def test_serve_cli_requires_token_for_remote_bind(awen_home, capsys, monkeypatch):
+    from awen_agent import service
+    from awen_agent.cli import main
 
     called = {}
     monkeypatch.setattr(service, "run", lambda **kw: called.update(kw))
@@ -210,8 +210,8 @@ def test_serve_cli_requires_token_for_remote_bind(ivyea_home, capsys, monkeypatc
     assert called["api_token"] == "secret"
 
 
-def test_service_health_shape_without_socket(ivyea_home):
-    from ivyea_agent import service
+def test_service_health_shape_without_socket(awen_home):
+    from awen_agent import service
 
     data = service.health()
     assert data["ok"] is True
@@ -290,7 +290,7 @@ def test_service_health_shape_without_socket(ivyea_home):
 
     spec = service.openapi_spec()
     assert spec["openapi"] == "3.1.0"
-    assert spec["info"]["title"] == "Ivyea Agent Local API"
+    assert spec["info"]["title"] == "awen Agent Local API"
     assert "/v1/chat" in spec["paths"]
     assert "/v1/chat/stream" in spec["paths"]
     assert "/v1/model/providers" in spec["paths"]
@@ -320,8 +320,8 @@ def test_service_health_shape_without_socket(ivyea_home):
     assert "/v1/tasks/{id}/continue" in spec["paths"]
 
 
-def test_service_task_api_helpers(ivyea_home, monkeypatch):
-    from ivyea_agent import service
+def test_service_task_api_helpers(awen_home, monkeypatch):
+    from awen_agent import service
 
     mcp = service.mcp_self_config()
     assert mcp["ok"] is True
@@ -361,8 +361,8 @@ def test_service_task_api_helpers(ivyea_home, monkeypatch):
     stepped = service.task_update(task_id, "step", {"index": 1, "status": "completed", "notes": "done"})
     assert stepped["task"]["steps"][0]["status"] == "completed"
 
-    logged = service.task_update(task_id, "log", {"text": "visible in IvyeaOps"})
-    assert logged["task"]["events"][-1]["text"] == "visible in IvyeaOps"
+    logged = service.task_update(task_id, "log", {"text": "visible in awenOps"})
+    assert logged["task"]["events"][-1]["text"] == "visible in awenOps"
 
     detail = service.task_detail(task_id)
     assert detail["task"]["id"] == task_id
@@ -372,8 +372,8 @@ def test_service_task_api_helpers(ivyea_home, monkeypatch):
     assert "Embed task" in resume["resume"]["prompt"]
 
 
-def test_service_trace_api_helpers(ivyea_home):
-    from ivyea_agent import service, traces
+def test_service_trace_api_helpers(awen_home):
+    from awen_agent import service, traces
 
     traces.record("svc-session", "turn-1", "tool_call", "knowledge_search", ok=True, duration_ms=8, summary="ok")
     traces.record("other-session", "turn-1", "tool_call", "run_patrol", ok=False, duration_ms=20, summary="failed")
@@ -388,8 +388,8 @@ def test_service_trace_api_helpers(ivyea_home):
     assert stats["stats"]["failures"] == 1
 
 
-def test_service_system_helpers(ivyea_home):
-    from ivyea_agent import service
+def test_service_system_helpers(awen_home):
+    from awen_agent import service
 
     status = service.system_status()
     assert status["ok"] is True
@@ -400,7 +400,7 @@ def test_service_system_helpers(ivyea_home):
     assert any(check["name"] == "retrieval embeddings" for check in doctor["checks"])
 
     bootstrap = service.system_bootstrap()
-    assert bootstrap["name"] == "ivyea-agent"
+    assert bootstrap["name"] == "awen-agent"
     assert bootstrap["urls"]["manifest"].endswith("/v1/manifest")
     assert bootstrap["mcp"]["args"] == ["mcp", "serve"]
 
@@ -413,8 +413,8 @@ def test_service_system_helpers(ivyea_home):
     assert "logs" in svc_logs
 
 
-def test_service_skill_and_knowledge_helpers(ivyea_home, monkeypatch):
-    from ivyea_agent import service
+def test_service_skill_and_knowledge_helpers(awen_home, monkeypatch):
+    from awen_agent import service
 
     sks = service.skill_list(limit=20)
     assert sks["ok"] is True
@@ -577,7 +577,7 @@ class _ServiceChatProvider:
     def chat(self, messages, tools=None, temperature=0.3, timeout=120.0):
         self.calls += 1
         assert messages[-1]["role"] == "user"
-        assert "Ivyea 本地知识检索" in messages[-1]["content"]
+        assert "awen 本地知识检索" in messages[-1]["content"]
         return {"role": "assistant", "content": "只读分析完成。[K1]", "tool_calls": []}
 
 
@@ -621,7 +621,7 @@ class _ServiceTaskContinueProvider:
     def chat(self, messages, tools=None, temperature=0.3, timeout=120.0):
         self.calls += 1
         if self.calls == 1:
-            assert "继续 Ivyea 长任务" in messages[-1]["content"]
+            assert "继续 awen 长任务" in messages[-1]["content"]
             return {
                 "role": "assistant",
                 "content": "",
@@ -640,8 +640,8 @@ class _ServiceTaskContinueProvider:
         return {"role": "assistant", "content": "任务已继续并更新步骤", "tool_calls": []}
 
 
-def test_service_chat_run_with_fake_provider(ivyea_home):
-    from ivyea_agent import service
+def test_service_chat_run_with_fake_provider(awen_home):
+    from awen_agent import service
 
     result = service.chat_run({"message": "主图转化怎么判断", "max_steps": 2}, provider=_ServiceChatProvider())
 
@@ -653,8 +653,8 @@ def test_service_chat_run_with_fake_provider(ivyea_home):
     assert result["session_id"]
 
 
-def test_service_chat_run_with_tool_event(ivyea_home):
-    from ivyea_agent import service
+def test_service_chat_run_with_tool_event(awen_home):
+    from awen_agent import service
 
     result = service.chat_run({"message": "否词规则", "max_steps": 3}, provider=_ServiceToolProvider())
 
@@ -665,8 +665,8 @@ def test_service_chat_run_with_tool_event(ivyea_home):
     assert any(m["role"] == "tool" for m in result["messages"])
 
 
-def test_service_model_configure_from_ops_slot(ivyea_home):
-    from ivyea_agent import config, service
+def test_service_model_configure_from_ops_slot(awen_home):
+    from awen_agent import config, service
 
     result = service.model_configure({
         "provider": "openrouter",
@@ -682,17 +682,17 @@ def test_service_model_configure_from_ops_slot(ivyea_home):
     assert "sk-router" not in str(result)
 
 
-def test_ops_bridge_tools_fail_closed_without_context(ivyea_home):
-    from ivyea_agent import agent_tools
+def test_ops_bridge_tools_fail_closed_without_context(awen_home):
+    from awen_agent import agent_tools
 
     names = {t["function"]["name"] for t in agent_tools.TOOL_SCHEMAS}
-    assert "ivyea_ops_list_tools" in names
-    out = agent_tools.dispatch("ivyea_ops_list_tools", {}, agent_tools.ToolContext())
+    assert "awen_ops_list_tools" in names
+    out = agent_tools.dispatch("awen_ops_list_tools", {}, agent_tools.ToolContext())
     assert "ops_bridge_unavailable" in out
 
 
-def test_service_chat_stream_with_fake_provider(ivyea_home):
-    from ivyea_agent import service
+def test_service_chat_stream_with_fake_provider(awen_home):
+    from awen_agent import service
 
     events = []
     result = service.chat_stream(
@@ -715,8 +715,8 @@ def test_service_chat_stream_with_fake_provider(ivyea_home):
     assert events[-1][0] == "final"
 
 
-def test_service_task_continue_runs_agent_and_updates_task(ivyea_home):
-    from ivyea_agent import service, task_runner
+def test_service_task_continue_runs_agent_and_updates_task(awen_home):
+    from awen_agent import service, task_runner
 
     task = task_runner.create("Continue via service", steps=["inspect", "finish"])
     task_runner.start_next(task["id"])
@@ -739,8 +739,8 @@ def test_service_task_continue_runs_agent_and_updates_task(ivyea_home):
     assert any(m["role"] == "tool" for m in result["chat"]["messages"])
 
 
-def test_service_task_continue_does_not_unblock_without_model(ivyea_home, monkeypatch):
-    from ivyea_agent import service, task_runner
+def test_service_task_continue_does_not_unblock_without_model(awen_home, monkeypatch):
+    from awen_agent import service, task_runner
 
     monkeypatch.setattr(service, "_model_requires_key", lambda settings: True)
     monkeypatch.setattr(service.config, "get_active_key", lambda: "")
@@ -757,8 +757,8 @@ def test_service_task_continue_does_not_unblock_without_model(ivyea_home, monkey
     assert saved["steps"][0]["status"] == "blocked"
 
 
-def test_service_chat_sessions_persist_and_resume(ivyea_home):
-    from ivyea_agent import service
+def test_service_chat_sessions_persist_and_resume(awen_home):
+    from awen_agent import service
 
     created = service.chat_session_create({"title": "运营对话"})
     sid = created["session"]["id"]
@@ -780,8 +780,8 @@ def test_service_chat_sessions_persist_and_resume(ivyea_home):
     assert any(row["id"] == sid for row in listed["sessions"])
 
 
-def test_local_service_health_and_retrieval(ivyea_home, monkeypatch):
-    from ivyea_agent import service
+def test_local_service_health_and_retrieval(awen_home, monkeypatch):
+    from awen_agent import service
 
     try:
         server = service.make_server("127.0.0.1", 0)
@@ -795,7 +795,7 @@ def test_local_service_health_and_retrieval(ivyea_home, monkeypatch):
         # so a slow first connection on CI does not flake as a TimeoutError.
         health = _get_json(f"http://{host}:{port}/health")
         assert health["ok"] is True
-        assert health["name"] == "ivyea-agent"
+        assert health["name"] == "awen-agent"
         assert health["retrieval"]["local"] is True
 
         with urllib.request.urlopen(f"http://{host}:{port}/v1/openapi.json", timeout=5) as resp:
@@ -958,7 +958,7 @@ def test_local_service_health_and_retrieval(ivyea_home, monkeypatch):
         assert rebuilt["ok"] is True
         assert rebuilt["index"]["cards"] >= 1
 
-        from ivyea_agent import traces
+        from awen_agent import traces
         traces.record("http-session", "turn-1", "tool_call", "knowledge_search", summary="ok")
         with urllib.request.urlopen(f"http://{host}:{port}/v1/traces?session_id=http-session", timeout=5) as resp:
             trace_rows = json.loads(resp.read().decode("utf-8"))
@@ -1135,8 +1135,8 @@ def test_local_service_health_and_retrieval(ivyea_home, monkeypatch):
         thread.join(timeout=5)
 
 
-def test_local_service_token_auth(ivyea_home):
-    from ivyea_agent import service
+def test_local_service_token_auth(awen_home):
+    from awen_agent import service
 
     try:
         server = service.make_server("127.0.0.1", 0, api_token="secret")

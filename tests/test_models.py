@@ -3,7 +3,7 @@ from __future__ import annotations
 
 
 def test_hermes_style_provider_catalog_contains_key_auth_shapes():
-    from ivyea_agent import models
+    from awen_agent import models
     providers = {p["id"]: p for p in models.providers()}
     for pid in ("openai", "anthropic", "deepseek", "openrouter", "ollama", "google-gemini-cli", "openai-codex", "copilot"):
         assert pid in providers
@@ -14,7 +14,7 @@ def test_hermes_style_provider_catalog_contains_key_auth_shapes():
 
 
 def test_model_aliases_and_provider_model_ids_resolve():
-    from ivyea_agent import models
+    from awen_agent import models
     assert models.by_id("deepseek-chat")["provider_id"] == "deepseek"
     assert models.by_id("claude-sonnet")["kind"] == "anthropic"
     custom = models.by_id("openrouter:moonshotai/kimi-k2.6")
@@ -22,8 +22,8 @@ def test_model_aliases_and_provider_model_ids_resolve():
     assert custom["model"] == "moonshotai/kimi-k2.6"
 
 
-def test_key_status_for_api_key_oauth_and_none(ivyea_home, monkeypatch):
-    from ivyea_agent import models
+def test_key_status_for_api_key_oauth_and_none(awen_home, monkeypatch):
+    from awen_agent import models
     deepseek = models.provider_by_id("deepseek")
     ollama = models.provider_by_id("ollama")
     codex = models.provider_by_id("openai-codex")
@@ -35,8 +35,8 @@ def test_key_status_for_api_key_oauth_and_none(ivyea_home, monkeypatch):
     assert models.key_status(codex) == "missing:auth-token"
 
 
-def test_provider_capability_matrix_exposes_product_facing_flags(ivyea_home):
-    from ivyea_agent import models
+def test_provider_capability_matrix_exposes_product_facing_flags(awen_home):
+    from awen_agent import models
 
     openai = models.provider_by_id("openai")
     codex = models.provider_by_id("openai-codex")
@@ -67,8 +67,8 @@ def test_provider_capability_matrix_exposes_product_facing_flags(ivyea_home):
     assert rows["openai-codex"]["key_status"].startswith("missing:")
 
 
-def test_provider_models_uses_live_catalog_and_cache(ivyea_home, monkeypatch):
-    from ivyea_agent import models
+def test_provider_models_uses_live_catalog_and_cache(awen_home, monkeypatch):
+    from awen_agent import models
     provider = {"id": "demo", "kind": "openai", "base": "https://demo.test/v1", "models": ["built-in"]}
     calls = []
 
@@ -88,8 +88,8 @@ def test_provider_models_uses_live_catalog_and_cache(ivyea_home, monkeypatch):
     assert source == "cache"
 
 
-def test_provider_models_falls_back_to_builtin_without_live(ivyea_home, monkeypatch):
-    from ivyea_agent import models
+def test_provider_models_falls_back_to_builtin_without_live(awen_home, monkeypatch):
+    from awen_agent import models
     provider = {"id": "demo", "kind": "openai", "base": "https://demo.test/v1", "models": ["built-in"]}
     monkeypatch.setattr(models, "live_models", lambda *a, **k: None)
     rows, source = models.provider_models(provider, refresh=True)
@@ -97,8 +97,8 @@ def test_provider_models_falls_back_to_builtin_without_live(ivyea_home, monkeypa
     assert source == "builtin"
 
 
-def test_provider_model_catalog_reports_live_error(ivyea_home, monkeypatch):
-    from ivyea_agent import models
+def test_provider_model_catalog_reports_live_error(awen_home, monkeypatch):
+    from awen_agent import models
     provider = {
         "id": "demo",
         "label": "Demo",
@@ -118,8 +118,8 @@ def test_provider_model_catalog_reports_live_error(ivyea_home, monkeypatch):
 
 
 def test_probe_provider_reports_missing_credential_and_success(monkeypatch):
-    from ivyea_agent import models
-    from ivyea_agent.providers import openai_compat
+    from awen_agent import models
+    from awen_agent.providers import openai_compat
 
     provider = {
         "id": "demo",
@@ -146,7 +146,7 @@ def test_probe_provider_reports_missing_credential_and_success(monkeypatch):
 
 
 def test_live_models_parses_gemini_and_anthropic(monkeypatch):
-    from ivyea_agent import models
+    from awen_agent import models
 
     class _Resp:
         def __init__(self, payload):
@@ -180,9 +180,9 @@ def test_live_models_parses_gemini_and_anthropic(monkeypatch):
     assert models.live_models(anthropic, api_key="anthropic-key") == ["claude-live"]
 
 
-def test_cli_model_provider_and_doctor_outputs(ivyea_home, capsys):
+def test_cli_model_provider_and_doctor_outputs(awen_home, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, config, models
+    from awen_agent import cli, config, models
     config.apply_model(models.by_id("ollama:qwen3-coder"))
     rc = cli._cmd_model(Namespace(spec="providers", extra=None, token=None,
                                   refresh_token=None, expires_at=0))
@@ -197,9 +197,9 @@ def test_cli_model_provider_and_doctor_outputs(ivyea_home, capsys):
     assert "capabilities" in out
 
 
-def test_cli_model_direct_oauth_runs_login(ivyea_home, monkeypatch, capsys):
+def test_cli_model_direct_oauth_runs_login(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, config, oauth_auth
+    from awen_agent import cli, config, oauth_auth
     calls = []
 
     def fake_login(notify=None):
@@ -219,8 +219,8 @@ def test_cli_model_direct_oauth_runs_login(ivyea_home, monkeypatch, capsys):
     assert config.load_settings().get("provider_id") == "openai-codex"
 
 
-def test_model_picker_lists_providers_first(ivyea_home, monkeypatch, capsys):
-    from ivyea_agent import cli
+def test_model_picker_lists_providers_first(awen_home, monkeypatch, capsys):
+    from awen_agent import cli
     answers = iter(["", ""])
     monkeypatch.setattr(cli, "_ask", lambda prompt, default="": next(answers, default))
     cli._model_picker()
@@ -230,8 +230,8 @@ def test_model_picker_lists_providers_first(ivyea_home, monkeypatch, capsys):
     assert "gpt-5-codex" not in out
 
 
-def test_model_picker_codex_runs_login_before_switch(ivyea_home, monkeypatch, capsys):
-    from ivyea_agent import cli, models, oauth_auth, config
+def test_model_picker_codex_runs_login_before_switch(awen_home, monkeypatch, capsys):
+    from awen_agent import cli, models, oauth_auth, config
     calls = []
     # 编号是**按分组顺序现算的**，加一家 provider 就会整体后移。写死数字的话，
     # 这个用例下一次加 provider 时会莫名其妙地去登录另一家（实测踩过：
@@ -259,8 +259,8 @@ def test_model_picker_codex_runs_login_before_switch(ivyea_home, monkeypatch, ca
     assert settings["model"] == "gpt-5-codex"
 
 
-def test_choose_provider_model_uses_live_catalog(ivyea_home, monkeypatch, capsys):
-    from ivyea_agent import cli, models
+def test_choose_provider_model_uses_live_catalog(awen_home, monkeypatch, capsys):
+    from awen_agent import cli, models
     provider = dict(models.provider_by_id("ollama"))
     monkeypatch.setattr(models, "provider_models", lambda p, api_key="", refresh=False: (["live-model"], "live"))
     monkeypatch.setattr(cli, "_ask", lambda prompt, default="": "")
@@ -270,8 +270,8 @@ def test_choose_provider_model_uses_live_catalog(ivyea_home, monkeypatch, capsys
     assert "实时获取" in out
 
 
-def test_model_picker_collects_api_key_before_live_catalog(ivyea_home, monkeypatch, capsys):
-    from ivyea_agent import cli, models
+def test_model_picker_collects_api_key_before_live_catalog(awen_home, monkeypatch, capsys):
+    from awen_agent import cli, models
     seen = []
     answers = iter(["1", ""])
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -290,9 +290,9 @@ def test_model_picker_collects_api_key_before_live_catalog(ivyea_home, monkeypat
     assert "已切换主脑" in out
 
 
-def test_cli_model_auth_imports_token(ivyea_home, capsys):
+def test_cli_model_auth_imports_token(awen_home, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, config, models, oauth_auth
+    from awen_agent import cli, config, models, oauth_auth
     rc = cli._cmd_model(Namespace(spec="auth", extra="qwen-oauth", token="secret-token",
                                   refresh_token="", expires_at=0))
     out = capsys.readouterr().out
@@ -303,9 +303,9 @@ def test_cli_model_auth_imports_token(ivyea_home, capsys):
     assert config.get_active_key() == "secret-token"
 
 
-def test_cli_model_auth_imports_qwen_cli(ivyea_home, tmp_path, monkeypatch, capsys):
+def test_cli_model_auth_imports_qwen_cli(awen_home, tmp_path, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     qwen_dir = tmp_path / ".qwen"
     qwen_dir.mkdir()
     (qwen_dir / "oauth_creds.json").write_text(
@@ -322,9 +322,9 @@ def test_cli_model_auth_imports_qwen_cli(ivyea_home, tmp_path, monkeypatch, caps
     assert oauth_auth.get_token("qwen-oauth") == "qwen-cli-token"
 
 
-def test_cli_model_auth_refreshes_qwen(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_refreshes_qwen(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "old", refresh_token="ref")
     monkeypatch.setattr(oauth_auth, "refresh_qwen_token", lambda: "new")
     rc = cli._cmd_model(Namespace(spec="auth", extra="qwen-oauth", token=None,
@@ -336,9 +336,9 @@ def test_cli_model_auth_refreshes_qwen(ivyea_home, monkeypatch, capsys):
     assert "已刷新" in out
 
 
-def test_cli_model_auth_device_code_codex(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_device_code_codex(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     monkeypatch.setattr(oauth_auth, "codex_device_code_login", lambda notify=None: None)
     rc = cli._cmd_model(Namespace(spec="auth", extra="openai-codex", token=None,
                                   refresh_token=None, expires_at=0,
@@ -349,9 +349,9 @@ def test_cli_model_auth_device_code_codex(ivyea_home, monkeypatch, capsys):
     assert "Codex Responses transport 已接入" in out
 
 
-def test_cli_model_auth_exchange_copilot(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_exchange_copilot(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     monkeypatch.setattr(oauth_auth, "resolve_copilot_api_token", lambda strict=False: "copilot-api")
     rc = cli._cmd_model(Namespace(spec="auth", extra="copilot", token=None,
                                   refresh_token=None, expires_at=0,
@@ -363,9 +363,9 @@ def test_cli_model_auth_exchange_copilot(ivyea_home, monkeypatch, capsys):
     assert "Copilot API token" in out
 
 
-def test_cli_model_auth_login_google_gemini(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_login_google_gemini(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     monkeypatch.setattr(oauth_auth, "google_oauth_login", lambda open_browser=True, notify=None: None)
     rc = cli._cmd_model(Namespace(spec="auth", extra="google-gemini-cli", token=None,
                                   refresh_token=None, expires_at=0,
@@ -377,9 +377,9 @@ def test_cli_model_auth_login_google_gemini(ivyea_home, monkeypatch, capsys):
     assert "已完成 OAuth 登录" in out
 
 
-def test_cli_model_auth_google_gemini_project(ivyea_home, capsys):
+def test_cli_model_auth_google_gemini_project(awen_home, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     rc = cli._cmd_model(Namespace(spec="auth", extra="google-gemini-cli", token=None,
                                   refresh_token=None, expires_at=0, project="project-1",
                                   refresh=False, login=False, no_browser=False,
@@ -391,9 +391,9 @@ def test_cli_model_auth_google_gemini_project(ivyea_home, capsys):
     assert oauth_auth.google_project_id() == "project-1"
 
 
-def test_cli_model_auth_detail_hides_token(ivyea_home, capsys):
+def test_cli_model_auth_detail_hides_token(awen_home, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("google-gemini-cli", "secret-token", refresh_token="refresh-secret", expires_at=1893456000)
     oauth_auth.set_google_project_id("project-1")
     rc = cli._cmd_model(Namespace(spec="auth", extra="google-gemini-cli", token=None,
@@ -409,16 +409,16 @@ def test_cli_model_auth_detail_hides_token(ivyea_home, capsys):
     assert "refresh-secret" not in out
 
 
-def test_cli_model_auth_google_gemini_probe(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_google_gemini_probe(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("google-gemini-cli", "secret-token")
 
     def fake_probe(token, model="gemini-3-pro-preview", timeout=30.0):
         assert token == "secret-token"
         return {"ok": True, "model": model, "project": "project-1", "content": "OK", "usage": {"total": 1}}
 
-    from ivyea_agent.providers import gemini_code_assist_provider as mod
+    from awen_agent.providers import gemini_code_assist_provider as mod
     monkeypatch.setattr(mod, "probe_gemini_code_assist", fake_probe)
     rc = cli._cmd_model(Namespace(spec="auth", extra="google-gemini-cli", token=None,
                                   refresh_token=None, expires_at=0, project=None,
@@ -433,9 +433,9 @@ def test_cli_model_auth_google_gemini_probe(ivyea_home, monkeypatch, capsys):
     assert "secret-token" not in out
 
 
-def test_cli_model_auth_google_gemini_probe_missing_token(ivyea_home, capsys):
+def test_cli_model_auth_google_gemini_probe_missing_token(awen_home, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli
+    from awen_agent import cli
     rc = cli._cmd_model(Namespace(spec="auth", extra="google-gemini-cli", token=None,
                                   refresh_token=None, expires_at=0, project=None,
                                   probe=True, timeout=5.0,
@@ -447,16 +447,16 @@ def test_cli_model_auth_google_gemini_probe_missing_token(ivyea_home, capsys):
     assert "token 未配置" in err
 
 
-def test_cli_model_auth_google_gemini_probe_diagnoses_failure(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_google_gemini_probe_diagnoses_failure(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("google-gemini-cli", "secret-token")
 
     def fake_probe(token, model="gemini-3-pro-preview", timeout=30.0):
-        from ivyea_agent.providers.gemini_code_assist_provider import GeminiCodeAssistError
+        from awen_agent.providers.gemini_code_assist_provider import GeminiCodeAssistError
         raise GeminiCodeAssistError("Gemini Code Assist HTTP 404", status_code=404, body="project not found")
 
-    from ivyea_agent.providers import gemini_code_assist_provider as mod
+    from awen_agent.providers import gemini_code_assist_provider as mod
     monkeypatch.setattr(mod, "probe_gemini_code_assist", fake_probe)
     rc = cli._cmd_model(Namespace(spec="auth", extra="google-gemini-cli", token=None,
                                   refresh_token=None, expires_at=0, project=None,
@@ -470,9 +470,9 @@ def test_cli_model_auth_google_gemini_probe_diagnoses_failure(ivyea_home, monkey
     assert "secret-token" not in err
 
 
-def test_cli_model_auth_codex_probe(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_codex_probe(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("openai-codex", "secret-token")
 
     def fake_probe(token, model="gpt-5.5", base_url="", timeout=30.0):
@@ -480,7 +480,7 @@ def test_cli_model_auth_codex_probe(ivyea_home, monkeypatch, capsys):
         assert model == "gpt-5.5"
         return {"ok": True, "model": model, "content": "OK", "usage": {"total": 1}}
 
-    from ivyea_agent.providers import codex_provider
+    from awen_agent.providers import codex_provider
     monkeypatch.setattr(codex_provider, "probe_codex", fake_probe)
     rc = cli._cmd_model(Namespace(spec="auth", extra="openai-codex", token=None,
                                   refresh_token=None, expires_at=0, project=None,
@@ -494,16 +494,16 @@ def test_cli_model_auth_codex_probe(ivyea_home, monkeypatch, capsys):
     assert "secret-token" not in out
 
 
-def test_cli_model_auth_copilot_probe(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_copilot_probe(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("copilot", "secret-token")
 
     def fake_probe(token, model="gpt-4o", base_url="", timeout=30.0):
         assert token == "secret-token"
         return {"ok": True, "model": model, "content": "OK", "usage": {"total": 1}}
 
-    from ivyea_agent.providers import copilot_provider
+    from awen_agent.providers import copilot_provider
     monkeypatch.setattr(copilot_provider, "probe_copilot", fake_probe)
     rc = cli._cmd_model(Namespace(spec="auth", extra="copilot", token=None,
                                   refresh_token=None, expires_at=0, project=None,
@@ -517,9 +517,9 @@ def test_cli_model_auth_copilot_probe(ivyea_home, monkeypatch, capsys):
     assert "secret-token" not in out
 
 
-def test_cli_model_auth_qwen_probe(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_qwen_probe(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "secret-token")
 
     def fake_probe(token, model="qwen3.7-max", base_url="", timeout=30.0):
@@ -528,7 +528,7 @@ def test_cli_model_auth_qwen_probe(ivyea_home, monkeypatch, capsys):
         assert "portal.qwen.ai" in base_url
         return {"ok": True, "model": model, "content": "OK", "usage": {"total_tokens": 1}}
 
-    from ivyea_agent.providers import openai_compat
+    from awen_agent.providers import openai_compat
     monkeypatch.setattr(openai_compat, "probe_openai_compat", fake_probe)
     rc = cli._cmd_model(Namespace(spec="auth", extra="qwen-oauth", token=None,
                                   refresh_token=None, expires_at=0, project=None,
@@ -542,9 +542,9 @@ def test_cli_model_auth_qwen_probe(ivyea_home, monkeypatch, capsys):
     assert "secret-token" not in out
 
 
-def test_cli_model_auth_login_qwen(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_login_qwen(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     monkeypatch.setattr(oauth_auth, "qwen_cli_login", lambda: None)
     rc = cli._cmd_model(Namespace(spec="auth", extra="qwen-oauth", token=None,
                                   refresh_token=None, expires_at=0,
@@ -556,9 +556,9 @@ def test_cli_model_auth_login_qwen(ivyea_home, monkeypatch, capsys):
     assert "已完成 OAuth 登录" in out
 
 
-def test_cli_model_auth_device_code_qwen(ivyea_home, monkeypatch, capsys):
+def test_cli_model_auth_device_code_qwen(awen_home, monkeypatch, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     monkeypatch.setattr(oauth_auth, "qwen_device_code_login", lambda open_browser=True, notify=None: None)
     rc = cli._cmd_model(Namespace(spec="auth", extra="qwen-oauth", token=None,
                                   refresh_token=None, expires_at=0, project=None,
@@ -572,9 +572,9 @@ def test_cli_model_auth_device_code_qwen(ivyea_home, monkeypatch, capsys):
     assert "已保存本地认证" in out
 
 
-def test_cli_model_logout_clears_token(ivyea_home, capsys):
+def test_cli_model_logout_clears_token(awen_home, capsys):
     from argparse import Namespace
-    from ivyea_agent import cli, oauth_auth
+    from awen_agent import cli, oauth_auth
     oauth_auth.set_auth_token("qwen-oauth", "secret-token")
     rc = cli._cmd_model(Namespace(spec="logout", extra="qwen-oauth", token=None,
                                   refresh_token=None, expires_at=0,

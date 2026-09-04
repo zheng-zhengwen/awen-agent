@@ -47,8 +47,8 @@ class _StreamResp:
         return self._body
 
 
-def test_from_settings_builds_codex_provider(ivyea_home):
-    from ivyea_agent.providers import from_settings
+def test_from_settings_builds_codex_provider(awen_home):
+    from awen_agent.providers import from_settings
     p = from_settings({"kind": "oauth", "api_mode": "codex_responses",
                        "model": "gpt-5.5",
                        "base_url": "https://chatgpt.com/backend-api/codex"}, "tok")
@@ -57,7 +57,7 @@ def test_from_settings_builds_codex_provider(ivyea_home):
 
 
 def test_codex_provider_payload_and_response(monkeypatch):
-    from ivyea_agent.providers.codex_provider import CodexProvider
+    from awen_agent.providers.codex_provider import CodexProvider
     captured = {}
 
     def fake_stream(method, url, headers=None, json=None, timeout=None):
@@ -67,7 +67,7 @@ def test_codex_provider_payload_and_response(monkeypatch):
         captured["json"] = json
         return _StreamResp()
 
-    from ivyea_agent.providers import codex_provider
+    from awen_agent.providers import codex_provider
     monkeypatch.setattr(codex_provider.httpx, "stream", fake_stream)
     p = CodexProvider("codex-token", "gpt-5.5", "https://chatgpt.com/backend-api/codex")
     out = p.chat(
@@ -102,7 +102,7 @@ def test_codex_provider_payload_and_response(monkeypatch):
 
 
 def test_parse_codex_responses_sse():
-    from ivyea_agent.providers.codex_provider import parse_responses_sse
+    from awen_agent.providers.codex_provider import parse_responses_sse
     lines = [
         'data: {"type":"response.output_text.delta","delta":"he"}',
         'data: {"type":"response.output_text.delta","delta":"llo"}',
@@ -124,7 +124,7 @@ def test_parse_codex_responses_sse():
 
 
 def test_normalize_usage_shapes():
-    from ivyea_agent.providers.codex_provider import _normalize_usage
+    from awen_agent.providers.codex_provider import _normalize_usage
     # Responses API 形状 → 归一（含缓存命中）
     u = _normalize_usage({"input_tokens": 100, "output_tokens": 20,
                           "input_tokens_details": {"cached_tokens": 60}, "total_tokens": 120})
@@ -139,7 +139,7 @@ def test_normalize_usage_shapes():
 
 
 def test_codex_provider_stream_chat(monkeypatch):
-    from ivyea_agent.providers.codex_provider import CodexProvider
+    from awen_agent.providers.codex_provider import CodexProvider
     captured = {}
 
     class _StreamResp:
@@ -164,7 +164,7 @@ def test_codex_provider_stream_chat(monkeypatch):
         captured["json"] = json
         return _StreamResp()
 
-    from ivyea_agent.providers import codex_provider
+    from awen_agent.providers import codex_provider
     monkeypatch.setattr(codex_provider.httpx, "stream", fake_stream)
     p = CodexProvider("codex-token", "gpt-5.5", "https://chatgpt.com/backend-api/codex")
     events = list(p.stream_chat([{"role": "user", "content": "hi"}]))
@@ -181,7 +181,7 @@ def test_codex_provider_stream_chat(monkeypatch):
 
 
 def test_probe_codex(monkeypatch):
-    from ivyea_agent.providers import codex_provider
+    from awen_agent.providers import codex_provider
     monkeypatch.setattr(codex_provider.httpx, "stream", lambda *a, **k: _StreamResp())
     result = codex_provider.probe_codex("codex-token", model="gpt-5.5",
                                         base_url="https://chatgpt.com/backend-api/codex")
@@ -191,7 +191,7 @@ def test_probe_codex(monkeypatch):
 
 
 def test_codex_provider_falls_back_from_unsupported_model(monkeypatch):
-    from ivyea_agent.providers.codex_provider import CodexProvider
+    from awen_agent.providers.codex_provider import CodexProvider
     seen = []
 
     def fake_stream(method, url, headers=None, json=None, timeout=None):
@@ -200,7 +200,7 @@ def test_codex_provider_falls_back_from_unsupported_model(monkeypatch):
             return _StreamResp(status_code=400, body=_UnsupportedResp.text)
         return _StreamResp()
 
-    from ivyea_agent.providers import codex_provider
+    from awen_agent.providers import codex_provider
     monkeypatch.setattr(codex_provider.httpx, "stream", fake_stream)
     p = CodexProvider("codex-token", "gpt-5.3-codex", "https://chatgpt.com/backend-api/codex")
     out = p.chat([{"role": "user", "content": "hi"}])
@@ -213,8 +213,8 @@ def test_codex_provider_retries_transient_then_succeeds(monkeypatch):
     """v1.8.1: a retryable 5xx on the streaming path (no tokens yet) is retried
     and then succeeds — the production main brain no longer fails a whole turn on
     a transient blip."""
-    from ivyea_agent.providers import codex_provider
-    from ivyea_agent.providers.codex_provider import CodexProvider
+    from awen_agent.providers import codex_provider
+    from awen_agent.providers.codex_provider import CodexProvider
     calls = {"n": 0}
 
     def fake_stream(method, url, headers=None, json=None, timeout=None):
@@ -234,9 +234,9 @@ def test_codex_provider_retries_transient_then_succeeds(monkeypatch):
 def test_codex_provider_does_not_retry_hard_4xx(monkeypatch):
     """A non-retryable client error (401) fails immediately, without retrying."""
     import pytest
-    from ivyea_agent.providers import codex_provider
-    from ivyea_agent.providers.codex_provider import CodexProvider
-    from ivyea_agent.providers.base import LLMError
+    from awen_agent.providers import codex_provider
+    from awen_agent.providers.codex_provider import CodexProvider
+    from awen_agent.providers.base import LLMError
     calls = {"n": 0}
 
     def fake_stream(method, url, headers=None, json=None, timeout=None):

@@ -73,8 +73,8 @@ def _isolate_copilot_env():
 
 
 @pytest.fixture()
-def svc(ivyea_home):
-    from ivyea_agent import service
+def svc(awen_home):
+    from awen_agent import service
     service._AUTH_SESSIONS.clear()
     return service
 
@@ -82,7 +82,7 @@ def svc(ivyea_home):
 # ── 状态 ────────────────────────────────────────────────────────────────────
 
 def test_status_lists_every_subscription_provider_without_secrets(svc):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     oauth_auth.set_auth_token("qwen-oauth", "super-secret-token",
                               refresh_token="secret-refresh", expires_at=time.time() + 3600)
@@ -105,7 +105,7 @@ def test_unknown_provider_is_rejected(svc):
 # ── 设备码流程（Qwen / Codex）────────────────────────────────────────────────
 
 def test_device_start_returns_user_code_and_hides_credentials(svc, monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "SECRET-DEVICE-CODE", "user_code": "ABCD-1234",
@@ -122,7 +122,7 @@ def test_device_start_returns_user_code_and_hides_credentials(svc, monkeypatch):
 
 
 def test_device_poll_pending_then_ok(svc, monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "dev", "user_code": "ABCD",
@@ -150,7 +150,7 @@ def test_device_poll_rejects_stale_session(svc):
 
 
 def test_codex_device_flow(svc, monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "Client", lambda *a, **k: _Client([
         _Resp(payload={"user_code": "WXYZ", "device_auth_id": "dev", "interval": 3})]))
@@ -171,7 +171,7 @@ def test_codex_device_flow(svc, monkeypatch):
 
 
 def test_device_provider_refuses_complete(svc, monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "dev", "user_code": "A", "verification_uri_complete": "x", "expires_in": 60}))
     started = svc.auth_start("qwen-oauth")
@@ -182,7 +182,7 @@ def test_device_provider_refuses_complete(svc, monkeypatch):
 # ── 粘码流程（Claude / Gemini）──────────────────────────────────────────────
 
 def test_anthropic_paste_flow(svc, monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     started = svc.auth_start("anthropic-oauth")
     assert started["kind"] == "paste"
@@ -201,7 +201,7 @@ def test_anthropic_paste_flow(svc, monkeypatch):
 
 def test_anthropic_rejects_wrong_state(svc, monkeypatch):
     """state 对不上就是粘错了或被篡改，必须拒绝而不是照换不误。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     started = svc.auth_start("anthropic-oauth")
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={"access_token": "x"}))
@@ -213,7 +213,7 @@ def test_anthropic_rejects_wrong_state(svc, monkeypatch):
 def test_google_paste_flow_reuses_the_same_redirect_uri(svc, monkeypatch):
     """换 token 用的 redirect_uri 必须和授权时**逐字一致**，否则 Google 直接拒。
     远程用的时候那个回调地址根本连不上（指的是用户自己的电脑），但它仍然要一字不差。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     started = svc.auth_start("google-gemini-cli")
     used = started["url"]
@@ -240,7 +240,7 @@ def test_google_paste_flow_reuses_the_same_redirect_uri(svc, monkeypatch):
 def test_copilot_login_writes_its_own_env_var_not_gh_token(svc, monkeypatch):
     """**绝不能写 GH_TOKEN / GITHUB_TOKEN** —— 那是 gh CLI 和 CI 脚本在用的通用变量，
     往里塞一个 Copilot 专用 token 会连带影响它们，出问题还查不出是谁改的。"""
-    from ivyea_agent import config, oauth_auth
+    from awen_agent import config, oauth_auth
 
     monkeypatch.setattr(oauth_auth, "exchange_copilot_token",
                         lambda tok, timeout=10.0: ("copilot-api-token", time.time() + 1800))
@@ -249,7 +249,7 @@ def test_copilot_login_writes_its_own_env_var_not_gh_token(svc, monkeypatch):
     out = svc.auth_complete("copilot", started["session"], "gho_realtoken")
     assert out["ok"] is True
 
-    env_text = (config.IVYEA_DIR / ".env").read_text(encoding="utf-8")
+    env_text = (config.AWEN_DIR / ".env").read_text(encoding="utf-8")
     assert "COPILOT_GITHUB_TOKEN=gho_realtoken" in env_text
     assert "GH_TOKEN" not in env_text
     assert "\nGITHUB_TOKEN" not in env_text
@@ -261,7 +261,7 @@ def test_copilot_rejects_classic_pat(svc, monkeypatch):
 
 
 def test_copilot_logout_only_clears_its_own_var(svc, monkeypatch):
-    from ivyea_agent import config, oauth_auth
+    from awen_agent import config, oauth_auth
 
     monkeypatch.setattr(oauth_auth, "exchange_copilot_token",
                         lambda tok, timeout=10.0: ("copilot-api-token", time.time() + 1800))
@@ -269,7 +269,7 @@ def test_copilot_logout_only_clears_its_own_var(svc, monkeypatch):
     svc.auth_complete("copilot", "", "gho_realtoken")
     svc.auth_logout("copilot")
 
-    env_text = (config.IVYEA_DIR / ".env").read_text(encoding="utf-8")
+    env_text = (config.AWEN_DIR / ".env").read_text(encoding="utf-8")
     assert "COPILOT_GITHUB_TOKEN=gho_realtoken" not in env_text
     assert "GH_TOKEN=someone-elses-token" in env_text     # 别人的东西一个字没动
     assert oauth_auth.get_token("copilot") == ""
@@ -278,7 +278,7 @@ def test_copilot_logout_only_clears_its_own_var(svc, monkeypatch):
 # ── 会话池 ──────────────────────────────────────────────────────────────────
 
 def test_sessions_expire(svc, monkeypatch):
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "dev", "user_code": "A", "verification_uri_complete": "x", "expires_in": 600}))
@@ -300,7 +300,7 @@ def test_session_pool_is_capped(svc):
 def test_gateway_5xx_during_poll_is_retryable_not_fatal(svc, monkeypatch):
     """实测撞到过阿里云网关的 504。把它当硬失败，用户正站在授权页面前面却被告知
     "登录失败"，而其实什么都没坏 —— 会话销毁后还得从头再来一遍。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "dev", "user_code": "A", "verification_uri_complete": "x", "expires_in": 600}))
@@ -321,7 +321,7 @@ def test_gateway_5xx_during_poll_is_retryable_not_fatal(svc, monkeypatch):
 
 def test_endless_gateway_failure_eventually_gives_up(svc, monkeypatch):
     """一直重试也不行的时候要认输，不能让界面永远转圈。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "dev", "user_code": "A", "verification_uri_complete": "x", "expires_in": 600}))
@@ -337,7 +337,7 @@ def test_endless_gateway_failure_eventually_gives_up(svc, monkeypatch):
 
 def test_transient_failure_counter_resets_on_a_normal_answer(svc, monkeypatch):
     """对面答得好好的（authorization_pending），之前那点抖动就不该再算数。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "dev", "user_code": "A", "verification_uri_complete": "x", "expires_in": 600}))
@@ -359,7 +359,7 @@ def test_transient_failure_counter_resets_on_a_normal_answer(svc, monkeypatch):
 def test_kimi_device_flow(svc, monkeypatch):
     """契约取自官方 CLI 包 @moonshot-ai/kimi-code：标准 RFC 8628。
     这里钉住三件事 —— 端点、client_id、grant_type，任何一个写错都只会在真机上炸。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     seen: list = []
 
@@ -389,7 +389,7 @@ def test_kimi_device_flow(svc, monkeypatch):
 def test_kimi_pending_and_expired_are_told_apart(svc, monkeypatch):
     """authorization_pending 要继续等，expired_token 要当场说"过期了，重来"——
     混成一句"登录失败"，用户根本不知道该不该再点一次。"""
-    from ivyea_agent import oauth_auth
+    from awen_agent import oauth_auth
 
     monkeypatch.setattr(oauth_auth.httpx, "post", lambda *a, **k: _Resp(payload={
         "device_code": "d", "user_code": "u", "verification_uri_complete": "x",
@@ -406,8 +406,8 @@ def test_kimi_pending_and_expired_are_told_apart(svc, monkeypatch):
     assert out["status"] == "error" and "过期" in out["error"]
 
 
-def test_kimi_token_refreshes_when_expiring(ivyea_home, monkeypatch):
-    from ivyea_agent import oauth_auth
+def test_kimi_token_refreshes_when_expiring(awen_home, monkeypatch):
+    from awen_agent import oauth_auth
     import time as _t
 
     oauth_auth.set_auth_token("kimi-code", "old", refresh_token="ref", expires_at=_t.time() - 1)
@@ -421,7 +421,7 @@ def test_kimi_token_refreshes_when_expiring(ivyea_home, monkeypatch):
 def test_glm_coding_plan_uses_the_coding_only_endpoint():
     """官方明确要求 Coding Plan 用 `/api/coding/paas/v4`，填成通用的 `/api/paas/v4`
     会不通，而报错完全指不到"地址错了"上。两种条目并存、各走各的。"""
-    from ivyea_agent import models
+    from awen_agent import models
 
     assert models.provider_by_id("zai-coding")["base"] == "https://api.z.ai/api/coding/paas/v4"
     assert models.provider_by_id("glm-coding")["base"] == "https://open.bigmodel.cn/api/coding/paas/v4"
@@ -431,7 +431,7 @@ def test_glm_coding_plan_uses_the_coding_only_endpoint():
 
 
 def test_kimi_code_provider_is_oauth_and_needs_no_key():
-    from ivyea_agent import models
+    from awen_agent import models
 
     p = models.provider_by_id("kimi-code")
     assert p["auth_type"] == "oauth_external"

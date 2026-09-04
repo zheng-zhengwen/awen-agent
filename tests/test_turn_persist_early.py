@@ -17,9 +17,9 @@ import sys
 
 
 def _mods():
-    sessions = importlib.reload(sys.modules["ivyea_agent.sessions"]) \
-        if "ivyea_agent.sessions" in sys.modules else importlib.import_module("ivyea_agent.sessions")
-    service = importlib.import_module("ivyea_agent.service")
+    sessions = importlib.reload(sys.modules["awen_agent.sessions"]) \
+        if "awen_agent.sessions" in sys.modules else importlib.import_module("awen_agent.sessions")
+    service = importlib.import_module("awen_agent.service")
     service.sessions = sessions
     return sessions, service
 
@@ -43,7 +43,7 @@ def _run(service, payload, sink):
     return service.chat_stream(payload, send, provider=_FakeProvider())
 
 
-def test_user_message_is_on_disk_before_the_turn_finishes(ivyea_home, monkeypatch):
+def test_user_message_is_on_disk_before_the_turn_finishes(awen_home, monkeypatch):
     sessions, service = _mods()
     seen: list[dict] = []
 
@@ -69,7 +69,7 @@ def test_user_message_is_on_disk_before_the_turn_finishes(ivyea_home, monkeypatc
     assert any("帮我看看这个报错" in t for t in texts)
 
 
-def test_the_question_is_not_written_twice(ivyea_home):
+def test_the_question_is_not_written_twice(awen_home):
     sessions, service = _mods()
     sid = "20260820-000000-101-test"
     _run(service, {"message": "帮我看看这个报错", "session_id": sid,
@@ -79,7 +79,7 @@ def test_the_question_is_not_written_twice(ivyea_home):
     assert len(asked) == 1, f"开跑写一次、收尾又写一次 = 同一句话在会话里出现两遍：{len(asked)}"
 
 
-def test_turn_count_is_still_one(ivyea_home):
+def test_turn_count_is_still_one(awen_home):
     """开跑那次不带 turn_stat，所以累计账里的轮数不能被算成两轮。"""
     sessions, service = _mods()
     sid = "20260820-000000-102-test"
@@ -88,7 +88,7 @@ def test_turn_count_is_still_one(ivyea_home):
     assert ((sessions.load(sid) or {}).get("stats") or {}).get("turns") == 1
 
 
-def test_persist_false_still_writes_nothing(ivyea_home):
+def test_persist_false_still_writes_nothing(awen_home):
     """跟进建议、内部一次性调用走 persist=False —— 它们不该在会话库里留下孤儿。"""
     sessions, service = _mods()
     sid = "20260820-000000-103-test"

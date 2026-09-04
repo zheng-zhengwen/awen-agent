@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ivyea Agent · 安装指南</title>
-<meta name="description" content="Ivyea Agent 一键安装：Windows / macOS / Linux 三平台，自动装 pipx、拉 Release wheel，装完 ivyea onboard 即可对话。含固定版本、pipx 手动、离线内网部署、验证维护与故障排查。" />
+<title>awen Agent · 安装指南</title>
+<meta name="description" content="awen Agent 一键安装：Windows / macOS / Linux 三平台，自动装 pipx、拉 Release wheel，装完 awen onboard 即可对话。含固定版本、pipx 手动、离线内网部署、验证维护与故障排查。" />
 <style>
   :root{
     --bg:#f4f8f5; --line:rgba(12,40,26,.09); --line2:rgba(12,40,26,.15); --line3:rgba(12,40,26,.24);
@@ -160,16 +160,16 @@
 <div class="orb orb1"></div>
 
 <div class="topbar">
-  <a class="brand" href="index.html"><span class="mark">›_</span> Ivyea Agent</a>
+  <a class="brand" href="index.html"><span class="mark">›_</span> awen Agent</a>
   <nav class="nav-links" id="navLinks">
     <a href="index.html#features">能力</a>
     <a href="install.html" class="active">安装</a>
     <a href="docs.html">文档</a>
     <a href="index.html#embed">嵌入 Ops</a>
-    <a href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">GitHub</a>
   </nav>
   <div style="display:flex;align-items:center;gap:10px">
-    <a class="gh-btn" href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">
+    <a class="gh-btn" href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">
       <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       <span>GitHub</span>
     </a>
@@ -194,8 +194,8 @@
 
     <article class="doc">
       <p class="eyebrow">Install guide · v1.2.3</p>
-      <h1>安装 Ivyea Agent</h1>
-      <p class="doc-intro">一条命令装完，三步就能对话。安装脚本会自动检测 Python、装好 pipx、拉取最新 Release，把 <code>ivyea</code> 作为独立命令放进 PATH——不污染系统 Python，升级卸载都干净。Windows / macOS / Linux 三平台，CI 全绿。</p>
+      <h1>安装 awen Agent</h1>
+      <p class="doc-intro">一条命令装完，三步就能对话。安装脚本会自动检测 Python、装好 pipx、拉取最新 Release，把 <code>awen</code> 作为独立命令放进 PATH——不污染系统 Python，升级卸载都干净。Windows / macOS / Linux 三平台，CI 全绿。</p>
 
       <!-- ── 最快安装 ── -->
       <h2 id="quick">最快安装</h2>
@@ -220,43 +220,43 @@
         <div class="term-body">
 <div class="os-pane" data-pane="linux-script">
 <div class="tl"><span class="c"># 1 · 一键安装（自动装 pipx，拉最新 Release wheel）</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.sh | bash</span></div>
-<div class="tl"><span class="dim">[ivyea] 使用 Python 3.11.9</span></div>
-<div class="tl"><span class="dim">[ivyea] 安装 ivyea-agent（来源：Release wheel v1.2.3）…</span></div>
-<div class="tl"><span class="ok">[ivyea] ✓ 安装完成。</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.sh | bash</span></div>
+<div class="tl"><span class="dim">[awen] 使用 Python 3.11.9</span></div>
+<div class="tl"><span class="dim">[awen] 安装 awen-agent（来源：Release wheel v1.2.3）…</span></div>
+<div class="tl"><span class="ok">[awen] ✓ 安装完成。</span></div>
 <div class="tl"><span class="c"># 2 · 首次引导：选模型 → 配 key（可选接领星）</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="c"># 3 · 开始对话</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ 对话式运营 Agent 就绪</span>  <span class="ok">✓</span></div>
 </div>
 <div class="os-pane" data-pane="windows-script" hidden>
 <div class="tl"><span class="c"># 1 · 一键安装（PowerShell，自动装 pipx / 拉 Release）</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">iwr https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.ps1 -UseBasicParsing | iex</span></div>
-<div class="tl"><span class="dim">[ivyea] 安装 ivyea-agent（来源：Release wheel v1.2.3）…</span></div>
-<div class="tl"><span class="ok">[ivyea] ✓ 安装完成。若 ivyea 不能直接执行，请重开 PowerShell。</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">iwr https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.ps1 -UseBasicParsing | iex</span></div>
+<div class="tl"><span class="dim">[awen] 安装 awen-agent（来源：Release wheel v1.2.3）…</span></div>
+<div class="tl"><span class="ok">[awen] ✓ 安装完成。若 awen 不能直接执行，请重开 PowerShell。</span></div>
 <div class="tl"><span class="c"># 2 · 首次引导：选模型 → 配 key</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="c"># 3 · 开始对话</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ 对话式运营 Agent 就绪</span>  <span class="ok">✓</span></div>
 </div>
 <div class="os-pane" data-pane="linux-pipx" hidden>
 <div class="tl"><span class="c"># 1 · 用 pipx 从源码安装（已装 pipx 时）</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">pipx install git+https://github.com/Hector-xue/ivyea-agent.git</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">pipx install git+https://github.com/zheng-zhengwen/awen-agent.git</span></div>
 <div class="tl"><span class="c"># 2 · 首次引导</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="c"># 3 · 开始对话</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ 对话式运营 Agent 就绪</span>  <span class="ok">✓</span></div>
 </div>
 <div class="os-pane" data-pane="windows-pipx" hidden>
 <div class="tl"><span class="c"># 1 · 用 pipx 从源码安装（已装 pipx 时）</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">pipx install git+https://github.com/Hector-xue/ivyea-agent.git</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">pipx install git+https://github.com/zheng-zhengwen/awen-agent.git</span></div>
 <div class="tl"><span class="c"># 2 · 首次引导</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="c"># 3 · 开始对话</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ 对话式运营 Agent 就绪</span>  <span class="ok">✓</span></div>
 </div>
         </div>
@@ -266,7 +266,7 @@
           <span class="term-step"><span class="n">3</span>对话</span>
         </div>
       </div>
-      <div class="note">看不到 <code>ivyea</code> 命令？多半是 PATH 还没刷新。<b>重开一个终端</b>即可；Linux/macOS 也可先临时执行 <code>export PATH="$HOME/.local/bin:$PATH"</code>。</div>
+      <div class="note">看不到 <code>awen</code> 命令？多半是 PATH 还没刷新。<b>重开一个终端</b>即可；Linux/macOS 也可先临时执行 <code>export PATH="$HOME/.local/bin:$PATH"</code>。</div>
 
       <!-- ── 脚本做了什么 ── -->
       <h2 id="what">一键脚本做了什么</h2>
@@ -286,13 +286,13 @@
           <tr><td>Python</td><td>3.9 或更高（脚本会自动检测，必要时尝试自动安装）。</td></tr>
           <tr><td>系统</td><td>Windows、macOS、Linux。CI 三平台 × Python 3.9 / 3.11 / 3.12 全绿。</td></tr>
           <tr><td>网络</td><td>在线安装需能访问 GitHub。国内可设 <code>PIP_INDEX_URL</code> 走镜像，私有仓库设 <code>GITHUB_TOKEN</code>；完全离线见「离线内网部署」。</td></tr>
-          <tr><td>模型</td><td>DeepSeek、OpenAI 兼容、Anthropic、Gemini、OpenAI Codex 等任选其一作主脑，<code>ivyea onboard</code> 里配置。</td></tr>
+          <tr><td>模型</td><td>DeepSeek、OpenAI 兼容、Anthropic、Gemini、OpenAI Codex 等任选其一作主脑，<code>awen onboard</code> 里配置。</td></tr>
         </tbody>
       </table>
 
       <!-- ── 固定版本 ── -->
       <h2 id="version">固定版本安装</h2>
-      <p class="lead">团队协作时建议固定版本，避免不同成员装到不同 Release。用 <code>IVYEA_VERSION</code> 指定标签即可。</p>
+      <p class="lead">团队协作时建议固定版本，避免不同成员装到不同 Release。用 <code>AWEN_VERSION</code> 指定标签即可。</p>
       <div class="term">
         <div class="term-bar">
           <span class="d" style="background:#ff5f57"></span>
@@ -302,11 +302,11 @@
         </div>
         <div class="term-body">
 <div class="tl"><span class="c"># Linux / macOS</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.sh | IVYEA_VERSION=v1.2.3 bash</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.sh | AWEN_VERSION=v1.2.3 bash</span></div>
 <div class="tl">&nbsp;</div>
 <div class="tl"><span class="c"># Windows PowerShell</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">$env:IVYEA_VERSION="v1.2.3"</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">iwr https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.ps1 -UseBasicParsing | iex</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">$env:AWEN_VERSION="v1.2.3"</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">iwr https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.ps1 -UseBasicParsing | iex</span></div>
 </div>
       </div>
 
@@ -322,69 +322,69 @@
         </div>
         <div class="term-body">
 <div class="tl"><span class="c"># A · pipx 从源码直装（推荐给已有 pipx 的人）</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">pipx install git+https://github.com/Hector-xue/ivyea-agent.git</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">pipx install git+https://github.com/zheng-zhengwen/awen-agent.git</span></div>
 <div class="tl">&nbsp;</div>
 <div class="tl"><span class="c"># B · 开发者：clone + editable，改代码即时生效</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">git clone https://github.com/Hector-xue/ivyea-agent.git</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">cd ivyea-agent</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">git clone https://github.com/zheng-zhengwen/awen-agent.git</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">cd awen-agent</span></div>
 <div class="tl"><span class="p">$ </span><span class="cmd">python -m venv .venv &amp;&amp; . .venv/bin/activate</span></div>
 <div class="tl"><span class="p">$ </span><span class="cmd">pip install -e ".[dev,anthropic]"</span></div>
 </div>
       </div>
-      <div class="note">需要<b>本地语义检索</b>（sentence-transformers）时，一键脚本加 <code>IVYEA_WITH_SEMANTIC=1</code>，或 pipx 装完执行 <code>pipx inject ivyea-agent "sentence-transformers>=3.0"</code>。不装也能用，默认回退本地 hash 索引。</div>
+      <div class="note">需要<b>本地语义检索</b>（sentence-transformers）时，一键脚本加 <code>AWEN_WITH_SEMANTIC=1</code>，或 pipx 装完执行 <code>pipx inject awen-agent "sentence-transformers>=3.0"</code>。不装也能用，默认回退本地 hash 索引。</div>
 
       <!-- ── 首次配置 ── -->
       <h2 id="onboard">首次配置</h2>
-      <p class="lead"><code>ivyea onboard</code> 是交互式引导：选主脑模型、填 API key、可选接入领星 OpenAPI、生成 <code>AGENTS.md</code> 持久指令。全程回车即用默认值。</p>
+      <p class="lead"><code>awen onboard</code> 是交互式引导：选主脑模型、填 API key、可选接入领星 OpenAPI、生成 <code>AGENTS.md</code> 持久指令。全程回车即用默认值。</p>
       <div class="term">
         <div class="term-bar">
           <span class="d" style="background:#ff5f57"></span>
           <span class="d" style="background:#febc2e"></span>
           <span class="d" style="background:#28c840"></span>
-          <span class="t">ivyea onboard</span>
+          <span class="t">awen onboard</span>
         </div>
         <div class="term-body">
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="dim">选择主脑模型：</span></div>
 <div class="tl"><span class="ok">  ›</span> deepseek · openai · anthropic · gemini · openai-codex …</div>
-<div class="tl"><span class="dim">填入 API key（留空可稍后 ivyea config 补）：</span> <span class="cmd">••••••••</span></div>
+<div class="tl"><span class="dim">填入 API key（留空可稍后 awen config 补）：</span> <span class="cmd">••••••••</span></div>
 <div class="tl"><span class="dim">接入领星 OpenAPI 广告数据？(y/N)：</span> <span class="cmd">N</span></div>
-<div class="tl"><span class="ok">✓ 已写入 ~/.ivyea/settings.json 与 .env</span></div>
+<div class="tl"><span class="ok">✓ 已写入 ~/.awen/settings.json 与 .env</span></div>
 <div class="tl"><span class="ok">✓ 已生成 AGENTS.md（持久运营指令）</span></div>
-<div class="tl"><span class="dim">下一步：ivyea chat</span></div>
+<div class="tl"><span class="dim">下一步：awen chat</span></div>
 </div>
       </div>
       <p>之后随时可用这些命令查看或修改配置：</p>
-      <pre><code>ivyea config show            # 查看当前配置
-ivyea config set key value   # 改单项
-ivyea model                  # 查看 / 切换主脑模型（交互）</code></pre>
-      <div class="note">配置、记忆与知识库默认都在 <code>~/.ivyea/</code>：<code>settings.json</code>、<code>.env</code>、<code>mcp.json</code>、<code>memory.db</code> 和用户知识库。备份这个目录就是备份全部状态。</div>
+      <pre><code>awen config show            # 查看当前配置
+awen config set key value   # 改单项
+awen model                  # 查看 / 切换主脑模型（交互）</code></pre>
+      <div class="note">配置、记忆与知识库默认都在 <code>~/.awen/</code>：<code>settings.json</code>、<code>.env</code>、<code>mcp.json</code>、<code>memory.db</code> 和用户知识库。备份这个目录就是备份全部状态。</div>
 
       <!-- ── 验证与维护 ── -->
       <h2 id="verify">验证与维护</h2>
-      <p class="lead"><code>ivyea doctor</code> 一键体检：配置、依赖、知识库、磁盘、领星 / MCP 连接。装完跑一次确认无红灯。</p>
+      <p class="lead"><code>awen doctor</code> 一键体检：配置、依赖、知识库、磁盘、领星 / MCP 连接。装完跑一次确认无红灯。</p>
       <div class="term">
         <div class="term-bar">
           <span class="d" style="background:#ff5f57"></span>
           <span class="d" style="background:#febc2e"></span>
           <span class="d" style="background:#28c840"></span>
-          <span class="t">ivyea doctor</span>
+          <span class="t">awen doctor</span>
         </div>
         <div class="term-body">
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea doctor</span></div>
-<div class="tl"><span class="ok">✓</span> Python 3.11.9 · ivyea-agent 1.2.1</div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen doctor</span></div>
+<div class="tl"><span class="ok">✓</span> Python 3.11.9 · awen-agent 1.2.1</div>
 <div class="tl"><span class="ok">✓</span> 主脑模型已配置 · API key 就绪</div>
 <div class="tl"><span class="ok">✓</span> 知识库 · 本地检索索引已建</div>
-<div class="tl"><span class="ok">✓</span> 数据目录 ~/.ivyea 可写 · 磁盘空间充足</div>
-<div class="tl"><span class="dim">○</span> <span class="dim">领星 OpenAPI 未接入（可选，ivyea lingxing setup）</span></div>
+<div class="tl"><span class="ok">✓</span> 数据目录 ~/.awen 可写 · 磁盘空间充足</div>
+<div class="tl"><span class="dim">○</span> <span class="dim">领星 OpenAPI 未接入（可选，awen lingxing setup）</span></div>
 </div>
       </div>
-      <p>升级与卸载都走 <code>ivyea self</code>（默认 dry-run，加 <code>--execute</code> 才真正执行）：</p>
-      <pre><code>ivyea self upgrade --execute              # 升级到最新 Release
-ivyea self upgrade --version v1.2.3 --execute   # 升到指定版本
-ivyea self uninstall --execute            # 卸载（保留数据）
-ivyea self uninstall --remove-data --execute    # 卸载并删除 ~/.ivyea</code></pre>
-      <p>重新跑一键安装脚本也会把已装的 ivyea 升级到最新版，效果等同 <code>self upgrade</code>。</p>
+      <p>升级与卸载都走 <code>awen self</code>（默认 dry-run，加 <code>--execute</code> 才真正执行）：</p>
+      <pre><code>awen self upgrade --execute              # 升级到最新 Release
+awen self upgrade --version v1.2.3 --execute   # 升到指定版本
+awen self uninstall --execute            # 卸载（保留数据）
+awen self uninstall --remove-data --execute    # 卸载并删除 ~/.awen</code></pre>
+      <p>重新跑一键安装脚本也会把已装的 awen 升级到最新版，效果等同 <code>self upgrade</code>。</p>
 
       <!-- ── 离线部署 ── -->
       <h2 id="offline">离线内网部署</h2>
@@ -400,12 +400,12 @@ ivyea self uninstall --remove-data --execute    # 卸载并删除 ~/.ivyea</code
 <div class="tl"><span class="c"># 有网机器：生成离线包</span></div>
 <div class="tl"><span class="p">$ </span><span class="cmd">python scripts/build_offline_bundle.py</span></div>
 <div class="tl"><span class="dim">产物在 dist/offline/：</span></div>
-<div class="tl"><span class="dim">  ivyea-agent-offline-1.2.1.tar.gz   (Linux / macOS)</span></div>
-<div class="tl"><span class="dim">  ivyea-agent-offline-1.2.1.zip      (Windows)</span></div>
+<div class="tl"><span class="dim">  awen-agent-offline-1.2.1.tar.gz   (Linux / macOS)</span></div>
+<div class="tl"><span class="dim">  awen-agent-offline-1.2.1.zip      (Windows)</span></div>
 <div class="tl">&nbsp;</div>
 <div class="tl"><span class="c"># 内网机器：解压后安装（不联网）</span></div>
 <div class="tl"><span class="p">$ </span><span class="cmd">bash install.sh</span>  <span class="dim"># Windows: powershell -ExecutionPolicy Bypass -File .\install.ps1</span></div>
-<div class="tl"><span class="ok">[ivyea] ✓ 离线安装完成。</span></div>
+<div class="tl"><span class="ok">[awen] ✓ 离线安装完成。</span></div>
 </div>
       </div>
       <div class="note">要把<b>本地语义检索依赖或 embedding 模型</b>也打进离线包，加 <code>--with-semantic</code>（可选 <code>--semantic-model-dir</code> 指定预下载的模型目录），详见 README。</div>
@@ -415,29 +415,29 @@ ivyea self uninstall --remove-data --execute    # 卸载并删除 ~/.ivyea</code
       <table>
         <thead><tr><th>现象</th><th>处理方式</th></tr></thead>
         <tbody>
-          <tr><td>装完找不到 <code>ivyea</code></td><td>PATH 未刷新。重开终端；或执行 <code>pipx ensurepath</code> 后重开，Linux/macOS 也可 <code>export PATH="$HOME/.local/bin:$PATH"</code>。</td></tr>
+          <tr><td>装完找不到 <code>awen</code></td><td>PATH 未刷新。重开终端；或执行 <code>pipx ensurepath</code> 后重开，Linux/macOS 也可 <code>export PATH="$HOME/.local/bin:$PATH"</code>。</td></tr>
           <tr><td>Python 版本太低</td><td>安装 Python 3.9+。Windows 从 python.org 安装时务必勾选 <b>Add Python to PATH</b>。</td></tr>
-          <tr><td>Release 读取失败 / 403</td><td>多为 GitHub API 限流或私有仓库。设 <code>GITHUB_TOKEN</code>，或设 <code>IVYEA_REF=main</code> 从 git 源码安装。</td></tr>
+          <tr><td>Release 读取失败 / 403</td><td>多为 GitHub API 限流或私有仓库。设 <code>GITHUB_TOKEN</code>，或设 <code>AWEN_REF=main</code> 从 git 源码安装。</td></tr>
           <tr><td>pip 下载太慢</td><td>设镜像：<code>PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple</code>（放在安装命令前）。</td></tr>
           <tr><td>Windows 报执行策略限制</td><td>当前会话放行：<code>Set-ExecutionPolicy -Scope Process Bypass</code>，再运行安装命令。</td></tr>
           <tr><td>中文 CSV 乱码</td><td>优先用 <code>.xlsx</code>，或把 CSV 另存为 UTF-8 编码。</td></tr>
         </tbody>
       </table>
-      <p style="margin-top:20px">还有问题？到 <a href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer" style="color:var(--green);font-weight:600">GitHub</a> 提 issue，或看 <a href="docs.html" style="color:var(--green);font-weight:600">完整文档</a> 与 <a href="docs.html#deploy" style="color:var(--green);font-weight:600">服务器部署</a>。</p>
+      <p style="margin-top:20px">还有问题？到 <a href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer" style="color:var(--green);font-weight:600">GitHub</a> 提 issue，或看 <a href="docs.html" style="color:var(--green);font-weight:600">完整文档</a> 与 <a href="docs.html#deploy" style="color:var(--green);font-weight:600">服务器部署</a>。</p>
     </article>
   </div>
 </div>
 
 <footer>
   <div class="foot">
-    <div class="foot-brand"><span class="mark">›_</span> Ivyea Agent</div>
+    <div class="foot-brand"><span class="mark">›_</span> awen Agent</div>
     <div class="foot-links">
       <a href="index.html">首页</a>
       <a href="docs.html">文档</a>
       <a href="docs.html#deploy">服务器部署</a>
-      <a href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">GitHub</a>
     </div>
-    <div class="foot-note">© 2026 Ivyea · 开源 · 自托管</div>
+    <div class="foot-note">© 2026 awen · 开源 · 自托管</div>
   </div>
 </footer>
 
@@ -447,10 +447,10 @@ document.querySelectorAll("#navLinks a").forEach(a=>a.onclick=()=>document.getEl
 
 // ── 顶部安装终端：OS × 方法 切换 + 复制 ──
 const OS_CMDS={
-  "linux-script":"curl -fsSL https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.sh | bash\nivyea onboard\nivyea chat",
-  "windows-script":"iwr https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.ps1 -UseBasicParsing | iex\nivyea onboard\nivyea chat",
-  "linux-pipx":"pipx install git+https://github.com/Hector-xue/ivyea-agent.git\nivyea onboard\nivyea chat",
-  "windows-pipx":"pipx install git+https://github.com/Hector-xue/ivyea-agent.git\nivyea onboard\nivyea chat",
+  "linux-script":"curl -fsSL https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.sh | bash\nawen onboard\nawen chat",
+  "windows-script":"iwr https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.ps1 -UseBasicParsing | iex\nawen onboard\nawen chat",
+  "linux-pipx":"pipx install git+https://github.com/zheng-zhengwen/awen-agent.git\nawen onboard\nawen chat",
+  "windows-pipx":"pipx install git+https://github.com/zheng-zhengwen/awen-agent.git\nawen onboard\nawen chat",
 };
 let curOS="linux",curMethod="script";
 function applyTabs(){

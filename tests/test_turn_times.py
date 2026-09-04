@@ -12,17 +12,17 @@ from __future__ import annotations
 
 import time
 
-from ivyea_agent import transcript
+from awen_agent import transcript
 
 
-def _sessions(ivyea_home):
+def _sessions(awen_home):
     import importlib
-    from ivyea_agent import sessions
+    from awen_agent import sessions
     return importlib.reload(sessions)
 
 
-def test_turn_times_survive_a_second_append(ivyea_home):
-    sessions = _sessions(ivyea_home)
+def test_turn_times_survive_a_second_append(awen_home):
+    sessions = _sessions(awen_home)
     sid = sessions.new_id()
     # 开跑：先落用户那句话，再记起点（chat_stream 就是这个顺序）
     sessions.append_turn(sid, "sys", [{"role": "user", "content": "做 A"}])
@@ -37,8 +37,8 @@ def test_turn_times_survive_a_second_append(ivyea_home):
     assert times == [{"turn": 0, "started_at": 1000.0, "ended_at": 1180.0, "ms": 180_000}]
 
 
-def test_second_turn_gets_its_own_row(ivyea_home):
-    sessions = _sessions(ivyea_home)
+def test_second_turn_gets_its_own_row(awen_home):
+    sessions = _sessions(awen_home)
     sid = sessions.new_id()
     for n, (start, end) in enumerate([(10.0, 20.0), (30.0, 45.0)]):
         sessions.append_turn(sid, "sys", [{"role": "user", "content": f"第 {n} 问"}])
@@ -52,9 +52,9 @@ def test_second_turn_gets_its_own_row(ivyea_home):
     assert [t["ms"] for t in times] == [10_000, 15_000]
 
 
-def test_turn_number_matches_the_paging_slices(ivyea_home):
+def test_turn_number_matches_the_paging_slices(awen_home):
     """轮号与详情分页的切法必须对得上 —— 追加指令自成一轮时也一样。"""
-    sessions = _sessions(ivyea_home)
+    sessions = _sessions(awen_home)
     sid = sessions.new_id()
     sessions.append_turn(sid, "sys", [{"role": "user", "content": "做 A"}])
     main = sessions.current_turn_index(sid)
@@ -76,9 +76,9 @@ def test_turn_number_matches_the_paging_slices(ivyea_home):
     assert b == len(kept)
 
 
-def test_gate_messages_do_not_shift_turn_numbers(ivyea_home):
+def test_gate_messages_do_not_shift_turn_numbers(awen_home):
     """门禁注回的 user 消息不是提问 —— 它不能把后面几轮的轮号顶偏。"""
-    sessions = _sessions(ivyea_home)
+    sessions = _sessions(awen_home)
     sid = sessions.new_id()
     sessions.append_turn(sid, "sys", [{"role": "user", "content": "做 A"}])
     sessions.append_turn(sid, "sys", [
@@ -91,15 +91,15 @@ def test_gate_messages_do_not_shift_turn_numbers(ivyea_home):
     assert sessions.current_turn_index(sid) == 1
 
 
-def test_note_turn_time_ignores_unknown_session(ivyea_home):
-    sessions = _sessions(ivyea_home)
+def test_note_turn_time_ignores_unknown_session(awen_home):
+    sessions = _sessions(awen_home)
     sessions.note_turn_time("no-such-session", 0, started_at=time.time())   # 不抛
     assert sessions.turn_times("no-such-session") == []
 
 
-def test_turn_times_are_not_wiped_by_a_plain_save(ivyea_home):
+def test_turn_times_are_not_wiped_by_a_plain_save(awen_home):
     """`save()` 是整份覆盖语义，但它不知道时间账的存在 —— 不能顺手抹掉。"""
-    sessions = _sessions(ivyea_home)
+    sessions = _sessions(awen_home)
     sid = sessions.new_id()
     sessions.append_turn(sid, "sys", [{"role": "user", "content": "问"}])
     sessions.note_turn_time(sid, 0, started_at=5.0, ended_at=9.0, ms=4000)

@@ -5,8 +5,8 @@ import importlib
 
 
 # ── B1 主脑健康（本地判断，不发网络）──
-def test_main_brain_health_oauth_expired(ivyea_home, monkeypatch):
-    from ivyea_agent import config, oauth_auth
+def test_main_brain_health_oauth_expired(awen_home, monkeypatch):
+    from awen_agent import config, oauth_auth
     monkeypatch.setattr(config, "load_settings",
                         lambda: {"auth_type": "oauth_external", "provider_id": "openai-codex", "label": "Codex"})
     monkeypatch.setattr(oauth_auth, "token_status", lambda pid: "expired")
@@ -14,20 +14,20 @@ def test_main_brain_health_oauth_expired(ivyea_home, monkeypatch):
     assert h["ok"] is False and h["status"] == "expired" and "Codex" in h["hint"]
 
 
-def test_main_brain_health_api_key_ok(ivyea_home, monkeypatch):
-    from ivyea_agent import config
+def test_main_brain_health_api_key_ok(awen_home, monkeypatch):
+    from awen_agent import config
     monkeypatch.setattr(config, "load_settings", lambda: {"auth_type": "api_key", "label": "DeepSeek"})
     monkeypatch.setattr(config, "get_active_key", lambda: "sk-xxx")
     assert config.main_brain_health()["ok"] is True
 
 
 # ── B2 debug 日志开关 ──
-def test_log_dbg_writes_only_when_enabled(ivyea_home, monkeypatch):
-    from ivyea_agent import config, log
+def test_log_dbg_writes_only_when_enabled(awen_home, monkeypatch):
+    from awen_agent import config, log
     importlib.reload(log)
-    logfile = config.IVYEA_DIR / "logs" / "agent.log"
+    logfile = config.AWEN_DIR / "logs" / "agent.log"
     # 关闭：不写
-    monkeypatch.delenv("IVYEA_DEBUG", raising=False)
+    monkeypatch.delenv("AWEN_DEBUG", raising=False)
     monkeypatch.setattr(log, "enabled", lambda: False)
     log.dbg("test", "should-not-write")
     assert not logfile.exists()
@@ -39,7 +39,7 @@ def test_log_dbg_writes_only_when_enabled(ivyea_home, monkeypatch):
 
 # ── B3 engineering_context 缓存 ──
 def test_engineering_context_caches_inspect(monkeypatch, tmp_path):
-    from ivyea_agent import engineering_context as ec
+    from awen_agent import engineering_context as ec
     ec._STATIC_CACHE.clear()
     calls = {"n": 0}
 
@@ -59,7 +59,7 @@ def test_engineering_context_caches_inspect(monkeypatch, tmp_path):
 
 
 def test_engineering_context_cache_invalidates_on_head_change(monkeypatch, tmp_path):
-    from ivyea_agent import engineering_context as ec
+    from awen_agent import engineering_context as ec
     ec._STATIC_CACHE.clear()
     calls = {"n": 0}
     monkeypatch.setattr(ec.workspace, "project_inspect",

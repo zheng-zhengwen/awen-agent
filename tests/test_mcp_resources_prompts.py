@@ -1,8 +1,8 @@
 """MCP client resources/prompts methods + reverse-server resources/prompts."""
 from __future__ import annotations
 
-from ivyea_agent import mcp_server
-from ivyea_agent.mcp_client import MCPClient
+from awen_agent import mcp_server
+from awen_agent.mcp_client import MCPClient
 
 
 # ── client ────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ def test_initialize_advertises_resources_and_prompts():
 
 def test_resources_list_and_read_knowledge_cards():
     resources = _call("resources/list")["resources"]
-    assert resources and all(r["uri"].startswith("ivyea-knowledge://") for r in resources)
+    assert resources and all(r["uri"].startswith("awen-knowledge://") for r in resources)
     body = _call("resources/read", {"uri": resources[0]["uri"]})["contents"][0]
     assert body["mimeType"] == "text/markdown" and body["text"]
 
@@ -58,7 +58,7 @@ def test_prompts_list_and_get_skills():
 
 def test_unknown_resource_and_prompt_error():
     err = mcp_server.handle_message(
-        {"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": "ivyea-knowledge://nope"}})
+        {"jsonrpc": "2.0", "id": 2, "method": "resources/read", "params": {"uri": "awen-knowledge://nope"}})
     assert "error" in err
     err2 = mcp_server.handle_message(
         {"jsonrpc": "2.0", "id": 3, "method": "prompts/get", "params": {"name": "nope"}})

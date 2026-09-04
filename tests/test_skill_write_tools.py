@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import importlib
 
-from ivyea_agent import skill_usage, skills, tools_general
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import skill_usage, skills, tools_general
+from awen_agent.agent_tools import ToolContext
 
 
 def _ctx(**kw):
@@ -23,7 +23,7 @@ def _good_args(**kw):
 
 
 # ── skill_write ──────────────────────────────────────────────────────────────
-def test_write_creates_a_loadable_skill(ivyea_home):
+def test_write_creates_a_loadable_skill(awen_home):
     importlib.reload(skills)
     out = tools_general.t_skill_write(_good_args(), _ctx())
     assert "已新建技能" in out
@@ -35,7 +35,7 @@ def test_write_creates_a_loadable_skill(ivyea_home):
     assert "每周复盘" in sk.body
 
 
-def test_a_skill_that_would_be_unfindable_is_rejected(ivyea_home):
+def test_a_skill_that_would_be_unfindable_is_rejected(awen_home):
     """没有触发词 = 中文用户搜不到。这种半成品不该落盘。"""
     importlib.reload(skills)
     out = tools_general.t_skill_write(_good_args(triggers=[]), _ctx())
@@ -44,14 +44,14 @@ def test_a_skill_that_would_be_unfindable_is_rejected(ivyea_home):
     assert skills.get_skill("lingxing.ad_patrol") is None      # 一个字都没写
 
 
-def test_validation_warnings_do_not_block(ivyea_home):
+def test_validation_warnings_do_not_block(awen_home):
     importlib.reload(skills)
     out = tools_general.t_skill_write(_good_args(body="# 就一句话"), _ctx())
     assert "已新建技能" in out
     assert "建议" in out or "小节" in out
 
 
-def test_rewriting_an_existing_skill_says_so(ivyea_home):
+def test_rewriting_an_existing_skill_says_so(awen_home):
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
     importlib.reload(skills)
@@ -59,7 +59,7 @@ def test_rewriting_an_existing_skill_says_so(ivyea_home):
     assert "已改写技能" in out
 
 
-def test_write_file_lands_next_to_the_skill(ivyea_home):
+def test_write_file_lands_next_to_the_skill(awen_home):
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
     out = tools_general.t_skill_write(
@@ -72,7 +72,7 @@ def test_write_file_lands_next_to_the_skill(ivyea_home):
     assert skills.read_asset(sk, "references/ch01.md") == "第一章内容"
 
 
-def test_asset_paths_cannot_escape_the_skill_directory(ivyea_home):
+def test_asset_paths_cannot_escape_the_skill_directory(awen_home):
     """路径来自模型，`../../` 一路能写到任何地方。"""
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
@@ -80,10 +80,10 @@ def test_asset_paths_cannot_escape_the_skill_directory(ivyea_home):
         {"action": "write_file", "skill_id": "lingxing.ad_patrol",
          "file_path": "../../../../etc/pwned", "content": "x"}, _ctx())
     assert "写入失败" in out
-    assert not (ivyea_home / "etc").exists()
+    assert not (awen_home / "etc").exists()
 
 
-def test_archive_moves_instead_of_deleting(ivyea_home):
+def test_archive_moves_instead_of_deleting(awen_home):
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
     importlib.reload(skills)
@@ -98,7 +98,7 @@ def test_archive_moves_instead_of_deleting(ivyea_home):
     assert skills.get_skill("lingxing.ad_patrol") is not None      # 拿得回来
 
 
-def test_builtin_skills_cannot_be_archived(ivyea_home):
+def test_builtin_skills_cannot_be_archived(awen_home):
     importlib.reload(skills)
     out = tools_general.t_skill_write(
         {"action": "archive", "skill_id": "amazon.budget_pacing"}, _ctx())
@@ -107,7 +107,7 @@ def test_builtin_skills_cannot_be_archived(ivyea_home):
     assert skills.get_skill("amazon.budget_pacing") is not None
 
 
-def test_plan_mode_blocks_skill_writes(ivyea_home):
+def test_plan_mode_blocks_skill_writes(awen_home):
     importlib.reload(skills)
     ctx = ToolContext(workspace=".", plan_mode=True)
     out = tools_general.t_skill_write(_good_args(), ctx)
@@ -117,7 +117,7 @@ def test_plan_mode_blocks_skill_writes(ivyea_home):
 
 
 # ── skill_view ───────────────────────────────────────────────────────────────
-def test_view_returns_the_full_body(ivyea_home):
+def test_view_returns_the_full_body(awen_home):
     """自动注入只给开头一段，全文此前**根本够不着** —— 这个工具补的就是这个洞。"""
     importlib.reload(skills)
     long_body = "# 手册\n\n## 何时使用\n用它\n\n" + "\n".join(f"第 {i} 步：做点什么。" for i in range(200))
@@ -132,7 +132,7 @@ def test_view_returns_the_full_body(ivyea_home):
     assert "第 199 步" in full              # 拿得到
 
 
-def test_view_reads_an_asset(ivyea_home):
+def test_view_reads_an_asset(awen_home):
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
     tools_general.t_skill_write(
@@ -144,7 +144,7 @@ def test_view_reads_an_asset(ivyea_home):
     assert out == "第一章内容"
 
 
-def test_view_lists_assets_when_the_path_is_wrong(ivyea_home):
+def test_view_lists_assets_when_the_path_is_wrong(awen_home):
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
     tools_general.t_skill_write(
@@ -156,13 +156,13 @@ def test_view_lists_assets_when_the_path_is_wrong(ivyea_home):
     assert "references/ch01.md" in out      # 别只说"没有"，把有什么告诉它
 
 
-def test_view_of_an_unknown_skill_suggests_neighbours(ivyea_home):
+def test_view_of_an_unknown_skill_suggests_neighbours(awen_home):
     importlib.reload(skills)
     out = tools_general.t_skill_view({"skill_id": "预算"}, _ctx())
     assert "未找到" in out and "budget_pacing" in out
 
 
-def test_view_cannot_escape_the_skill_directory(ivyea_home):
+def test_view_cannot_escape_the_skill_directory(awen_home):
     importlib.reload(skills)
     tools_general.t_skill_write(_good_args(), _ctx())
     importlib.reload(skills)
@@ -172,7 +172,7 @@ def test_view_cannot_escape_the_skill_directory(ivyea_home):
 
 
 # ── 使用统计 ─────────────────────────────────────────────────────────────────
-def test_injection_and_view_are_counted(ivyea_home):
+def test_injection_and_view_are_counted(awen_home):
     importlib.reload(skills)
     skills.context_for_query("预算怎么分配", limit=2)
     tools_general.t_skill_view({"skill_id": "amazon.budget_pacing"}, _ctx())
@@ -182,7 +182,7 @@ def test_injection_and_view_are_counted(ivyea_home):
     assert row["by_source"]["view"] >= 1
 
 
-def test_dormant_lists_never_hit_skills(ivyea_home):
+def test_dormant_lists_never_hit_skills(awen_home):
     importlib.reload(skills)
     skills.context_for_query("预算怎么分配", limit=2)
     ids = [sk.id for sk in skills.list_skills()]
@@ -191,7 +191,7 @@ def test_dormant_lists_never_hit_skills(ivyea_home):
     assert "amazon.listing_conversion_audit" in dormant
 
 
-def test_a_corrupt_usage_file_is_survivable(ivyea_home):
+def test_a_corrupt_usage_file_is_survivable(awen_home):
     skill_usage.usage_file().parent.mkdir(parents=True, exist_ok=True)
     skill_usage.usage_file().write_text("{半截", encoding="utf-8")
     skill_usage.record("a.b", query="x")

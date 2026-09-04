@@ -32,8 +32,8 @@ def _listing_payload() -> dict:
     }
 
 
-def test_authorized_evidence_requires_explicit_rights_and_official_source(ivyea_home):
-    from ivyea_agent import knowledge_evidence
+def test_authorized_evidence_requires_explicit_rights_and_official_source(awen_home):
+    from awen_agent import knowledge_evidence
 
     payload = _listing_payload()
     payload["authorized"] = False
@@ -47,7 +47,7 @@ def test_authorized_evidence_requires_explicit_rights_and_official_source(ivyea_
 
 
 def test_authorized_evidence_schema_matches_runtime_kinds():
-    from ivyea_agent import knowledge_evidence
+    from awen_agent import knowledge_evidence
 
     schema = knowledge_evidence.schema()
     assert set(schema["properties"]["kind"]["enum"]) == set(knowledge_evidence.EVIDENCE_KINDS)
@@ -55,8 +55,8 @@ def test_authorized_evidence_schema_matches_runtime_kinds():
     assert "content" in schema["anyOf"][0]["required"]
 
 
-def test_prepare_redacts_private_data_and_builds_ready_diagnostic(ivyea_home):
-    from ivyea_agent import knowledge, knowledge_evidence
+def test_prepare_redacts_private_data_and_builds_ready_diagnostic(awen_home):
+    from awen_agent import knowledge, knowledge_evidence
 
     prepared = knowledge_evidence.prepare(_listing_payload())
     assert prepared["ok"] is True
@@ -79,8 +79,8 @@ def test_prepare_redacts_private_data_and_builds_ready_diagnostic(ivyea_home):
     assert knowledge_evidence.list_evidence()["evidence"] == []
 
 
-def test_incomplete_evidence_is_flagged_not_fabricated(ivyea_home):
-    from ivyea_agent import knowledge_evidence
+def test_incomplete_evidence_is_flagged_not_fabricated(awen_home):
+    from awen_agent import knowledge_evidence
 
     payload = {
         "authorized": True,
@@ -103,8 +103,8 @@ def test_incomplete_evidence_is_flagged_not_fabricated(ivyea_home):
     ("returns_report", {"order_id": "ORDER-PRIVATE-123", "sku": "SKU-1"}, "order_ref"),
     ("brand_notice", {"notification_id": "NOTICE-PRIVATE-123", "program": "Transparency"}, "notification_ref"),
 ])
-def test_business_account_evidence_kinds_build_ready_diagnostics(ivyea_home, kind, extra, ref_key):
-    from ivyea_agent import knowledge_evidence
+def test_business_account_evidence_kinds_build_ready_diagnostics(awen_home, kind, extra, ref_key):
+    from awen_agent import knowledge_evidence
 
     payload = {
         "authorized": True,
@@ -123,8 +123,8 @@ def test_business_account_evidence_kinds_build_ready_diagnostics(ivyea_home, kin
         assert next(value for key, value in extra.items() if key.endswith("_id")) not in json.dumps(prepared)
 
 
-def test_apply_requires_confirmation_then_stores_only_sanitized_evidence(ivyea_home):
-    from ivyea_agent import knowledge, knowledge_evidence
+def test_apply_requires_confirmation_then_stores_only_sanitized_evidence(awen_home):
+    from awen_agent import knowledge, knowledge_evidence
 
     prepared = knowledge_evidence.prepare(_listing_payload())
     card_id = prepared["draft"]["card_id"]
@@ -149,8 +149,8 @@ def test_apply_requires_confirmation_then_stores_only_sanitized_evidence(ivyea_h
     assert ledger["evidence"][0]["card_id"] == card_id
 
 
-def test_evidence_integrity_check_rejects_tampering(ivyea_home):
-    from ivyea_agent import knowledge_evidence
+def test_evidence_integrity_check_rejects_tampering(awen_home):
+    from awen_agent import knowledge_evidence
 
     prepared = knowledge_evidence.prepare(_listing_payload())
     prepared["draft"]["body"] += "tampered"
@@ -159,8 +159,8 @@ def test_evidence_integrity_check_rejects_tampering(ivyea_home):
     assert result["error"] == "evidence_integrity_check_failed"
 
 
-def test_evidence_cli_plan_apply_and_list(ivyea_home, tmp_path, capsys):
-    from ivyea_agent.cli import main
+def test_evidence_cli_plan_apply_and_list(awen_home, tmp_path, capsys):
+    from awen_agent.cli import main
 
     path = tmp_path / "evidence.json"
     path.write_text(json.dumps(_listing_payload(), ensure_ascii=False), encoding="utf-8")

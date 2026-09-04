@@ -1,8 +1,8 @@
 """Phase C：persona 开场、完整流式 _StreamPrinter 视觉行数计算。"""
 from __future__ import annotations
 
-from ivyea_agent import agent_loop
-from ivyea_agent.cli import _StreamPrinter
+from awen_agent import agent_loop
+from awen_agent.cli import _StreamPrinter
 
 
 def test_persona_opening_is_dual_role():

@@ -10,7 +10,7 @@ import time
 
 
 def _episodes(n: int) -> None:
-    from ivyea_agent import memory
+    from awen_agent import memory
     for i in range(n):
         memory.index_turn("user", f"第 {i} 条经历：帮我否个词", "s")
 
@@ -28,22 +28,22 @@ class _FakeProvider:
         return self.payload
 
 
-def test_threshold_lowered_to_eight(ivyea_home):
-    from ivyea_agent import memory_reflect
+def test_threshold_lowered_to_eight(awen_home):
+    from awen_agent import memory_reflect
     assert memory_reflect.MIN_EPISODES == 8
 
 
-def test_should_reflect_needs_enough_episodes(ivyea_home):
-    from ivyea_agent import memory_reflect
+def test_should_reflect_needs_enough_episodes(awen_home):
+    from awen_agent import memory_reflect
     _episodes(3)
     assert memory_reflect.should_reflect() is False
     _episodes(10)
     assert memory_reflect.should_reflect() is True
 
 
-def test_throttle_blocks_back_to_back_runs(ivyea_home):
+def test_throttle_blocks_back_to_back_runs(awen_home):
     """serve 是长驻的：一段密集对话几分钟内能反复越过显著性门槛，得有节流。"""
-    from ivyea_agent import config, memory_reflect
+    from awen_agent import config, memory_reflect
     _episodes(20)
     assert memory_reflect.should_reflect() is True
     config.set_setting("memory_last_reflect_run_ts", time.time())
@@ -53,19 +53,19 @@ def test_throttle_blocks_back_to_back_runs(ivyea_home):
     assert memory_reflect.should_reflect() is True
 
 
-def test_run_watermark_is_separate_from_episode_watermark(ivyea_home):
+def test_run_watermark_is_separate_from_episode_watermark(awen_home):
     """节流必须用**墙钟**水位线。
 
     经历水位线取的是最后一条经历的 ts；喂一批陈年经历会把它停在很久以前，
     拿它做节流等于节流永远不生效。
     """
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     assert memory_reflect._LAST_TS_KEY != memory_reflect._LAST_RUN_KEY
 
 
-def test_failed_reflection_still_advances_throttle(ivyea_home):
+def test_failed_reflection_still_advances_throttle(awen_home):
     """模型欠费时经历只会越攒越多、门槛永远满足 —— 不推进水位线就是每轮重试一次 LLM。"""
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     _episodes(20)
     res = memory_reflect.reflect(_FakeProvider(boom=True))
     assert res["ok"] is False
@@ -73,8 +73,8 @@ def test_failed_reflection_still_advances_throttle(ivyea_home):
     assert memory_reflect.should_reflect() is False
 
 
-def test_async_reflection_runs_in_background(ivyea_home, monkeypatch):
-    from ivyea_agent import memory_reflect
+def test_async_reflection_runs_in_background(awen_home, monkeypatch):
+    from awen_agent import memory_reflect
     prov = _FakeProvider()
     monkeypatch.setattr(memory_reflect, "_default_provider", lambda: prov)
     _episodes(20)
@@ -84,8 +84,8 @@ def test_async_reflection_runs_in_background(ivyea_home, monkeypatch):
     assert memory_reflect.is_running() is False
 
 
-def test_async_reflection_skips_when_not_due(ivyea_home, monkeypatch):
-    from ivyea_agent import memory_reflect
+def test_async_reflection_skips_when_not_due(awen_home, monkeypatch):
+    from awen_agent import memory_reflect
     prov = _FakeProvider()
     monkeypatch.setattr(memory_reflect, "_default_provider", lambda: prov)
     _episodes(2)                       # 不够门槛
@@ -93,28 +93,28 @@ def test_async_reflection_skips_when_not_due(ivyea_home, monkeypatch):
     assert prov.calls == 0
 
 
-def test_async_reflection_survives_missing_provider(ivyea_home, monkeypatch):
+def test_async_reflection_survives_missing_provider(awen_home, monkeypatch):
     """没配 key 的机器上，轮末这一下必须无声跳过，不能让这一轮报错。"""
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     monkeypatch.setattr(memory_reflect, "_default_provider", lambda: None)
     _episodes(20)
     memory_reflect.maybe_reflect_async()
     assert memory_reflect.wait_for_idle(10.0) is True
 
 
-def test_reflect_lock_is_not_the_write_lock(ivyea_home):
+def test_reflect_lock_is_not_the_write_lock(awen_home):
     """反思里包着一次最长 120 秒的模型调用。
 
     如果它占的是记忆写锁，这两分钟内所有 memory_write / core_memory_edit 都要排队，
     用户会看到"说了记住、半天没反应"。两把锁必须是两个文件。
     """
-    from ivyea_agent import memory_lock
+    from awen_agent import memory_lock
     assert memory_lock.lock_path() != memory_lock.reflect_lock_path()
 
 
-def test_reflect_lock_is_non_blocking_by_default(ivyea_home):
+def test_reflect_lock_is_non_blocking_by_default(awen_home):
     """拿不到就走人：反思是周期性的，排队等只会让线程堆积。"""
-    from ivyea_agent import memory_lock
+    from awen_agent import memory_lock
     with memory_lock.reflect_lock(timeout=0.0) as first:
         assert first is True
         t0 = time.time()

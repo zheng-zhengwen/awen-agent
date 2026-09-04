@@ -1,7 +1,7 @@
 """Chat-exposed code navigation tools (grep / code_search / code_symbols / code_impact)."""
 from __future__ import annotations
 
-from ivyea_agent.agent_tools import TOOL_SCHEMAS, ToolContext, dispatch
+from awen_agent.agent_tools import TOOL_SCHEMAS, ToolContext, dispatch
 
 
 def _make_repo(tmp_path):

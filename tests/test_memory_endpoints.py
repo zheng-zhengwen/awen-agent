@@ -12,8 +12,8 @@ import pytest
 
 
 @pytest.fixture()
-def store(ivyea_home):
-    from ivyea_agent import memory_store, service
+def store(awen_home):
+    from awen_agent import memory_store, service
     memory_store.apply("add", name="领星广告方法论", content="规则引擎 + LLM 复核。",
                        category="domain", description="领星广告优化怎么做",
                        keywords="领星,广告")
@@ -47,7 +47,7 @@ def test_get_missing_is_a_clean_not_found(store):
 
 def test_human_write_is_marked_as_user_stated(store):
     """界面上人敲的就是他亲口说的：满置信，而且从此反思不许再改它。"""
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
     res = store.memory_write({"operation": "add", "name": "发版纪律",
                               "category": "feedback", "content": "未经批准绝不发版。",
                               "description": "用户定的规矩"})
@@ -62,7 +62,7 @@ def test_human_write_goes_through_the_same_conflict_rules(store):
     res = store.memory_write({"operation": "add", "name": "领星广告方法论2",
                               "category": "domain", "content": "规则引擎 + LLM 复核。",
                               "description": "领星广告优化怎么做"})
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
     # 查重命中时走的是合并而不是新建；无论哪种结果，条目数都不该凭空多出一条重复的
     names = [e.name for e in memory_store.list_entries()]
     assert len(names) == len(set(names))
@@ -76,7 +76,7 @@ def test_write_rejects_unknown_operation(store):
 def test_confirm_is_the_only_way_past_the_uncertainty_line(store):
     """自动攒够观察次数也只是转正、仍标推断；人点头才能满置信。
     这是"未经确认的推断永远带着标记"这条不变式的出口。"""
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
     memory_store.add_pending("推断偏好", "他大概喜欢这样。", category="feedback",
                              description="从行为推断的")
     res = store.memory_pending_decide({"name": "推断偏好"}, "confirm")
@@ -86,7 +86,7 @@ def test_confirm_is_the_only_way_past_the_uncertainty_line(store):
 
 
 def test_reject_removes_the_pending_inference(store):
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
     memory_store.add_pending("错的推断", "错的。", category="feedback", description="x")
     assert store.memory_pending_decide({"name": "错的推断"}, "reject")["ok"]
     assert memory_store.get_pending("错的推断") is None
@@ -94,7 +94,7 @@ def test_reject_removes_the_pending_inference(store):
 
 def test_pending_list_shows_progress_toward_promotion(store):
     """待定区要说清"第几次观察了" —— 否则用户看到的只是一条没头没尾的猜测。"""
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
     memory_store.add_pending("推断偏好", "内容", category="feedback", description="x")
     res = store.memory_pending_list()
     row = res["pending"][0]
@@ -126,7 +126,7 @@ def test_stats_covers_all_three_layers(store):
 
 def test_reflect_endpoint_is_async(store, monkeypatch):
     """反思里包着一次最长 120 秒的模型调用，同步等会把用户挂在那儿。"""
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     calls = []
     monkeypatch.setattr(memory_reflect, "maybe_reflect_async",
                         lambda **kw: calls.append(kw) or True)
@@ -144,7 +144,7 @@ def test_prune_endpoint_defaults_to_dry_run(store):
 def test_query_param_mojibake_is_repaired(store):
     """没做百分号编码的客户端会让中文参数变成乱码，而失败的样子是 not_found ——
     看起来像"这条记忆没了"，比报错还难查。"""
-    from ivyea_agent.service import _repair_latin1
+    from awen_agent.service import _repair_latin1
     mojibake = "领星广告方法论".encode("utf-8").decode("latin-1")
     assert _repair_latin1(mojibake) == "领星广告方法论"
     assert _repair_latin1("领星广告方法论") == "领星广告方法论"   # 正确输入不动

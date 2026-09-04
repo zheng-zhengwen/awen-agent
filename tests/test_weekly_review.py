@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ivyea_agent.actions import Action
+from awen_agent.actions import Action
 
 
-def test_weekly_review_build_and_render(ivyea_home):
-    from ivyea_agent import action_queue, memory, weekly_review
+def test_weekly_review_build_and_render(awen_home):
+    from awen_agent import action_queue, memory, weekly_review
 
     added = action_queue.enqueue_actions([
         Action(kind="negative", search_term="bad term"),
@@ -16,13 +16,13 @@ def test_weekly_review_build_and_render(ivyea_home):
     report = weekly_review.build(limit=50)
     assert report["queue"]["approved"] == 1
     text = weekly_review.render(report)
-    assert "Ivyea 周期运营复盘" in text
+    assert "awen 周期运营复盘" in text
     assert "本周期优先事项" in text
     assert "最近巡检" in text
 
 
-def test_weekly_cli_export(ivyea_home, tmp_path, capsys):
-    from ivyea_agent.cli import main
+def test_weekly_cli_export(awen_home, tmp_path, capsys):
+    from awen_agent.cli import main
 
     out = tmp_path / "weekly.md"
     assert main(["weekly", "review", "--output", str(out)]) == 0

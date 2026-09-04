@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import subprocess
 
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent.agent_tools import ToolContext
 
 
 def _git_init(root):
@@ -14,9 +14,9 @@ def _git_init(root):
 
 # ── Phase 1：思考深度旋钮 ─────────────────────────────────────────────
 def test_from_settings_injects_reasoning_effort(monkeypatch):
-    from ivyea_agent.providers import base
+    from awen_agent.providers import base
     monkeypatch.setattr(base.config if hasattr(base, "config") else __import__(
-        "ivyea_agent.config", fromlist=["x"]), "get_setting",
+        "awen_agent.config", fromlist=["x"]), "get_setting",
         lambda k, d=None: "high" if k == "reasoning_effort" else d)
     p = base.from_settings({"kind": "openai", "model": "deepseek-reasoner",
                             "base_url": "https://api.deepseek.com"}, "sk-x")
@@ -24,14 +24,14 @@ def test_from_settings_injects_reasoning_effort(monkeypatch):
 
 
 def test_codex_reasoning_mapping():
-    from ivyea_agent.providers.codex_provider import _codex_reasoning
+    from awen_agent.providers.codex_provider import _codex_reasoning
     assert _codex_reasoning("high") == {"summary": "auto", "effort": "high"}
     assert _codex_reasoning("auto") == {"summary": "auto"}            # auto 不指定 effort
     assert _codex_reasoning("off") == {"summary": "auto", "effort": "minimal"}
 
 
 def test_openai_effort_gated_to_reasoning_models():
-    from ivyea_agent.providers.openai_compat import _reasoning_effort_for
+    from awen_agent.providers.openai_compat import _reasoning_effort_for
     assert _reasoning_effort_for("deepseek-reasoner", "high") == "high"
     assert _reasoning_effort_for("o3-mini", "medium") == "medium"
     assert _reasoning_effort_for("deepseek-chat", "high") is None     # 普通模型不加 → 不 400
@@ -39,14 +39,14 @@ def test_openai_effort_gated_to_reasoning_models():
 
 
 def test_gemini_thinking_gated_to_25():
-    from ivyea_agent.providers.gemini_provider import _thinking_config
+    from awen_agent.providers.gemini_provider import _thinking_config
     assert _thinking_config("gemini-2.5-flash", "high") == {"thinkingBudget": 16384}
     assert _thinking_config("gemini-2.5-flash", "off") == {"thinkingBudget": 0}
     assert _thinking_config("gemini-1.5-pro", "high") is None         # 旧模型不加
 
 
 def test_openai_payload_carries_effort_for_reasoner():
-    from ivyea_agent.providers.openai_compat import OpenAICompatProvider
+    from awen_agent.providers.openai_compat import OpenAICompatProvider
     p = OpenAICompatProvider("sk-x", "deepseek-reasoner", "https://api.deepseek.com")
     p.reasoning_effort = "high"
     captured = {}
@@ -58,7 +58,7 @@ def test_openai_payload_carries_effort_for_reasoner():
 
 # ── Phase 2：完成前自验证门禁 ─────────────────────────────────────────
 def test_verify_gate_blocks_secret(tmp_path):
-    from ivyea_agent import verify
+    from awen_agent import verify
     _git_init(tmp_path)
     (tmp_path / "a.py").write_text("x=1\n")
     subprocess.run(["git", "add", "-A"], cwd=tmp_path); subprocess.run(["git", "commit", "-qm", "i"], cwd=tmp_path)
@@ -68,7 +68,7 @@ def test_verify_gate_blocks_secret(tmp_path):
 
 
 def test_verify_gate_clean_passes(tmp_path):
-    from ivyea_agent import verify
+    from awen_agent import verify
     _git_init(tmp_path)
     (tmp_path / "a.py").write_text("x=1\n")
     subprocess.run(["git", "add", "-A"], cwd=tmp_path); subprocess.run(["git", "commit", "-qm", "i"], cwd=tmp_path)
@@ -76,13 +76,13 @@ def test_verify_gate_clean_passes(tmp_path):
 
 
 def test_verify_gate_non_git_passes(tmp_path):
-    from ivyea_agent import verify
+    from awen_agent import verify
     assert verify.gate(tmp_path, run_tests=False)["ok"] is True
 
 
 def test_verify_gate_forces_repair_in_loop(tmp_path):
     """核心循环集成：写了带密钥的代码想收尾 → 门禁注回 ⚠ 反馈并逼多跑几轮。"""
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
     _git_init(tmp_path)
     (tmp_path / "seed.py").write_text("x=1\n")
     subprocess.run(["git", "add", "-A"], cwd=tmp_path); subprocess.run(["git", "commit", "-qm", "i"], cwd=tmp_path)
@@ -108,7 +108,7 @@ def test_verify_gate_forces_repair_in_loop(tmp_path):
 
 def test_verify_gate_skips_non_code_turn(tmp_path):
     """没动过源码的轮次不触发门禁（广告/运营轮不受影响）。"""
-    from ivyea_agent import agent_loop
+    from awen_agent import agent_loop
     _git_init(tmp_path)
 
     class FP:
@@ -125,12 +125,12 @@ def test_verify_gate_skips_non_code_turn(tmp_path):
 
 # ── Phase 3：通用自我批判 ─────────────────────────────────────────────
 def test_critique_degrades_without_provider():
-    from ivyea_agent import critique
+    from awen_agent import critique
     assert critique.critique("t", "a", None)["ok"] is False
 
 
 def test_critique_with_provider():
-    from ivyea_agent import critique
+    from awen_agent import critique
 
     class FP:
         def complete(self, system, user, **k): return "**建议修正**：漏了边界。"
@@ -139,7 +139,7 @@ def test_critique_with_provider():
 
 
 def test_self_critique_tool():
-    from ivyea_agent.agent_tools import dispatch
+    from awen_agent.agent_tools import dispatch
 
     class FP:
         def complete(self, system, user, **k): return "未见明显问题。"
@@ -151,5 +151,5 @@ def test_self_critique_tool():
 # ── Phase 4：多轮修复默认 ─────────────────────────────────────────────
 def test_run_loop_default_two_rounds():
     import inspect
-    from ivyea_agent import code_agent
+    from awen_agent import code_agent
     assert inspect.signature(code_agent.run_loop).parameters["max_rounds"].default == 2

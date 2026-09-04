@@ -18,7 +18,7 @@ def test_standalone_script_helpers():
     version = mod.project_version()
     assert version
     name = mod.exe_name(version)
-    assert name.startswith(f"ivyea-agent-{version}-")
+    assert name.startswith(f"awen-agent-{version}-")
 
 
 def test_standalone_missing_pyinstaller(monkeypatch, capsys):

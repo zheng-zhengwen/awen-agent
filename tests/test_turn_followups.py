@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import threading
 
-from ivyea_agent import agent_loop, transcript, turn_inbox
+from awen_agent import agent_loop, transcript, turn_inbox
 
 
 def teardown_function():
@@ -65,7 +65,7 @@ def test_concurrent_submits_all_land():
 # ── 步边界注入 ──────────────────────────────────────────────────────────────
 
 def test_drain_injections_appends_user_message_and_resets_guard():
-    from ivyea_agent import loop_guard
+    from awen_agent import loop_guard
     messages = [{"role": "system", "content": "s"}, {"role": "user", "content": "做 A"}]
     guard = loop_guard.LoopGuard()
     guard.steps_since_progress = 5
@@ -131,7 +131,7 @@ class _TwoStepProvider:
 
 
 def _ctx(tmp_path=None):
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent.agent_tools import ToolContext
     return ToolContext(session_id="s1", workspace=str(tmp_path or "."))
 
 

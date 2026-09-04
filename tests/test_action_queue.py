@@ -1,11 +1,11 @@
 """Local action queue."""
 from __future__ import annotations
 
-from ivyea_agent.actions import Action
+from awen_agent.actions import Action
 
 
-def test_enqueue_list_status_clear(ivyea_home):
-    from ivyea_agent import action_queue
+def test_enqueue_list_status_clear(awen_home):
+    from awen_agent import action_queue
 
     acts = [Action(kind="negative", search_term="bad term", asin="B0X")]
     added = action_queue.enqueue_actions(acts, source="run1", origin="test")
@@ -22,8 +22,8 @@ def test_enqueue_list_status_clear(ivyea_home):
     assert action_queue.list_items() == []
 
 
-def test_blocked_action_kept_with_reason(ivyea_home):
-    from ivyea_agent import action_queue
+def test_blocked_action_kept_with_reason(awen_home):
+    from awen_agent import action_queue
 
     a = Action(kind="negative", search_term="brand term", blocked=True, block_reason="品牌词不否")
     added = action_queue.enqueue_actions([a], source="run2")
@@ -31,8 +31,8 @@ def test_blocked_action_kept_with_reason(ivyea_home):
     assert "BLOCKED" in out and "品牌词不否" in out
 
 
-def test_to_action_and_mark_done(ivyea_home):
-    from ivyea_agent import action_queue
+def test_to_action_and_mark_done(awen_home):
+    from awen_agent import action_queue
 
     added = action_queue.enqueue_actions(
         [Action(kind="negative", search_term="waste term", asin="B0Y")],
@@ -51,9 +51,9 @@ def test_to_action_and_mark_done(ivyea_home):
     assert saved["result"] == "executed ok"
 
 
-def test_cli_execute_dry_run_keeps_item_approved(ivyea_home, capsys):
-    from ivyea_agent import action_queue
-    from ivyea_agent.cli import build_parser
+def test_cli_execute_dry_run_keeps_item_approved(awen_home, capsys):
+    from awen_agent import action_queue
+    from awen_agent.cli import build_parser
 
     added = action_queue.enqueue_actions(
         [Action(kind="negative", search_term="waste term", asin="B0Y")],
@@ -73,8 +73,8 @@ def test_cli_execute_dry_run_keeps_item_approved(ivyea_home, capsys):
     assert action_queue.get(item_id)["status"] == "approved"
 
 
-def test_bulk_status_and_report(ivyea_home):
-    from ivyea_agent import action_queue
+def test_bulk_status_and_report(awen_home):
+    from awen_agent import action_queue
 
     action_queue.enqueue_actions([
         Action(kind="negative", search_term="term one"),
@@ -86,13 +86,13 @@ def test_bulk_status_and_report(ivyea_home):
 
     items = action_queue.list_items(status="approved")
     report = action_queue.render_report(items)
-    assert "# Ivyea 动作队列复核报告" in report
+    assert "# awen 动作队列复核报告" in report
     assert "term one" in report or "term two" in report
 
 
-def test_cli_bulk_approve_and_report(ivyea_home, tmp_path, capsys):
-    from ivyea_agent import action_queue
-    from ivyea_agent.cli import build_parser
+def test_cli_bulk_approve_and_report(awen_home, tmp_path, capsys):
+    from awen_agent import action_queue
+    from awen_agent.cli import build_parser
 
     action_queue.enqueue_actions([Action(kind="negative", search_term="term one")], source="run6", origin="test")
     parser = build_parser()

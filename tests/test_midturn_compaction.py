@@ -1,7 +1,7 @@
 """Mid-turn auto-compaction guard (overflow protection at step boundaries)."""
 from __future__ import annotations
 
-from ivyea_agent import agent_loop, config, context
+from awen_agent import agent_loop, config, context
 
 
 class FakeProvider:

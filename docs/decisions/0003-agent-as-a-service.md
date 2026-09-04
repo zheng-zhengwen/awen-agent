@@ -7,7 +7,7 @@
 
 ## 背景
 
-IvyeaOps 要驱动 agent 干活。最初的做法是每次起一个子进程、跑一次 `ivyea chat`、**解析它打给
+awenOps 要驱动 agent 干活。最初的做法是每次起一个子进程、跑一次 `awen chat`、**解析它打给
 人看的终端输出**。这套做法的问题很直接：
 
 - 终端输出是给人看的，加了颜色、动画、进度条，解析起来极其脆弱
@@ -20,7 +20,7 @@ IvyeaOps 要驱动 agent 干活。最初的做法是每次起一个子进程、�
 两步走：
 
 1. **服务化**（v0.5.x）—— agent 常驻运行，对外暴露只读 chat API、只读 MCP server、
-   任务状态 API。IvyeaOps 调 HTTP，不再起子进程。
+   任务状态 API。awenOps 调 HTTP，不再起子进程。
 2. **结构化输出**（v1.2.0）—— `chat -p --output-format stream-json` 输出 NDJSON 事件流：
    每一步工具调用、每一段正文、每一次审批请求都是一条独立事件。
 
@@ -32,7 +32,7 @@ IvyeaOps 要驱动 agent 干活。最初的做法是每次起一个子进程、�
 
 ## 后果
 
-- IvyeaOps 的 runner 全面改走 stream-json
+- awenOps 的 runner 全面改走 stream-json
 - 后续所有面向工作台的能力都以「发一个结构化事件」的形式提供：结构化步骤（v1.9.0）、
   文件变更事件（v1.10.x）、思考流（v1.10.3）
 - 服务化带来了新的一类问题 —— 生命周期管理。`service stop` 只认 pidfile 导致「谎报成功」

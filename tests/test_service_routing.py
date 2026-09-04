@@ -26,7 +26,7 @@ class _EchoProvider:
 
 
 def _run(message: str, **payload):
-    from ivyea_agent import service
+    from awen_agent import service
 
     provider = _EchoProvider()
     events: list[tuple[str, dict]] = []
@@ -46,7 +46,7 @@ def _last_user_text(messages: list[dict]) -> str:
     return ""
 
 
-def test_chat_lane_sends_no_tools_and_no_injections(ivyea_home):
+def test_chat_lane_sends_no_tools_and_no_injections(awen_home):
     """闲聊：不挂工具、不注知识、不注技能 —— 一次调用就该结束。"""
     result, provider, start = _run("你好", auto_skill=True)
 
@@ -56,11 +56,11 @@ def test_chat_lane_sends_no_tools_and_no_injections(ivyea_home):
     messages, tools = provider.calls[0]
     assert tools == [], "闲聊路线必须一个工具都不挂"
     said = _last_user_text(messages)
-    assert "[Ivyea 本地知识检索" not in said
-    assert "[Ivyea Skill" not in said
+    assert "[awen 本地知识检索" not in said
+    assert "[awen Skill" not in said
 
 
-def test_work_lane_keeps_everything(ivyea_home):
+def test_work_lane_keeps_everything(awen_home):
     """常规路线一个字都不能变：全量工具（tools=None 交给 agent_loop 兜底）。"""
     _, provider, start = _run("新卖家注册身份验证失败怎么办")
 
@@ -70,7 +70,7 @@ def test_work_lane_keeps_everything(ivyea_home):
     assert tools and len(tools) > 10, "常规路线不裁工具"
 
 
-def test_board_lane_points_at_the_tool_and_keeps_tools(ivyea_home):
+def test_board_lane_points_at_the_tool_and_keeps_tools(awen_home):
     """板块任务：给出点名到工具的直达指令，但工具集照样是全量。"""
     _, provider, start = _run(
         "帮我做个市场调研 B0C1234567",
@@ -84,16 +84,16 @@ def test_board_lane_points_at_the_tool_and_keeps_tools(ivyea_home):
     assert "[本轮直达]" in said and "market_generate_report" in said
 
 
-def test_board_and_chat_switch_off_the_reporting_state_machine(ivyea_home):
+def test_board_and_chat_switch_off_the_reporting_state_machine(awen_home):
     """这两条 lane 都不该被 todo/阶段汇报挡路（一句「测试」曾 18 步里 17 步花在这）。"""
-    from ivyea_agent import routing
+    from awen_agent import routing
 
     for message, kwargs in (("你好", {}),
                             ("帮我做个市场调研", {"ops_bridge": {"base_url": "x"}})):
         route = routing.classify(message, ops_bridge=bool(kwargs.get("ops_bridge")))
         assert route.lane in ("chat", "board")
     # 接线本身：chat_stream 里对这两条 lane 关掉 progress_reporting_disabled
-    src = __import__("ivyea_agent.service", fromlist=["service"]).__file__
+    src = __import__("awen_agent.service", fromlist=["service"]).__file__
     text = open(src, encoding="utf-8").read()
     assert "route.is_chat or route.is_quick or route.is_board" in text
     assert "ctx.progress_reporting_disabled = True" in text
@@ -108,7 +108,7 @@ def test_cli_wires_routing_into_every_turn_call():
     """
     from pathlib import Path
 
-    from ivyea_agent import cli
+    from awen_agent import cli
 
     src = Path(cli.__file__).read_text(encoding="utf-8")
     # 不去解析括号（调用里嵌着 lambda，配对很脆）。直接对数量：**每一个调用点都要带一次**。
@@ -124,7 +124,7 @@ def test_cli_wires_routing_into_every_turn_call():
 # ── quick：知识型提问只挂只读检索工具 ────────────────────────────────────────
 def test_quick_lane_takes_knowledge_questions():
     """"这是什么/了解过吗/有什么区别" 这类问题走 quick。"""
-    from ivyea_agent import routing
+    from awen_agent import routing
 
     for msg in ("你了解过 51WORLD 这家公司吗", "ACOS 是什么意思", "什么是 A9 算法",
                 "介绍一下亚马逊的 FBA", "FBA 和 FBM 有什么区别", "变体是干什么的"):
@@ -137,7 +137,7 @@ def test_quick_lane_refuses_anything_touching_my_own_data():
     quick 判错的代价比 chat 小（答案照样是查过才给的），但"没有写工具"这件事在
     用户要动手时就是硬伤 —— 所以这道闸只能往 work 那边倒。
     """
-    from ivyea_agent import routing
+    from awen_agent import routing
 
     for msg in ("我的广告 ACOS 是什么情况", "店铺最近的销量是什么水平",
                 "这个报表里的转化率是什么意思", "帮我看看什么是问题所在",
@@ -147,7 +147,7 @@ def test_quick_lane_refuses_anything_touching_my_own_data():
 
 def test_quick_lane_is_not_triggered_by_plain_statements():
     """不是提问形态的，一律 work —— 判不准往"多做一点"那边倒。"""
-    from ivyea_agent import routing
+    from awen_agent import routing
 
     for msg in ("新卖家注册身份验证失败怎么办", "广告怎么优化否词", "跑一下巡检",
                 "51WORLD 这家公司挺不错的"):
@@ -158,8 +158,8 @@ def test_quick_tool_set_is_readonly_and_much_smaller():
     """quick 的工具集必须又小又干净：一个写/执行/板块工具都不能混进去。"""
     import json
 
-    from ivyea_agent import routing
-    from ivyea_agent.agent_tools import READONLY_TOOLS, TOOL_SCHEMAS
+    from awen_agent import routing
+    from awen_agent.agent_tools import READONLY_TOOLS, TOOL_SCHEMAS
 
     quick = routing.quick_tool_schemas()
     names = {t["function"]["name"] for t in quick}
@@ -173,7 +173,7 @@ def test_quick_tool_set_is_readonly_and_much_smaller():
 
 def test_quick_lane_keeps_searching_unlike_chat():
     """quick 和 chat 的分界：chat 不挂工具，quick 照样能查。"""
-    from ivyea_agent import routing
+    from awen_agent import routing
 
     chat = routing.classify("你好")
     quick = routing.classify("什么是 A9 算法")
@@ -185,7 +185,7 @@ def test_quick_lane_is_wired_into_service_tool_selection():
     """接线钉死：serve 的 _tools_for 必须认 quick，否则裁工具这件事根本没发生。"""
     from pathlib import Path
 
-    from ivyea_agent import service
+    from awen_agent import service
 
     src = Path(service.__file__).read_text(encoding="utf-8")
     assert "route.is_quick" in src and "routing.quick_tool_schemas()" in src
@@ -197,7 +197,7 @@ def test_quick_hint_tells_the_model_to_search_at_most_once():
     实测反例：挂上只读工具集之后模型仍然跑了 web_search → web_images →
     web_search → web_images，后两步查的和前两步是同一件事，白白多两次往返。
     """
-    from ivyea_agent import routing
+    from awen_agent import routing
 
     hint = routing.quick_hint(routing.classify("什么是 A9 算法"))
     assert "最多一轮" in hint and "第二遍" in hint
@@ -209,7 +209,7 @@ def test_quick_hint_is_wired_everywhere_board_hint_is():
     """board_hint 有三个注入点（serve 一个、CLI 两个），quick_hint 一个都不能漏。"""
     from pathlib import Path
 
-    from ivyea_agent import cli, service
+    from awen_agent import cli, service
 
     for mod in (service, cli):
         src = Path(mod.__file__).read_text(encoding="utf-8")

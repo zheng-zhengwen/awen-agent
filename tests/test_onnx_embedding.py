@@ -9,7 +9,7 @@ import math
 
 import pytest
 
-from ivyea_agent import onnx_embedding, retrieval_embeddings, wordpiece
+from awen_agent import onnx_embedding, retrieval_embeddings, wordpiece
 
 
 def _cos(a, b):
@@ -89,7 +89,7 @@ def test_empty_input_is_none(model):
 
 
 def test_tokenizer_ids_are_in_vocab(model):
-    from ivyea_agent.onnx_embedding import _load
+    from awen_agent.onnx_embedding import _load
     vocab = _load()["vocab"]
     toks = wordpiece.tokenize("广告 ACoS 45% 的 B08XYZ123", vocab)
     assert toks

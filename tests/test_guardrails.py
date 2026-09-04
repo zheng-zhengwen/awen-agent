@@ -1,8 +1,8 @@
 """guardrails：硬护栏拦截逻辑（纯函数，无 IO）。"""
 from __future__ import annotations
 
-from ivyea_agent import guardrails
-from ivyea_agent.actions import Action
+from awen_agent import guardrails
+from awen_agent.actions import Action
 
 
 def test_protected_term_blocked():

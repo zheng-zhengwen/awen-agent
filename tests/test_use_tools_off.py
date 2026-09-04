@@ -1,12 +1,12 @@
-"""不挂工具的纯文本轮次（IvyeaOps 把 agent 当文本引擎用时走这条）。
+"""不挂工具的纯文本轮次（awenOps 把 agent 当文本引擎用时走这条）。
 
 以前 `tools or TOOL_SCHEMAS` 把 [] 当假值退回全量工具，等于关不掉：模型会花步数
 去查工具（plan_mode 下 MCP 调用还会被拒），中间叙述被逐 token 流成"报告"。
 """
 from __future__ import annotations
 
-from ivyea_agent import agent_loop, service
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import agent_loop, service
+from awen_agent.agent_tools import ToolContext
 
 
 class _Prov:
@@ -52,7 +52,7 @@ def test_service_payload_flag():
 
 def test_defer_citation_text_suppresses_the_superseded_draft():
     """引证门会让模型带 [K#] 重写整篇；只累加 token 的调用方不 defer 会收到两份。"""
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent.agent_tools import ToolContext
 
     class _TwoPass:
         def __init__(self):

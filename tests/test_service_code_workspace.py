@@ -28,8 +28,8 @@ def _make_project(tmp_path):
     return tmp_path
 
 
-def test_service_workspace_and_code_helpers(ivyea_home, tmp_path):
-    from ivyea_agent import service
+def test_service_workspace_and_code_helpers(awen_home, tmp_path):
+    from awen_agent import service
 
     root = _make_project(tmp_path)
     indexed = service.workspace_index({"root": str(root)})
@@ -96,8 +96,8 @@ def test_service_workspace_and_code_helpers(ivyea_home, tmp_path):
     assert repair["repair"]["failure_summary"][0]["kind"] == "assertion"
 
 
-def test_service_workspace_and_code_http_routes(ivyea_home, tmp_path):
-    from ivyea_agent import service
+def test_service_workspace_and_code_http_routes(awen_home, tmp_path):
+    from awen_agent import service
 
     root = _make_project(tmp_path)
     try:

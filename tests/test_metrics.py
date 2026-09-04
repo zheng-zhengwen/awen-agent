@@ -27,8 +27,8 @@ class _Src:
 
 
 @pytest.fixture()
-def clean(ivyea_home):
-    from ivyea_agent import metrics
+def clean(awen_home):
+    from awen_agent import metrics
     for s in list(metrics.registered()):
         metrics.unregister(s.name)
     yield metrics

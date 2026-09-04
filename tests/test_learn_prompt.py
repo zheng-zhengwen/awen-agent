@@ -1,5 +1,5 @@
 """learn_prompt：把用户那句话编译成一轮完整指令。"""
-from ivyea_agent import learn_prompt
+from awen_agent import learn_prompt
 
 
 def test_the_request_is_carried_through_verbatim():
@@ -35,11 +35,11 @@ def test_it_tells_the_agent_to_extend_rather_than_duplicate():
     assert "扩写" in p and "skill_search" in p
 
 
-# ── ivyea learn 的接线 ───────────────────────────────────────────────────────
+# ── awen learn 的接线 ───────────────────────────────────────────────────────
 def test_learn_namespace_inherits_every_chat_default():
     """learn 内部跑的就是一轮 chat -p。默认值必须从 chat 解析器**自己**拿 ——
     手抄一份清单会随 chat 加参数而过期，过期的表现是 learn 直接 AttributeError 崩。"""
-    from ivyea_agent import cli
+    from awen_agent import cli
     chat_ns = cli.build_parser().parse_args(["chat"])
     learn_ns = cli.build_parser().parse_args(["learn", "素材"])
     missing = [k for k in vars(chat_ns) if k not in ("func", "print_prompt")
@@ -50,7 +50,7 @@ def test_learn_namespace_inherits_every_chat_default():
 
 
 def test_learn_passes_the_compiled_prompt_to_chat(monkeypatch):
-    from ivyea_agent import cli
+    from awen_agent import cli
     seen = {}
 
     def fake_chat(ns):

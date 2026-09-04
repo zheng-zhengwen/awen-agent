@@ -4,12 +4,12 @@
 """
 from __future__ import annotations
 
-from ivyea_agent import tools_general as tg
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import tools_general as tg
+from awen_agent.agent_tools import ToolContext
 
 
 def _ctx(tmp_path, allow=()):
-    from ivyea_agent import policy
+    from awen_agent import policy
     if policy.POLICY_FILE.exists():
         policy.POLICY_FILE.unlink()
     c = ToolContext(workspace=str(tmp_path))
@@ -21,9 +21,9 @@ def _ctx(tmp_path, allow=()):
 # ── 读类（自动放行）──
 def test_read_and_list(tmp_path):
     f = tmp_path / "a.txt"
-    f.write_text("你好 ivyea", encoding="utf-8")
+    f.write_text("你好 awen", encoding="utf-8")
     ctx = _ctx(tmp_path)
-    assert "你好 ivyea" in tg.t_read_file({"path": str(f)}, ctx)
+    assert "你好 awen" in tg.t_read_file({"path": str(f)}, ctx)
     out = tg.t_list_dir({"path": str(tmp_path)}, ctx)
     assert "a.txt" in out
 
@@ -118,8 +118,8 @@ def test_run_python_blocked_plan(tmp_path):
 
 def test_run_command(tmp_path):
     ctx = _ctx(tmp_path, allow=["run_command"])
-    r = tg.t_run_command({"command": "echo ivyea-ok"}, ctx)
-    assert "ivyea-ok" in r
+    r = tg.t_run_command({"command": "echo awen-ok"}, ctx)
+    assert "awen-ok" in r
 
 
 def test_run_command_rejects_dangerous(tmp_path):
@@ -227,20 +227,20 @@ def test_web_images_says_so_when_nothing_usable(monkeypatch):
 
 
 def test_web_images_is_readonly_and_parallel_safe():
-    from ivyea_agent.agent_tools import PARALLEL_SAFE, READONLY_TOOLS
+    from awen_agent.agent_tools import PARALLEL_SAFE, READONLY_TOOLS
     assert "web_images" in READONLY_TOOLS and "web_images" in PARALLEL_SAFE
 
 
 # ── 注册完整性 ──
 def test_registered_in_agent_tools():
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     for n in tg.GENERAL_DISPATCH:
         assert n in names and n in _DISPATCH
 
 
 def test_task_tools_update_bound_task(tmp_path, monkeypatch):
-    from ivyea_agent import task_runner
+    from awen_agent import task_runner
 
     monkeypatch.setattr(task_runner, "TASK_DIR", tmp_path / "tasks")
     task = task_runner.create("Tool task", steps=["inspect", "finish"])
@@ -254,7 +254,7 @@ def test_task_tools_update_bound_task(tmp_path, monkeypatch):
     assert "done" in out
     out = tg.t_task_log({"text": "agent progress"}, ctx)
     assert "agent progress" in out
-    assert "继续 Ivyea 长任务" in tg.t_task_resume({}, ctx)
+    assert "继续 awen 长任务" in tg.t_task_resume({}, ctx)
 
     saved = task_runner.load(task["id"])
     assert saved["steps"][0]["status"] == "completed"
@@ -289,13 +289,13 @@ def test_glob_brace_expansion(tmp_path):
 
 
 def test_search_globs_normalize_absolute_and_repo_prefixed_patterns(tmp_path):
-    repo = tmp_path / "ivyea-agent"
+    repo = tmp_path / "awen-agent"
     repo.mkdir()
     (repo / "a.py").write_text("needle\n", encoding="utf-8")
     ctx = _ctx(repo)
 
     absolute = tg.t_grep({"pattern": "needle", "glob": str(repo / "**" / "*.py")}, ctx)
-    prefixed = tg.t_grep({"pattern": "needle", "glob": "ivyea-agent/**/*.py"}, ctx)
+    prefixed = tg.t_grep({"pattern": "needle", "glob": "awen-agent/**/*.py"}, ctx)
     globbed = tg.t_glob({"pattern": str(repo / "**" / "*.py")}, ctx)
 
     assert "a.py" in absolute
@@ -318,7 +318,7 @@ def test_glob_deadend_no_match_with_files(tmp_path):
 
 def test_ui_tool_result_highlights_deadend(monkeypatch):
     """ui.tool_result：⚠ 开头的死胡同结果用 warn 黄色 + ▲ 高亮，不被灰掉。"""
-    from ivyea_agent import ui
+    from awen_agent import ui
     monkeypatch.delenv("NO_COLOR", raising=False)
     colored = ui.tool_result(tg.DEADEND_MARK + " 扫描了 0 个文件（根 /x）", color=True)
     assert "\033[" in colored                      # 有 ANSI 上色（非 muted 灰）

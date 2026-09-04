@@ -1,8 +1,8 @@
 """收尾自查门禁：只盯"动过东西"的轮次，拿不准一律放行。"""
 from __future__ import annotations
 
-from ivyea_agent import agent_loop, critique
-from ivyea_agent.agent_tools import ToolContext, ToolResult
+from awen_agent import agent_loop, critique
+from awen_agent.agent_tools import ToolContext, ToolResult
 
 
 class Critic:
@@ -46,14 +46,14 @@ def test_rubrics_are_domain_specific():
 
 
 # ── 触发面：只盯动过东西的轮次 ───────────────────────────────────────────────
-def test_plain_answer_turn_is_never_critiqued(ivyea_home):
+def test_plain_answer_turn_is_never_critiqued(awen_home):
     critic = Critic("**建议修正**：随便挑个刺")
     ctx = ToolContext(workspace=".", provider=critic)
     assert agent_loop._critique_gate_feedback(ctx, _status(), "答案", lambda _s: None) is None
     assert critic.calls == 0
 
 
-def test_doc_only_turn_is_never_critiqued(ivyea_home):
+def test_doc_only_turn_is_never_critiqued(awen_home):
     """只写了 .md 的轮次不算"动过东西" —— 与行为门禁同一条线。"""
     critic = Critic("**建议修正**：随便挑个刺")
     ctx = ToolContext(workspace=".", provider=critic)
@@ -64,7 +64,7 @@ def test_doc_only_turn_is_never_critiqued(ivyea_home):
     assert critic.calls == 0
 
 
-def test_code_turn_is_critiqued_and_blocked_on_findings(ivyea_home):
+def test_code_turn_is_critiqued_and_blocked_on_findings(awen_home):
     critic = Critic("1. 没验证过\n\n**建议修正**：跑一遍再说")
     ctx = ToolContext(workspace=".", provider=critic, session_id="crit-1")
     st = _status(wrote_code=True, wrote_code_files=True)
@@ -75,7 +75,7 @@ def test_code_turn_is_critiqued_and_blocked_on_findings(ivyea_home):
     assert "消费方契约" in critic.last_user      # 用了 code 那套维度
 
 
-def test_a_passing_critique_is_silent(ivyea_home):
+def test_a_passing_critique_is_silent(awen_home):
     critic = Critic("**通过**")
     ctx = ToolContext(workspace=".", provider=critic)
     st = _status(wrote_code=True, wrote_code_files=True)
@@ -83,7 +83,7 @@ def test_a_passing_critique_is_silent(ivyea_home):
     assert critic.calls == 1
 
 
-def test_real_ad_writes_use_the_ads_rubric(ivyea_home):
+def test_real_ad_writes_use_the_ads_rubric(awen_home):
     critic = Critic("**通过**")
     ctx = ToolContext(workspace=".", provider=critic)
     ctx.executed_writes = True
@@ -91,7 +91,7 @@ def test_real_ad_writes_use_the_ads_rubric(ivyea_home):
     assert "归因销售不等于增量销售" in critic.last_user
 
 
-def test_the_gate_runs_at_most_once(ivyea_home):
+def test_the_gate_runs_at_most_once(awen_home):
     critic = Critic("**建议修正**：还是有问题")
     ctx = ToolContext(workspace=".", provider=critic)
     st = _status(wrote_code=True, wrote_code_files=True)
@@ -100,7 +100,7 @@ def test_the_gate_runs_at_most_once(ivyea_home):
     assert critic.calls == 1
 
 
-def test_model_self_critique_skips_the_runtime_one(ivyea_home):
+def test_model_self_critique_skips_the_runtime_one(awen_home):
     critic = Critic("**建议修正**：随便挑个刺")
     ctx = ToolContext(workspace=".", provider=critic)
     st = _status(wrote_code=True, wrote_code_files=True)
@@ -110,8 +110,8 @@ def test_model_self_critique_skips_the_runtime_one(ivyea_home):
     assert critic.calls == 0
 
 
-def test_the_switch_turns_it_off(ivyea_home):
-    from ivyea_agent import config
+def test_the_switch_turns_it_off(awen_home):
+    from awen_agent import config
     config.set_setting("critique_before_done", False)
     critic = Critic("**建议修正**：随便挑个刺")
     ctx = ToolContext(workspace=".", provider=critic)
@@ -120,7 +120,7 @@ def test_the_switch_turns_it_off(ivyea_home):
     assert critic.calls == 0
 
 
-def test_a_broken_critic_never_blocks_delivery(ivyea_home):
+def test_a_broken_critic_never_blocks_delivery(awen_home):
     class Broken:
         def complete(self, *a, **kw):
             raise RuntimeError("模型挂了")
@@ -130,14 +130,14 @@ def test_a_broken_critic_never_blocks_delivery(ivyea_home):
     assert agent_loop._critique_gate_feedback(ctx, st, "改完了", lambda _s: None) is None
 
 
-def test_no_provider_no_gate(ivyea_home):
+def test_no_provider_no_gate(awen_home):
     ctx = ToolContext(workspace=".", provider=None)
     st = _status(wrote_code=True, wrote_code_files=True)
     assert agent_loop._critique_gate_feedback(ctx, st, "改完了", lambda _s: None) is None
 
 
 # ── 通过时的旁注：付了钱就要拿到东西 ─────────────────────────────────────────
-def test_a_passing_critique_still_surfaces_its_findings(ivyea_home):
+def test_a_passing_critique_still_surfaces_its_findings(awen_home):
     """实测里一次判"通过"的复核仍然指出了真问题（调用方依赖 ZeroDivisionError）。
     静默丢掉等于白付一次模型调用。"""
     verdict = ("1. **需求吻合**：未发现超范围修改。\n"

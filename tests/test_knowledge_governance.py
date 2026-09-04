@@ -35,8 +35,8 @@ def _changed_event(knowledge_sync) -> dict:
     return changed["results"][0]
 
 
-def test_change_review_requires_confirmation_and_never_publishes(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_change_review_requires_confirmation_and_never_publishes(awen_home):
+    from awen_agent import knowledge_sync
 
     changed = _changed_event(knowledge_sync)
     assert changed["event_id"].startswith("chg-")
@@ -66,8 +66,8 @@ def test_change_review_requires_confirmation_and_never_publishes(ivyea_home):
     assert "owner@example.com" not in str(history)
 
 
-def test_legacy_change_without_event_id_is_migrated_on_read(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_legacy_change_without_event_id_is_migrated_on_read(awen_home):
+    from awen_agent import knowledge_sync
 
     changed = _changed_event(knowledge_sync)
     path = knowledge_sync._events_file()
@@ -79,8 +79,8 @@ def test_legacy_change_without_event_id_is_migrated_on_read(ivyea_home):
     assert row["review_status"] == "pending"
 
 
-def test_change_review_detects_snapshot_tampering(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_change_review_detects_snapshot_tampering(awen_home):
+    from awen_agent import knowledge_sync
 
     changed = _changed_event(knowledge_sync)
     Path(changed["snapshot"]).write_text("tampered", encoding="utf-8")
@@ -88,8 +88,8 @@ def test_change_review_detects_snapshot_tampering(ivyea_home):
         knowledge_sync.review_change(changed["event_id"], "rejected", confirm=True)
 
 
-def test_unverified_approved_review_cannot_prepare_publication(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_unverified_approved_review_cannot_prepare_publication(awen_home):
+    from awen_agent import knowledge_sync
 
     changed = _changed_event(knowledge_sync)
     reviewed = knowledge_sync.review_change(
@@ -102,7 +102,7 @@ def test_unverified_approved_review_cannot_prepare_publication(ivyea_home):
 
 
 def test_ops_reviewer_identity_assertion_requires_valid_hmac_and_fresh_timestamp():
-    from ivyea_agent.service import _Handler
+    from awen_agent.service import _Handler
 
     token = "shared-test-token"
     timestamp = str(int(time.time()))
@@ -128,8 +128,8 @@ def test_ops_reviewer_identity_assertion_requires_valid_hmac_and_fresh_timestamp
     assert tampered["identity_verified"] is False
 
 
-def test_approved_change_prepares_and_separately_applies_evidence_linked_draft(ivyea_home):
-    from ivyea_agent import knowledge, knowledge_sync
+def test_approved_change_prepares_and_separately_applies_evidence_linked_draft(awen_home):
+    from awen_agent import knowledge, knowledge_sync
 
     changed = _changed_event(knowledge_sync)
     knowledge_sync.review_change(
@@ -177,8 +177,8 @@ def test_approved_change_prepares_and_separately_applies_evidence_linked_draft(i
     assert duplicate["error"] == "change_already_published"
 
 
-def test_change_review_rejects_unknown_status_and_decision(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_change_review_rejects_unknown_status_and_decision(awen_home):
+    from awen_agent import knowledge_sync
 
     with pytest.raises(ValueError, match="review_status"):
         knowledge_sync.changes(review_status="invalid")
@@ -186,8 +186,8 @@ def test_change_review_rejects_unknown_status_and_decision(ivyea_home):
         knowledge_sync.review_change("chg-none", "pending", confirm=True)
 
 
-def test_governance_coverage_closes_required_marketplace_matrix(ivyea_home):
-    from ivyea_agent import knowledge_governance
+def test_governance_coverage_closes_required_marketplace_matrix(awen_home):
+    from awen_agent import knowledge_governance
 
     data = knowledge_governance.coverage()
     assert data["summary"]["requirements"] >= 30
@@ -202,8 +202,8 @@ def test_governance_coverage_closes_required_marketplace_matrix(ivyea_home):
     assert by_key[("traffic_governance", "GLOBAL")]["status"] == "governed"
 
 
-def test_governance_freshness_tracks_overdue_and_error_sources(ivyea_home):
-    from ivyea_agent import knowledge_governance, knowledge_sync
+def test_governance_freshness_tracks_overdue_and_error_sources(awen_home):
+    from awen_agent import knowledge_governance, knowledge_sync
 
     knowledge_sync.sync(
         force=True,
@@ -227,8 +227,8 @@ def test_governance_freshness_tracks_overdue_and_error_sources(ivyea_home):
     assert failed["summary"]["monitor_status"]["error"] == 1
 
 
-def test_stale_retrieval_is_downgraded_and_warned(ivyea_home, monkeypatch):
-    from ivyea_agent import knowledge
+def test_stale_retrieval_is_downgraded_and_warned(awen_home, monkeypatch):
+    from awen_agent import knowledge
 
     monkeypatch.setattr(knowledge, "_freshness", lambda card: "stale_needs_review")
     evidence = knowledge.evidence_context("亚马逊广告 ACoS ROAS 计算口径", limit=3)
@@ -236,8 +236,8 @@ def test_stale_retrieval_is_downgraded_and_warned(ivyea_home, monkeypatch):
     assert "时效门禁" in evidence["text"]
 
 
-def test_enhanced_conflicts_flag_unsupported_algorithm_claim(ivyea_home):
-    from ivyea_agent import knowledge
+def test_enhanced_conflicts_flag_unsupported_algorithm_claim(awen_home):
+    from awen_agent import knowledge
 
     knowledge.import_text(
         "Traffic pool absolute claim",
@@ -255,8 +255,8 @@ def test_enhanced_conflicts_flag_unsupported_algorithm_claim(ivyea_home):
     assert all(row.get("fingerprint") for row in rows)
 
 
-def test_continuous_quality_suite_and_schedule(ivyea_home):
-    from ivyea_agent import knowledge_quality, schedule
+def test_continuous_quality_suite_and_schedule(awen_home):
+    from awen_agent import knowledge_quality, schedule
 
     result = knowledge_quality.run()
     assert result["ok"] is True
@@ -274,9 +274,9 @@ def test_continuous_quality_suite_and_schedule(ivyea_home):
     assert "result=PASS" in text
 
 
-def test_governance_cli_and_service_contracts(ivyea_home, capsys):
-    from ivyea_agent import knowledge_sync, service
-    from ivyea_agent.cli import main
+def test_governance_cli_and_service_contracts(awen_home, capsys):
+    from awen_agent import knowledge_sync, service
+    from awen_agent.cli import main
 
     changed = _changed_event(knowledge_sync)
     assert main(["knowledge", "changes", "--status", "pending"]) == 0
@@ -307,8 +307,8 @@ def test_governance_cli_and_service_contracts(ivyea_home, capsys):
     assert any(row["path"] == "/v1/knowledge/versions/rollback" for row in manifest["endpoints"])
 
 
-def test_alerts_surface_review_backlog_without_closed_coverage_alert(ivyea_home):
-    from ivyea_agent import alerts, knowledge_sync
+def test_alerts_surface_review_backlog_without_closed_coverage_alert(awen_home):
+    from awen_agent import alerts, knowledge_sync
 
     _changed_event(knowledge_sync)
     rows = alerts.check(limit=20)

@@ -7,7 +7,7 @@ import pytest
 
 
 def _dates(days=1, excl=1):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
     return store_health._window_days(days, excl)
 
 
@@ -30,8 +30,8 @@ class _Src:
 
 
 @pytest.fixture()
-def wire(ivyea_home, monkeypatch):
-    from ivyea_agent import metrics, datasources
+def wire(awen_home, monkeypatch):
+    from awen_agent import metrics, datasources
 
     def _install(**data):
         for s in list(metrics.registered()):
@@ -39,7 +39,7 @@ def wire(ivyea_home, monkeypatch):
         metrics.register(_Src(data), priority=1)
         monkeypatch.setattr(datasources, "install_defaults", lambda: None)
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 
@@ -52,7 +52,7 @@ def _rep(day, cid="C1", **kw):
 
 
 def test_summary_computes_deltas(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     recent, base = _dates()
     wire(**{"ads.campaign_report":
@@ -69,7 +69,7 @@ def test_summary_computes_deltas(wire):
 
 
 def test_no_baseline_says_so_rather_than_faking_zero(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     recent, _base = _dates()
     wire(**{"ads.campaign_report": [_rep(recent[0], spend=10.0, sales=50.0)]})
@@ -78,7 +78,7 @@ def test_no_baseline_says_so_rather_than_faking_zero(wire):
 
 def test_missing_data_becomes_gap_not_zero(wire):
     """空账号上报「无数据」，不能编出一行全 0 的漂亮指标。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(**{"ads.campaign_report": []})
     d = store_health.daily_summary(1)
@@ -87,8 +87,8 @@ def test_missing_data_becomes_gap_not_zero(wire):
 
 
 def test_inventory_line_counts_oos_and_low(wire):
-    from ivyea_agent import store_health
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+    from awen_agent import store_health
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     def _inv(_w):
         raw = [
@@ -110,8 +110,8 @@ def test_inventory_line_counts_oos_and_low(wire):
 
 
 def test_all_fbm_reports_gap(wire):
-    from ivyea_agent import store_health
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+    from awen_agent import store_health
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     wire(**{"inventory.fba_snapshot": lambda _w: [
         LingxingSource._inventory({"msku": "D", "fulfillment_channel_name": "FBM"}, 1)]})
@@ -119,8 +119,8 @@ def test_all_fbm_reports_gap(wire):
     assert any("非 FBA 渠道" in g for g in d["gaps"])
 
 
-def test_window_excludes_today(ivyea_home):
-    from ivyea_agent import store_health
+def test_window_excludes_today(awen_home):
+    from awen_agent import store_health
 
     recent, base = store_health._window_days(1)
     assert datetime.date.today().isoformat() not in recent + base
@@ -128,8 +128,8 @@ def test_window_excludes_today(ivyea_home):
 
 
 # ── schedule 装配 ───────────────────────────────────────────────────────────
-def test_daily_task_pushes_card(ivyea_home, monkeypatch):
-    from ivyea_agent import schedule, store_health, patrol_push
+def test_daily_task_pushes_card(awen_home, monkeypatch):
+    from awen_agent import schedule, store_health, patrol_push
 
     monkeypatch.setattr(store_health, "check_l3",
                         lambda sid, **kw: store_health.CheckResult(sid=sid, layer="L3"))
@@ -151,8 +151,8 @@ def test_daily_task_pushes_card(ivyea_home, monkeypatch):
     assert "利润无数据" in seen["gaps"], "数据缺口必须进卡片，不能只留在日志"
 
 
-def test_daily_task_reports_push_failure(ivyea_home, monkeypatch):
-    from ivyea_agent import schedule, store_health, patrol_push
+def test_daily_task_reports_push_failure(awen_home, monkeypatch):
+    from awen_agent import schedule, store_health, patrol_push
 
     monkeypatch.setattr(store_health, "check_l3",
                         lambda sid, **kw: store_health.CheckResult(sid=sid, layer="L3"))
@@ -164,9 +164,9 @@ def test_daily_task_reports_push_failure(ivyea_home, monkeypatch):
     assert not ok and "bot not in chat" in text
 
 
-def test_daily_task_falls_back_to_text_channel(ivyea_home, monkeypatch):
+def test_daily_task_falls_back_to_text_channel(awen_home, monkeypatch):
     """非 feishu_app 通道走原有纯文本路径，不该被卡片装配劫持。"""
-    from ivyea_agent import schedule, store_health, notify
+    from awen_agent import schedule, store_health, notify
 
     monkeypatch.setattr(store_health, "check_l3",
                         lambda sid, **kw: store_health.CheckResult(sid=sid, layer="L3"))
@@ -179,7 +179,7 @@ def test_daily_task_falls_back_to_text_channel(ivyea_home, monkeypatch):
 
 # ── Listing 维度（领星 MCP 源）──────────────────────────────────────────────
 def _listing_rows(n=3, **over):
-    from ivyea_agent.datasources.lingxing_mcp_source import LingxingMcpSource
+    from awen_agent.datasources.lingxing_mcp_source import LingxingMcpSource
 
     base = {"store_id": 1, "msku": "M", "asin": "B", "item_name": "商品",
             "fulfillment_channel_type": "FBM", "status_text": "在售",
@@ -196,7 +196,7 @@ def _listing_rows(n=3, **over):
 def test_daily_includes_listing_dimension(wire):
     """这个账号广告和利润都是空的，但 listing 维度有真实销量 ——
     早报不能因此变成一张只有"无数据"的卡。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(**{"listing.snapshot": lambda _w: _listing_rows(3)})
     d = store_health.daily_summary(1)
@@ -208,7 +208,7 @@ def test_daily_includes_listing_dimension(wire):
 
 
 def test_daily_counts_low_rated_listings(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     rows = _listing_rows(2) + _listing_rows(1, stars=2.0, reviews_num=8)
     wire(**{"listing.snapshot": lambda _w: rows})
@@ -218,7 +218,7 @@ def test_daily_counts_low_rated_listings(wire):
 def test_daily_trend_is_labelled_as_7d_vs_30d(wire):
     """领星按 listing 只给 7 日/30 日窗口，没有"昨日 vs 前日"。
     比的是趋势不是日环比，卡片上必须标清楚，别让人误读。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(**{"listing.snapshot": lambda _w: _listing_rows(1)})
     text = "\n".join(store_health.daily_summary(1)["lines"])
@@ -226,7 +226,7 @@ def test_daily_trend_is_labelled_as_7d_vs_30d(wire):
 
 
 def test_daily_reports_gap_when_no_listing_source(wire):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire()
     d = store_health.daily_summary(1)
@@ -236,7 +236,7 @@ def test_daily_reports_gap_when_no_listing_source(wire):
 def test_check_l1_is_unaffected_by_summary_code(wire):
     """回归：早报的 listing 汇总代码一度被误插进 check_l1，
     那里没有 lines/out/gaps，会直接 NameError。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire(**{"listing.snapshot": lambda _w: _listing_rows(2)})
     res = store_health.check_l1(1)

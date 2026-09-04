@@ -39,8 +39,8 @@ class _Src:
 
 
 @pytest.fixture()
-def wire2(ivyea_home, monkeypatch):
-    from ivyea_agent import metrics, datasources
+def wire2(awen_home, monkeypatch):
+    from awen_agent import metrics, datasources
 
     state = {}
 
@@ -53,7 +53,7 @@ def wire2(ivyea_home, monkeypatch):
         monkeypatch.setattr(datasources, "install_defaults", lambda: None)
         return src
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 
@@ -89,7 +89,7 @@ def _codes(res):
 
 # ── 采样差分语义 ────────────────────────────────────────────────────────────
 def test_first_sample_of_day_reports_no_delta_rule(wire2):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(spend=500.0)], config_rows=[_conf()])
     res = store_health.check_l2(1)
@@ -97,9 +97,9 @@ def test_first_sample_of_day_reports_no_delta_rule(wire2):
     assert any("首次采样" in s for s in res.skipped)
 
 
-def test_negative_delta_treated_as_correction(ivyea_home):
+def test_negative_delta_treated_as_correction(awen_home):
     """亚马逊会回溯修正当日数据。把"花费 -50"当异常报出去是灾难。"""
-    from ivyea_agent import intraday
+    from awen_agent import intraday
 
     intraday.record_and_diff(1, "campaign", _today(), [_row(spend=100.0)], "campaign_id")
     r = intraday.record_and_diff(1, "campaign", _today(), [_row(spend=60.0)], "campaign_id")
@@ -107,9 +107,9 @@ def test_negative_delta_treated_as_correction(ivyea_home):
     assert r.deltas[0].corrected is True
 
 
-def test_cross_day_never_diffed(ivyea_home):
+def test_cross_day_never_diffed(awen_home):
     """新的一天累计值归零；与昨天末次采样相减会得到大负数。"""
-    from ivyea_agent import intraday
+    from awen_agent import intraday
 
     intraday.record_and_diff(1, "campaign", _yesterday(), [_row(spend=900.0)], "campaign_id")
     r = intraday.record_and_diff(1, "campaign", _today(), [_row(spend=5.0)], "campaign_id")
@@ -119,7 +119,7 @@ def test_cross_day_never_diffed(ivyea_home):
 
 def test_short_gap_samples_are_ignored(wire2, monkeypatch):
     """20 分钟内的两次采样，增量全是噪声。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(spend=10.0)], config_rows=[_conf()])
     store_health.check_l2(1)
@@ -130,7 +130,7 @@ def test_short_gap_samples_are_ignored(wire2, monkeypatch):
 # ── 花费突增 ────────────────────────────────────────────────────────────────
 def _force_gap(monkeypatch, seconds):
     """把上一次采样的时间戳往前推，制造出足够的采样间隔。"""
-    from ivyea_agent import intraday
+    from awen_agent import intraday
     conn = intraday._conn()
     try:
         conn.execute("UPDATE samples SET ts = ts - ?", (seconds,))
@@ -142,7 +142,7 @@ def _force_gap(monkeypatch, seconds):
 def test_spend_burst_uses_budget_pace_fallback(wire2, monkeypatch):
     """历史样本不足时必须退到日预算配速——否则新用户前三天完全没这条规则，
     而那几天恰恰最容易配错预算烧钱。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(spend=10.0)], config_rows=[_conf(budget=240.0)])
     store_health.check_l2(1)                    # 首采
@@ -160,7 +160,7 @@ def test_spend_burst_uses_budget_pace_fallback(wire2, monkeypatch):
 
 def test_spend_burst_silent_when_orders_keep_up(wire2, monkeypatch):
     """花得多但单也多 = 卖爆了，不是烧钱。"""
-    from ivyea_agent import store_health, intraday
+    from awen_agent import store_health, intraday
 
     wire2(today_rows=[_row(spend=10.0, orders=1.0)], config_rows=[_conf(budget=240.0)])
     store_health.check_l2(1)
@@ -175,7 +175,7 @@ def test_spend_burst_silent_when_orders_keep_up(wire2, monkeypatch):
 
 
 def test_spend_burst_below_floor_ignored(wire2, monkeypatch):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(spend=1.0)], config_rows=[_conf(budget=24.0)])
     store_health.check_l2(1)
@@ -186,7 +186,7 @@ def test_spend_burst_below_floor_ignored(wire2, monkeypatch):
 
 # ── 曝光归零 / 点击无单 ─────────────────────────────────────────────────────
 def test_impression_zero(wire2):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(impressions=0.0)],
           hist_rows=_hist(impressions=5000.0),
@@ -197,7 +197,7 @@ def test_impression_zero(wire2):
 
 
 def test_impression_zero_ignored_for_low_traffic_campaign(wire2):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(impressions=0.0)],
           hist_rows=_hist(impressions=10.0),
@@ -206,7 +206,7 @@ def test_impression_zero_ignored_for_low_traffic_campaign(wire2):
 
 
 def test_click_no_order_intraday(wire2):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(clicks=80.0, orders=0.0, spend=90.0)],
           hist_rows=_hist(clicks=20.0, orders=2.0),
@@ -218,7 +218,7 @@ def test_click_no_order_intraday(wire2):
 
 
 def test_click_no_order_silent_when_orders_exist(wire2):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(clicks=80.0, orders=3.0)],
           hist_rows=_hist(clicks=20.0),
@@ -230,7 +230,7 @@ def test_click_no_order_silent_when_orders_exist(wire2):
 def test_no_growth_observed_is_surfaced(wire2, monkeypatch):
     """当日累计值始终不动 = 该源当日数据不滚动，L2 需改由推送承载。
     这条观测让 U8 自己验证自己，不必人工去猜。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire2(today_rows=[_row(spend=10.0)], config_rows=[_conf()])
     store_health.check_l2(1)
@@ -240,8 +240,8 @@ def test_no_growth_observed_is_surfaced(wire2, monkeypatch):
     assert any("不滚动更新" in s for s in res.skipped)
 
 
-def test_rate_baseline_needs_min_days(ivyea_home):
-    from ivyea_agent import intraday
+def test_rate_baseline_needs_min_days(awen_home):
+    from awen_agent import intraday
 
     assert intraday.rate_baseline(1, "campaign", "C1", 10, min_days=3) is None
 
@@ -256,7 +256,7 @@ def _seed_days(sid, entity_id, *, days, gap_hours, spend_per_hour):
     """按给定采样间隔造若干天历史。每天两次采样，间隔 gap_hours。"""
     import time as _t
 
-    from ivyea_agent import intraday
+    from awen_agent import intraday
     now = _t.time()
     conn = intraday._conn()
     try:
@@ -275,11 +275,11 @@ def _seed_days(sid, entity_id, *, days, gap_hours, spend_per_hour):
 
 
 @pytest.mark.parametrize("gap_hours", [1, 12])
-def test_baseline_is_a_rate_whatever_the_sampling_gap(ivyea_home, gap_hours):
+def test_baseline_is_a_rate_whatever_the_sampling_gap(awen_home, gap_hours):
     """同样的"每小时 10 块"，1 小时采一次和 12 小时采一次必须得出同一个基线。"""
     import time as _t
 
-    from ivyea_agent import intraday
+    from awen_agent import intraday
 
     hour = _t.localtime().tm_hour
     _seed_days(1, f"C-{gap_hours}", days=5, gap_hours=gap_hours, spend_per_hour=10.0)
@@ -288,12 +288,12 @@ def test_baseline_is_a_rate_whatever_the_sampling_gap(ivyea_home, gap_hours):
     assert base["spend"] == pytest.approx(10.0, rel=0.01)
 
 
-def test_baseline_tolerates_the_hour_drifting(ivyea_home):
+def test_baseline_tolerates_the_hour_drifting(awen_home):
     """任务按「上次跑完 + 间隔」调度，执行时刻会慢慢漂。
     要求整点严格相等的话，漂过一个小时边界基线就凭空消失。"""
     import time as _t
 
-    from ivyea_agent import intraday
+    from awen_agent import intraday
 
     hour = _t.localtime().tm_hour
     _seed_days(1, "C-drift", days=4, gap_hours=1, spend_per_hour=8.0)

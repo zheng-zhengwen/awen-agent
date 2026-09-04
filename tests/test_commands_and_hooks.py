@@ -6,13 +6,13 @@ import os
 
 import pytest
 
-from ivyea_agent import commands, config, hooks
+from awen_agent import commands, config, hooks
 
 _posix_only = pytest.mark.skipif(os.name == "nt", reason="钩子命令用了 bash 语法（; / 引号转义），cmd 不等价")
 
 
 def _use_home(tmp_path, monkeypatch):
-    monkeypatch.setattr(config, "IVYEA_DIR", tmp_path)
+    monkeypatch.setattr(config, "AWEN_DIR", tmp_path)
     return tmp_path
 
 
@@ -132,7 +132,7 @@ def test_dispatch_result_pre_hook_blocks_and_post_hook_fires(tmp_path, monkeypat
         "pre_tool_use": [{"matcher": "run_command", "command": "echo guard says no >&2; exit 2"}],
         "post_tool_use": [{"matcher": "list_dir", "command": f"echo done > {post_marker}"}],
     })
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
     ctx = agent_tools.ToolContext()
     res = agent_tools.dispatch_result("run_command", {"command": "echo hi"}, ctx)
     assert res.ok is False and "pre_tool_use hook 拒绝" in res.text and "guard says no" in res.text
@@ -151,10 +151,10 @@ def test_legacy_list_format_still_works_for_tool_events(tmp_path, monkeypatch):
     assert marker.exists()
 
 
-def test_chat_p_fires_stop_and_session_end(tmp_path, monkeypatch, ivyea_home, capsys):
+def test_chat_p_fires_stop_and_session_end(tmp_path, monkeypatch, awen_home, capsys):
     """-p 全链路：user_prompt → stop → session_end 按序触发。"""
-    from ivyea_agent import providers, hooks as hooks_mod
-    from ivyea_agent.cli import build_parser
+    from awen_agent import providers, hooks as hooks_mod
+    from awen_agent.cli import build_parser
     fired = []
     monkeypatch.setattr(hooks_mod, "fire", lambda ev, payload=None, **kw: fired.append(ev))
 

@@ -25,7 +25,7 @@
 
 两件事：
 
-1. **活轮事件日志**（`ivyea_agent/live_turn.py`）：每条会话最多一份，跑的过程中
+1. **活轮事件日志**（`awen_agent/live_turn.py`）：每条会话最多一份，跑的过程中
    把所有事件记一份，跑完封存 5 分钟。新增 `GET /v1/chat/sessions/{id}/live`，
    任何客户端随时接进来 —— 先回放已经发生的，再实时跟随。会话详情多回一行
    `live: {running, seq}`，前端据此决定要不要接。

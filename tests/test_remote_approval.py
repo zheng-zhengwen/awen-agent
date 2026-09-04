@@ -18,7 +18,7 @@ def _options():
 
 def test_prompt_blocks_until_decision_arrives():
     """发出 permission_request 后阻塞；决策一到就返回对应选项。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     sent: list[tuple[str, dict]] = []
     remote = service.RemoteApproval(lambda ev, data: sent.append((ev, data)), "sid-1")
@@ -59,7 +59,7 @@ def test_prompt_blocks_until_decision_arrives():
 
 def test_timeout_denies_and_notifies():
     """没人理 → 拒绝，并且告诉前端这张卡已经失效。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     sent: list[tuple[str, dict]] = []
     remote = service.RemoteApproval(lambda ev, data: sent.append((ev, data)), "sid-2", timeout=0.05)
@@ -71,7 +71,7 @@ def test_timeout_denies_and_notifies():
 
 def test_client_disconnect_denies_without_waiting_out_the_timeout():
     """页面关了就没人能确认了，别把这一步在服务端干挂十分钟。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     gone = threading.Event()
     gone.set()
@@ -84,7 +84,7 @@ def test_client_disconnect_denies_without_waiting_out_the_timeout():
 
 def test_unknown_choice_falls_back_to_deny():
     """前端塞个没发过的选项，不许借此改变语义。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     holder: dict = {}
     remote = service.RemoteApproval(lambda ev, data: holder.setdefault("id", data.get("request_id")),
@@ -103,13 +103,13 @@ def test_unknown_choice_falls_back_to_deny():
 
 
 def test_resolve_unknown_request_id_is_false():
-    from ivyea_agent import service
+    from awen_agent import service
     assert service.resolve_permission("no-such-id", "approve") is False
 
 
 def test_permission_engine_uses_remote_channel_and_skips_edit():
     """审批引擎认这条通道；远端没法做就地编辑，edit 选项必须先摘掉。"""
-    from ivyea_agent import permission
+    from awen_agent import permission
 
     seen: dict = {}
 
@@ -133,7 +133,7 @@ def test_permission_engine_uses_remote_channel_and_skips_edit():
 
 def test_session_choice_allows_same_op_type_without_asking_again():
     """「本会话同类都批准」在远程模式下同样生效，不该每步都再弹一次。"""
-    from ivyea_agent import permission
+    from awen_agent import permission
 
     asked: list[str] = []
 
@@ -150,7 +150,7 @@ def test_session_choice_allows_same_op_type_without_asking_again():
 
 def test_cli_path_untouched_without_prompt_fn(monkeypatch):
     """没注入 prompt_fn 时仍走 tui.select —— CLI 的交互审批行为一字不变。"""
-    from ivyea_agent import permission, tui
+    from awen_agent import permission, tui
 
     calls: dict = {}
 
@@ -177,7 +177,7 @@ class _BoardToolProvider:
         self.calls += 1
         if self.calls == 1:
             yield {"type": "final", "content": "", "usage": {}, "tool_calls": [{
-                "id": "b1", "name": "ivyea_ops_call_tool",
+                "id": "b1", "name": "awen_ops_call_tool",
                 "arguments": {"name": "lingxing_operate_enable", "arguments": {}},
             }]}
         else:
@@ -185,9 +185,9 @@ class _BoardToolProvider:
 
 
 @pytest.mark.parametrize("decision,expect_called", [("approve", True), ("deny", False)])
-def test_destructive_board_tool_requires_approval(ivyea_home, monkeypatch, decision, expect_called):
+def test_destructive_board_tool_requires_approval(awen_home, monkeypatch, decision, expect_called):
     """写类板块能力（开领星可写开关这种）必须先问过人，拒绝就真的不调。"""
-    from ivyea_agent import agent_loop, agent_tools, permission
+    from awen_agent import agent_loop, agent_tools, permission
 
     called: list[str] = []
 
@@ -215,9 +215,9 @@ def test_destructive_board_tool_requires_approval(ivyea_home, monkeypatch, decis
     assert permission  # 引擎确实参与了这条路径
 
 
-def test_readonly_board_tool_is_not_gated(ivyea_home, monkeypatch):
+def test_readonly_board_tool_is_not_gated(awen_home, monkeypatch):
     """只读板块能力不该被审批打断 —— 否则每查一次历史都要点一次确认。"""
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
 
     def _fake_bridge(ctx, path, payload, timeout=80.0):
         if path == "/tools":
@@ -231,14 +231,14 @@ def test_readonly_board_tool_is_not_gated(ivyea_home, monkeypatch):
     asked: list[str] = []
     ctx.perm.prompt_fn = lambda *a, **k: asked.append("asked") or "deny"
 
-    out = agent_tools._t_ivyea_ops_call_tool({"name": "market_history", "arguments": {}}, ctx)
+    out = agent_tools._t_awen_ops_call_tool({"name": "market_history", "arguments": {}}, ctx)
     assert "rows" in out
     assert asked == []
 
 
-def test_board_tool_unchanged_when_no_approval_channel(ivyea_home, monkeypatch):
+def test_board_tool_unchanged_when_no_approval_channel(awen_home, monkeypatch):
     """没有审批通道时保持既有行为：嵌入式对话一直这么跑的，这次不改它。"""
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
 
     called: list[str] = []
 
@@ -251,7 +251,7 @@ def test_board_tool_unchanged_when_no_approval_channel(ivyea_home, monkeypatch):
     monkeypatch.setattr(agent_tools, "_ops_bridge_request", _fake_bridge)
     ctx = agent_tools.ToolContext()            # perm.prompt_fn 为 None
     ctx.ops_bridge = {"base_url": "http://x/api", "token": "t"}
-    agent_tools._t_ivyea_ops_call_tool({"name": "lingxing_operate_enable", "arguments": {}}, ctx)
+    agent_tools._t_awen_ops_call_tool({"name": "lingxing_operate_enable", "arguments": {}}, ctx)
     assert called == ["lingxing_operate_enable"]
 
 
@@ -262,11 +262,11 @@ def test_file_tools_resolve_relative_paths_against_workspace(tmp_path, monkeypat
 
     ToolContext.workspace 一直写着"通用工具的工作目录"，但 read_file / list_dir /
     write_file / edit_file 都是直接 Path(...).resolve()。CLI 下 workspace == cwd
-    所以一直没暴露；嵌进 IvyeaOps 跑时进程 cwd 是 ops 的安装目录，实测
-    list_dir(".") 列出来的是 /root/ivyea-ops 而不是用户绑定的工作区。
+    所以一直没暴露；嵌进 awenOps 跑时进程 cwd 是 ops 的安装目录，实测
+    list_dir(".") 列出来的是 /root/awen-ops 而不是用户绑定的工作区。
     """
-    from ivyea_agent import tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import tools_general as tg
+    from awen_agent.agent_tools import ToolContext
 
     ws = tmp_path / "myws"
     ws.mkdir()
@@ -285,8 +285,8 @@ def test_file_tools_resolve_relative_paths_against_workspace(tmp_path, monkeypat
 
 
 def test_absolute_paths_are_untouched_by_workspace(tmp_path, monkeypatch):
-    from ivyea_agent import tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import tools_general as tg
+    from awen_agent.agent_tools import ToolContext
 
     ws = tmp_path / "ws"
     ws.mkdir()
@@ -298,8 +298,8 @@ def test_absolute_paths_are_untouched_by_workspace(tmp_path, monkeypatch):
 
 def test_cli_behaviour_unchanged_when_workspace_equals_cwd(tmp_path, monkeypatch):
     """CLI 把 workspace 设成 os.getcwd()，两者一致 —— 行为必须和以前一模一样。"""
-    from ivyea_agent import tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import tools_general as tg
+    from awen_agent.agent_tools import ToolContext
 
     (tmp_path / "a.txt").write_text("x", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
@@ -315,8 +315,8 @@ def test_declared_workspace_is_never_widened_by_scope_locking(tmp_path, monkeypa
     那个"看起来像项目"的祖先去。实测：绑定 /tmp/…/wsdir 被放宽成 /tmp，agent 于是
     对着 5.5 万个文件找一个相对路径文件，既找不到、扫描面也大得离谱。
     """
-    from ivyea_agent import task_scope
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import task_scope
+    from awen_agent.agent_tools import ToolContext
 
     # 祖先目录伪装成一个"项目"（.git 存在）
     ancestor = tmp_path / "looks-like-a-repo"
@@ -342,8 +342,8 @@ def test_declared_workspace_is_never_widened_by_scope_locking(tmp_path, monkeypa
 
 def test_declared_workspace_still_allows_narrowing_inside(tmp_path):
     """收窄是允许的 —— 边界只挡"往上"，不挡"往里"。"""
-    from ivyea_agent import task_scope
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import task_scope
+    from awen_agent.agent_tools import ToolContext
 
     base = tmp_path / "base"
     inner = base / "sub"
@@ -360,8 +360,8 @@ def test_tool_evidence_cannot_widen_past_the_declared_workspace(tmp_path):
     少了这道闸，第一次 read_file 之后工作区又被悄悄放宽回祖先目录 ——
     实测收尾会带一句"[范围已锁定] 后续代码搜索根：/tmp"。
     """
-    from ivyea_agent import task_scope
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import task_scope
+    from awen_agent.agent_tools import ToolContext
 
     ancestor = tmp_path / "repo"
     (ancestor / ".git").mkdir(parents=True)

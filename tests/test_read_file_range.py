@@ -1,7 +1,7 @@
 """read_file line-range support (offset/limit) — the approval-loop root fix."""
 from __future__ import annotations
 
-from ivyea_agent.agent_tools import TOOL_SCHEMAS, ToolContext, dispatch
+from awen_agent.agent_tools import TOOL_SCHEMAS, ToolContext, dispatch
 
 
 def _file(tmp_path, n=20):

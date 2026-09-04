@@ -62,7 +62,7 @@ class _FakePromoSource:
     def fetch(self, metric, scope, window=None):
         from zoneinfo import ZoneInfo
 
-        from ivyea_agent.datasources.lingxing_source import LingxingSource
+        from awen_agent.datasources.lingxing_source import LingxingSource
         tz = ZoneInfo(self.tz_name)
         out = []
         for kind, raw in self.rows:
@@ -74,8 +74,8 @@ class _FakePromoSource:
 
 
 @pytest.fixture()
-def wire_promo(ivyea_home, monkeypatch):
-    from ivyea_agent import datasources, metrics
+def wire_promo(awen_home, monkeypatch):
+    from awen_agent import datasources, metrics
 
     def _install(rows, tz_name="Europe/London"):
         for s in list(metrics.registered()):
@@ -83,13 +83,13 @@ def wire_promo(ivyea_home, monkeypatch):
         metrics.register(_FakePromoSource(rows, tz_name), priority=1)
         monkeypatch.setattr(datasources, "install_defaults", lambda: None)
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 
 
 def _run(sid=1863):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
     return store_health.check_l1(sid)
 
 
@@ -102,11 +102,11 @@ def _of(result, code):
 
 
 # ── 规范化 ──────────────────────────────────────────────────────────────────
-def test_site_time_is_parsed_in_store_timezone(ivyea_home):
+def test_site_time_is_parsed_in_store_timezone(awen_home):
     """同一个裸时间串，UK 店和 JP 店必须落在不同的绝对时刻（差 8 小时）。"""
     from zoneinfo import ZoneInfo
 
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     raw = _raw_promo(promotion_end_time="2026-08-24 23:59:00")
     uk = LingxingSource._promotion(raw, 1863, "coupon", ZoneInfo("Europe/London"))
@@ -116,10 +116,10 @@ def test_site_time_is_parsed_in_store_timezone(ivyea_home):
     assert delta == 8 * 3600
 
 
-def test_money_strings_with_currency_symbols_are_parsed(ivyea_home):
+def test_money_strings_with_currency_symbols_are_parsed(awen_home):
     from zoneinfo import ZoneInfo
 
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     row = LingxingSource._promotion(
         _raw_promo(budget="JP¥10,084.0", cost="8067.20"), 1872, "coupon",
@@ -129,11 +129,11 @@ def test_money_strings_with_currency_symbols_are_parsed(ivyea_home):
     assert row["budget_used_pct"] == 80.0
 
 
-def test_missing_budget_is_none_not_zero(ivyea_home):
+def test_missing_budget_is_none_not_zero(awen_home):
     """"没有预算这个概念"和"预算是 0"在卡片上必须能区分开。"""
     from zoneinfo import ZoneInfo
 
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     row = LingxingSource._promotion(_raw_promo(budget="", cost=""), 1863, "seckill",
                                     ZoneInfo("Europe/London"))
@@ -270,7 +270,7 @@ def test_promotion_findings_carry_no_executable_intent(wire_promo):
 
 def test_card_labels_exist_for_every_promo_rule():
     """新规则必须有人话短名 —— 卡片上出现 promo.sync_stale 这种代码是半成品。"""
-    from ivyea_agent.feishu_card import RULE_LABEL
+    from awen_agent.feishu_card import RULE_LABEL
 
     for code in ("promo.ending_soon", "promo.starting_soon",
                  "promo.budget_exhausted", "promo.sync_stale"):

@@ -1,7 +1,7 @@
 """Gemini native provider translation tests."""
 from __future__ import annotations
 
-from ivyea_agent.providers import gemini_provider as gp
+from awen_agent.providers import gemini_provider as gp
 
 
 def test_messages_to_gemini_with_tool_roundtrip_shape():
@@ -51,8 +51,8 @@ def test_extract_response_text_tool_and_usage():
     assert out["usage"] == {"prompt_tokens": 12, "completion_tokens": 5}
 
 
-def test_from_settings_builds_gemini_provider(ivyea_home):
-    from ivyea_agent.providers import from_settings
+def test_from_settings_builds_gemini_provider(awen_home):
+    from awen_agent.providers import from_settings
     p = from_settings({"kind": "native", "api_mode": "gemini_native",
                        "model": "gemini-3-pro-preview",
                        "base_url": "https://generativelanguage.googleapis.com/v1beta"}, "key")

@@ -12,7 +12,7 @@ import pytest
 
 
 def _dates(days=7, excl=1):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
     return store_health._window_days(days, excl)
 
 
@@ -46,8 +46,8 @@ class _Src:
 
 
 @pytest.fixture()
-def wire3(ivyea_home, monkeypatch):
-    from ivyea_agent import metrics, datasources, lingxing_optimizer
+def wire3(awen_home, monkeypatch):
+    from awen_agent import metrics, datasources, lingxing_optimizer
 
     def _install(report=(), config_rows=(), profit_by_window=None, listings=None):
         for s in list(metrics.registered()):
@@ -72,13 +72,13 @@ def wire3(ivyea_home, monkeypatch):
         monkeypatch.setattr(lingxing_optimizer, "resolve_target_acos",
                             lambda sid: (0.30, 0.40, 0.40, "测试目标"))
     yield _install
-    from ivyea_agent import metrics as m
+    from awen_agent import metrics as m
     for s in list(m.registered()):
         m.unregister(s.name)
 
 
 def _run(**kw):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
     return store_health.check_l3(1, include_optimizer=False, **kw)
 
 
@@ -87,7 +87,7 @@ def _codes(res):
 
 
 # ── 窗口 ────────────────────────────────────────────────────────────────────
-def test_window_excludes_today_and_does_not_overlap(ivyea_home):
+def test_window_excludes_today_and_does_not_overlap(awen_home):
     """报表 T+1：拿今天的半天数据和整天基线比，会造出"销量腰斩"的假告警。"""
     recent, base = _dates(7)
     today = datetime.date.today().isoformat()
@@ -218,7 +218,7 @@ def test_gross_rate_percentage_form_is_normalized(wire3):
 
 # ── 数据缺口 ────────────────────────────────────────────────────────────────
 def test_missing_report_surfaces_gap_not_silence(wire3):
-    from ivyea_agent import metrics
+    from awen_agent import metrics
 
     wire3()
     for s in list(metrics.registered()):
@@ -230,7 +230,7 @@ def test_missing_report_surfaces_gap_not_silence(wire3):
 
 # ── 与优化器的分工 ──────────────────────────────────────────────────────────
 def test_optimizer_candidates_become_findings(wire3, monkeypatch):
-    from ivyea_agent import store_health, lingxing_optimizer
+    from awen_agent import store_health, lingxing_optimizer
 
     wire3()
     monkeypatch.setattr(lingxing_optimizer, "run_store", lambda sid: {
@@ -259,7 +259,7 @@ def test_optimizer_candidates_become_findings(wire3, monkeypatch):
 
 
 def test_optimizer_failure_is_a_gap_not_a_crash(wire3, monkeypatch):
-    from ivyea_agent import store_health, lingxing_optimizer
+    from awen_agent import store_health, lingxing_optimizer
 
     wire3()
 
@@ -306,7 +306,7 @@ def test_listing_sales_drop_ignores_long_tail(wire3):
 
 def test_listing_stall_is_crit_and_beats_drop(wire3):
     """卖得动的货突然一件不出，比"下滑"严重，且不该同时报两条。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire3(listings=[_listing(v7=0.0, v30=300.0)])
     codes = _codes(_run())
@@ -335,7 +335,7 @@ def test_listing_acos_ignored_below_spend_floor(wire3):
 
 def test_spend_with_zero_sales_is_crit(wire3):
     """有花费、零销售额是纯烧钱，门槛比 ACOS 超标低一档。"""
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     wire3(listings=[_listing(spend7=80.0, amount7=0.0)])
     hits = [f for f in _run().findings if f.code == "ads.listing_spend_no_sales"]

@@ -24,8 +24,8 @@
 
 `amazon_auth`（LWA 换 token、区域推导、站点表）、`amazon_spapi`（限流/重试/分页）、
 `amazon_ads`（版本化媒体类型、v3 异步报表）、`datasources/amazon_source`
-（规范化到既有 canonical 契约）、`ivyea amazon verify`（分步自检）、
-以及 IvyeaOps 里可以真正填进去的配置区。
+（规范化到既有 canonical 契约）、`awen amazon verify`（分步自检）、
+以及 awenOps 里可以真正填进去的配置区。
 
 ### 二、契约必须逐条来自官方文件，并在代码里写明出处
 
@@ -64,7 +64,7 @@ Ads v3 把花费叫 `cost`（v2 是 `spend`），照抄会拿到一整列 0；
 
 ## 后果
 
-- 已可用：填凭据 → 库存与广告规则改吃官方数据 → `ivyea amazon verify` 端到端验收。
+- 已可用：填凭据 → 库存与广告规则改吃官方数据 → `awen amazon verify` 端到端验收。
 - **仍未做**，且都需要真账号或真基础设施才验得了：
   - P7b 推送通道（SP-API Notifications / Marketing Stream）：要建 EventBridge/SQS
     目的地并真订阅，没有账号连能不能建都不知道。这是"秒级实时"的唯一正路（ADR-9）。

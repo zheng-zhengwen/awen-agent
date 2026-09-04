@@ -14,7 +14,7 @@
 `DEEPSEEK_API_KEY`、领星凭据、各家 provider 的 key。
 
 自己手配一两个 MCP server 的年代，这不算问题：那些命令是自己挑的。但方向已经变了 ——
-`ivyea mcp add` 让接入任意第三方 server 变成一条命令，hook 也开始有人从别处抄脚本。
+`awen mcp add` 让接入任意第三方 server 变成一条命令，hook 也开始有人从别处抄脚本。
 **一个"查快递"的 server 没有任何理由看得见 DeepSeek 的 key。**
 
 对照组：DeepSeek Harness 的 `dsh-mcp-client`，其配置字段的文档写的是
@@ -72,7 +72,7 @@ MCP server 写在 `mcp.json` 的服务器条目里，hook 写在 `hooks.json` �
 
 ### 4. 许可证：MIT
 
-同仓库群里 IvyeaOps 是 AGPL-3.0（要保护的产品），ivyea-translate 是 MIT（要传播的工具）。
+同仓库群里 awenOps 是 AGPL-3.0（要保护的产品），awen-translate 是 MIT（要传播的工具）。
 本仓属于后者：**它的价值在于被用、被扩展**，一个会劝退插件作者和企业用户的传染性协议
 和这个目标冲突。
 
@@ -143,9 +143,9 @@ v1.15.8 改成"三个字段一个都没写才继承"。看着合理 —— 但�
 
 安全由两条**主动路径**渐进拿到，都不需要用户碰 JSON：
 
-- `ivyea mcp add` 向导给新服务器写 `inherit_env: false` → **新加的默认收紧**
-- `ivyea mcp env <名> --secure` / `--pass` / `--set`，配合
-  `ivyea mcp doctor` 和 `ivyea mcp list` 的提示
+- `awen mcp add` 向导给新服务器写 `inherit_env: false` → **新加的默认收紧**
+- `awen mcp env <名> --secure` / `--pass` / `--set`，配合
+  `awen mcp doctor` 和 `awen mcp list` 的提示
 
 ## 留下的教训
 

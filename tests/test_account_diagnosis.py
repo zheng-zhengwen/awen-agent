@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import csv
 
-from ivyea_agent import account_diagnosis as ad
+from awen_agent import account_diagnosis as ad
 
 
 ROWS = [
@@ -45,7 +45,7 @@ def test_render_md_contains_sections(tmp_path):
 
 
 def test_agent_tool_registered():
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "run_account_diagnosis" in names
     assert "run_account_diagnosis" in _DISPATCH

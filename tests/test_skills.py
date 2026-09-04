@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from ivyea_agent import skills
+from awen_agent import skills
 
 
 def test_builtin_skills_list_and_get():
@@ -29,8 +29,8 @@ def test_skill_search_chinese_terms():
     assert "amazon.launch_playbook" in ids
 
 
-def test_user_skill_directory(ivyea_home):
-    base = ivyea_home / "skills" / "amazon" / "custom_review"
+def test_user_skill_directory(awen_home):
+    base = awen_home / "skills" / "amazon" / "custom_review"
     base.mkdir(parents=True)
     (base / "skill.json").write_text(json.dumps({
         "id": "amazon.custom_review",
@@ -49,7 +49,7 @@ def test_user_skill_directory(ivyea_home):
     assert "Custom Review" in skills.render_list([sk])
 
 
-def test_create_user_skill_and_audit(ivyea_home):
+def test_create_user_skill_and_audit(awen_home):
     sk = skills.create_user_skill(
         "general.release_check",
         title="Release Check",
@@ -71,7 +71,7 @@ def test_create_user_skill_and_audit(ivyea_home):
     assert "Skill Audit" in skills.render_audit(rows)
 
 
-def test_skill_status_and_lockfile_for_user_override(ivyea_home):
+def test_skill_status_and_lockfile_for_user_override(awen_home):
     sk = skills.create_user_skill(
         "amazon.search_term_optimizer",
         title="Local Search Optimizer",
@@ -82,7 +82,7 @@ def test_skill_status_and_lockfile_for_user_override(ivyea_home):
         body="# Local Override\n\nUse account-specific rules.",
         overwrite=True,
     )
-    manifest = sk.path and (ivyea_home / "skills" / "amazon" / "search_term_optimizer" / "skill.json")
+    manifest = sk.path and (awen_home / "skills" / "amazon" / "search_term_optimizer" / "skill.json")
     data = json.loads(manifest.read_text(encoding="utf-8"))
     data["version"] = "0.0.1"
     manifest.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
@@ -97,12 +97,12 @@ def test_skill_status_and_lockfile_for_user_override(ivyea_home):
     active = next(s for s in lock["skills"] if s["id"] == "amazon.search_term_optimizer")
     assert active["scope"] == "user"
 
-    out = skills.write_lockfile(ivyea_home / "skills.lock.json")
+    out = skills.write_lockfile(awen_home / "skills.lock.json")
     assert json.loads(out.read_text(encoding="utf-8"))["version"] == 1
 
 
 def test_skill_cli(capsys):
-    from ivyea_agent.cli import main
+    from awen_agent.cli import main
 
     assert main(["skill", "list"]) == 0
     out = capsys.readouterr().out
@@ -152,11 +152,11 @@ def _write_skill(root, rel: str, frontmatter: str, body: str = "步骤一。", a
     return d
 
 
-def test_frontmatter_skill_loads_without_a_skill_json(ivyea_home, monkeypatch):
-    """外部技能库（IvyeaOps 的 Skill 中心就是）用的就是这个格式，不该再要求 skill.json。"""
+def test_frontmatter_skill_loads_without_a_skill_json(awen_home, monkeypatch):
+    """外部技能库（awenOps 的 Skill 中心就是）用的就是这个格式，不该再要求 skill.json。"""
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/search-term",
+    _write_skill(awen_home / "skills", "amazon/search-term",
                  "name: search-term\ndescription: Analyze search term reports\n"
                  "description_zh: 分析广告搜索词报表\nversion: 2.0.0\n"
                  "triggers: [搜索词, 否词]")
@@ -170,21 +170,21 @@ def test_frontmatter_skill_loads_without_a_skill_json(ivyea_home, monkeypatch):
     assert sk.domain == "amazon"
 
 
-def test_hermes_style_tags_become_triggers(ivyea_home):
+def test_hermes_style_tags_become_triggers(awen_home):
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/legacy",
+    _write_skill(awen_home / "skills", "amazon/legacy",
                  "name: legacy\ndescription: d\n"
                  "metadata:\n  hermes:\n    tags: [ads, 报表]")
     sk = {s.id: s for s in skills.list_skills()}["amazon.legacy"]
     assert sk.triggers == ["ads", "报表"]
 
 
-def test_skill_json_still_wins_for_existing_skills(ivyea_home):
+def test_skill_json_still_wins_for_existing_skills(awen_home):
     """老技能一个都不能受影响。"""
     import importlib
     importlib.reload(skills)
-    d = _write_skill(ivyea_home / "skills", "amazon/both",
+    d = _write_skill(awen_home / "skills", "amazon/both",
                      "name: both\ndescription: 来自 frontmatter")
     (d / "skill.json").write_text(json.dumps(
         {"id": "amazon.both", "description": "来自 skill.json"}), encoding="utf-8")
@@ -192,12 +192,12 @@ def test_skill_json_still_wins_for_existing_skills(ivyea_home):
     assert sk.description == "来自 skill.json"
 
 
-def test_external_roots_are_loaded_in_place(ivyea_home, tmp_path, monkeypatch):
+def test_external_roots_are_loaded_in_place(awen_home, tmp_path, monkeypatch):
     """上游把自己的技能库**原地**挂上来，不用复制、不用转格式。"""
     import importlib
     external = tmp_path / "hub" / "amazon"
     _write_skill(external, "market-research", "name: market-research\ndescription_zh: 市场调研")
-    monkeypatch.setenv("IVYEA_SKILL_ROOTS", str(external))
+    monkeypatch.setenv("AWEN_SKILL_ROOTS", str(external))
     importlib.reload(skills)
 
     sk = {s.id: s for s in skills.list_skills()}.get("amazon.market_research")
@@ -208,13 +208,13 @@ def test_external_roots_are_loaded_in_place(ivyea_home, tmp_path, monkeypatch):
     assert sk.path == str(external / "market-research")
 
 
-def test_external_roots_can_never_shadow_builtin(ivyea_home, tmp_path, monkeypatch):
+def test_external_roots_can_never_shadow_builtin(awen_home, tmp_path, monkeypatch):
     """外部库里随手一个同名技能就顶掉内置技能，是最难查的那种故障。"""
     import importlib
     external = tmp_path / "hub" / "amazon"
     _write_skill(external, "budget-pacing",
                  "id: amazon.budget_pacing\nname: budget-pacing\ndescription_zh: 冒牌货")
-    monkeypatch.setenv("IVYEA_SKILL_ROOTS", str(external))
+    monkeypatch.setenv("AWEN_SKILL_ROOTS", str(external))
     importlib.reload(skills)
 
     sk = {s.id: s for s in skills.list_skills()}["amazon.budget_pacing"]
@@ -222,21 +222,21 @@ def test_external_roots_can_never_shadow_builtin(ivyea_home, tmp_path, monkeypat
     assert "冒牌货" not in sk.description
 
 
-def test_personal_skills_still_override_builtin(ivyea_home):
+def test_personal_skills_still_override_builtin(awen_home):
     """个人技能覆盖内置 —— 这是本机作者的明确意图，语义不能跟着一起改掉。"""
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/mine",
+    _write_skill(awen_home / "skills", "amazon/mine",
                  "id: amazon.budget_pacing\nname: mine\ndescription_zh: 我自己的版本")
     sk = {s.id: s for s in skills.list_skills()}["amazon.budget_pacing"]
     assert sk.description == "我自己的版本"
 
 
-def test_the_model_is_told_where_the_assets_are(ivyea_home):
+def test_the_model_is_told_where_the_assets_are(awen_home):
     """说明书写着"运行 scripts/x.py"，就得告诉它这些文件在哪。"""
     import importlib
     importlib.reload(skills)
-    d = _write_skill(ivyea_home / "skills", "amazon/with-assets",
+    d = _write_skill(awen_home / "skills", "amazon/with-assets",
                      "name: with-assets\ndescription_zh: 带脚本的技能",
                      body="按 scripts/render.py 渲染。",
                      assets={"scripts/render.py": "print(1)"})
@@ -250,19 +250,19 @@ def test_the_model_is_told_where_the_assets_are(ivyea_home):
     assert "skill_view" in text
 
 
-def test_no_assets_means_no_directory_noise(ivyea_home):
+def test_no_assets_means_no_directory_noise(awen_home):
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/plain", "name: plain\ndescription_zh: 纯说明书")
+    _write_skill(awen_home / "skills", "amazon/plain", "name: plain\ndescription_zh: 纯说明书")
     sk = {s.id: s for s in skills.list_skills()}["amazon.plain"]
     assert "文件目录" not in skills.render_skill(sk)
 
 
-def test_broken_frontmatter_does_not_take_down_the_loader(ivyea_home):
+def test_broken_frontmatter_does_not_take_down_the_loader(awen_home):
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/good", "name: good\ndescription_zh: 好的")
-    bad = ivyea_home / "skills" / "amazon" / "bad"
+    _write_skill(awen_home / "skills", "amazon/good", "name: good\ndescription_zh: 好的")
+    bad = awen_home / "skills" / "amazon" / "bad"
     bad.mkdir(parents=True)
     (bad / "SKILL.md").write_text("---\n: : 坏 yaml : :\n---\n正文", encoding="utf-8")
 
@@ -271,10 +271,10 @@ def test_broken_frontmatter_does_not_take_down_the_loader(ivyea_home):
     assert "amazon.search_term_optimizer" in ids      # 内置的照常在
 
 
-def test_archive_dirs_are_skipped(ivyea_home):
+def test_archive_dirs_are_skipped(awen_home):
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/.archive/old", "name: old\ndescription_zh: 归档")
+    _write_skill(awen_home / "skills", "amazon/.archive/old", "name: old\ndescription_zh: 归档")
     assert "amazon.old" not in {s.id for s in skills.list_skills()}
 
 
@@ -299,12 +299,12 @@ def test_a_natural_chinese_question_matches_a_builtin_skill():
     assert hits and any(sk.id == "amazon.budget_pacing" for sk, _ in hits)
 
 
-def test_a_long_body_cannot_outrank_a_skill_that_is_actually_about_it(ivyea_home):
+def test_a_long_body_cannot_outrank_a_skill_that_is_actually_about_it(awen_home):
     """切了 2-gram 之后，长正文会靠噪音堆分。实测出现过一个几千字的技能在
     完全不相干的查询上排第一 —— 所以正文命中要封顶、标识和描述要加权。"""
     import importlib
     importlib.reload(skills)
-    root = ivyea_home / "skills"
+    root = awen_home / "skills"
     _write_skill(root, "amazon/on-topic",
                  "name: on-topic\ndescription_zh: 库存周转与补货节奏",
                  body="简短。")
@@ -316,11 +316,11 @@ def test_a_long_body_cannot_outrank_a_skill_that_is_actually_about_it(ivyea_home
     assert hits[0][0].id == "amazon.on_topic"
 
 
-def test_trigger_lists_written_with_chinese_separators_are_split(ivyea_home):
+def test_trigger_lists_written_with_chinese_separators_are_split(awen_home):
     """作者常把一行写成「调研报告、选品调研、市场分析」。不切开就是一条没法命中的长串。"""
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "amazon/research",
+    _write_skill(awen_home / "skills", "amazon/research",
                  "name: research\ndescription_zh: 调研\n"
                  "triggers: ['调研报告、选品调研、市场分析']")
     sk = {s.id: s for s in skills.list_skills()}["amazon.research"]
@@ -328,7 +328,7 @@ def test_trigger_lists_written_with_chinese_separators_are_split(ivyea_home):
     assert "选品调研" in sk.triggers
 
 
-def test_auto_injection_requires_a_named_hit(ivyea_home):
+def test_auto_injection_requires_a_named_hit(awen_home):
     """自动注入只认"这条技能就是干这个的"，不认正文里撞了几个常用词。
 
     线上事故：一句「测试」以 score=2 命中 ASIN 审计手册（全靠正文里出现过两次
@@ -336,7 +336,7 @@ def test_auto_injection_requires_a_named_hit(ivyea_home):
     """
     import importlib
     importlib.reload(skills)
-    root = ivyea_home / "skills"
+    root = awen_home / "skills"
     _write_skill(root, "amazon/audit",
                  "name: audit\ndescription_zh: ASIN 深度审计\ntriggers: ['asin审计']",
                  body="第一步先做连通性测试，再测试报表口径。测试通过后进入下一阶段。")
@@ -346,17 +346,17 @@ def test_auto_injection_requires_a_named_hit(ivyea_home):
     # 人工翻库不设这道闸：搜得到才好挑
     assert "amazon.audit" in [sk.id for sk, _ in skills.search("测试", limit=5)]
     # 名义命中照常注入
-    # 注意：ivyea_home 夹具不隔离 settings.skill_roots，真实技能库照样在列，
+    # 注意：awen_home 夹具不隔离 settings.skill_roots，真实技能库照样在列，
     # 所以这里断言"命中里有它"，不断言"只有它"。
     text, ids = skills.context_for_query("asin审计", limit=3)
     assert "amazon.audit" in ids and text
 
 
-def test_archived_skills_are_not_loaded(ivyea_home):
-    """归档区就在 ~/.ivyea/skills/ 里面 —— 扫描不跳过它，"归档"就只是搬了个目录。"""
+def test_archived_skills_are_not_loaded(awen_home):
+    """归档区就在 ~/.awen/skills/ 里面 —— 扫描不跳过它，"归档"就只是搬了个目录。"""
     import importlib
     importlib.reload(skills)
-    _write_skill(ivyea_home / "skills", "lingxing/patrol",
+    _write_skill(awen_home / "skills", "lingxing/patrol",
                  "id: lingxing.patrol\nname: patrol\ndescription_zh: 巡检\ntriggers: [巡检]")
     importlib.reload(skills)
     assert skills.get_skill("lingxing.patrol") is not None
@@ -367,7 +367,7 @@ def test_archived_skills_are_not_loaded(ivyea_home):
     assert skills.list_archive()          # 但东西还在，没删
 
 
-def test_written_id_is_the_id_that_loads_back(ivyea_home):
+def test_written_id_is_the_id_that_loads_back(awen_home):
     """加载器没有 id 就从 name 推导，推出来的和调用方给的往往不是一回事。"""
     import importlib
     importlib.reload(skills)
@@ -379,7 +379,7 @@ def test_written_id_is_the_id_that_loads_back(ivyea_home):
     assert skills.get_skill("lingxing.lingxing_ad_patrol") is None
 
 
-def test_semantic_never_leaks_into_auto_injection(ivyea_home):
+def test_semantic_never_leaks_into_auto_injection(awen_home):
     """小语料上余弦永远返回"最像的那几条"，没有"都不像"这个答案 ——
     自动注入那条路必须仍然能回答"一条都没有"。"""
     import importlib
@@ -389,7 +389,7 @@ def test_semantic_never_leaks_into_auto_injection(ivyea_home):
         assert ids == [], query
 
 
-def test_semantic_can_be_turned_off_for_a_single_call(ivyea_home):
+def test_semantic_can_be_turned_off_for_a_single_call(awen_home):
     import importlib
     importlib.reload(skills)
     assert skills.search("完全不存在的东西", limit=3, semantic=False) == []

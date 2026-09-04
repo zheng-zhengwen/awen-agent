@@ -13,8 +13,8 @@ def _citation():
 
 
 def test_nonstream_citation_gate_retries_then_appends_used_source():
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     class Provider:
         def __init__(self):
@@ -40,8 +40,8 @@ def test_nonstream_citation_gate_retries_then_appends_used_source():
 
 
 def test_stream_citation_gate_does_not_render_uncited_draft():
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     class Provider:
         def __init__(self):
@@ -66,7 +66,7 @@ def test_stream_citation_gate_does_not_render_uncited_draft():
 
 
 def test_knowledge_tool_registers_citations_on_context():
-    from ivyea_agent.agent_tools import ToolContext, dispatch
+    from awen_agent.agent_tools import ToolContext, dispatch
 
     ctx = ToolContext()
     text = dispatch("knowledge_search", {"query": "上架报错 90220", "limit": 2}, ctx)
@@ -77,7 +77,7 @@ def test_knowledge_tool_registers_citations_on_context():
 
 
 def test_repeated_knowledge_searches_keep_stable_unique_keys():
-    from ivyea_agent.agent_tools import ToolContext, dispatch
+    from awen_agent.agent_tools import ToolContext, dispatch
 
     ctx = ToolContext()
     first = dispatch("knowledge_search", {"query": "上架报错 90220", "limit": 1}, ctx)

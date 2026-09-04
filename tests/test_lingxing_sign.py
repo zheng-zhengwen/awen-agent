@@ -1,11 +1,11 @@
 """领星签名黄金向量 —— 逐字节锁死 make_sign 与权威实现一致。
 
 向量用合成 16 字节 appId（与真实凭据无关），固定 params，期望值由权威算法
-（ivyea-ops lingxing_openapi.make_sign）于 2026-06-17 生成并冻结。
+（awen-ops lingxing_openapi.make_sign）于 2026-06-17 生成并冻结。
 """
 from __future__ import annotations
 
-from ivyea_agent.lingxing_openapi import make_sign
+from awen_agent.lingxing_openapi import make_sign
 
 APPID = "abcdef0123456789"  # 16 字节 = AES-128 key
 PARAMS = {

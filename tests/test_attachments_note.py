@@ -15,9 +15,9 @@ import sys
 
 
 def _mods():
-    sessions = importlib.reload(sys.modules["ivyea_agent.sessions"]) \
-        if "ivyea_agent.sessions" in sys.modules else importlib.import_module("ivyea_agent.sessions")
-    service = importlib.import_module("ivyea_agent.service")
+    sessions = importlib.reload(sys.modules["awen_agent.sessions"]) \
+        if "awen_agent.sessions" in sys.modules else importlib.import_module("awen_agent.sessions")
+    service = importlib.import_module("awen_agent.service")
     service.sessions = sessions
     return sessions, service
 
@@ -37,16 +37,16 @@ def _run(service, payload):
     return service.chat_stream(payload, lambda event, data: None, provider=_FakeProvider())
 
 
-_ATTACH = [{"kind": "image", "name": "trail-cam.png", "ref": "ivyea-ref://abc123",
+_ATTACH = [{"kind": "image", "name": "trail-cam.png", "ref": "awen-ref://abc123",
             "by": "siliconflow · Qwen3-VL",
             "text": "一只红熊猫趴在树干上，右侧绑着一台太阳能野外相机。"}]
 
 
 def test_note_carries_content_ref_and_the_no_denial_rule():
-    service = importlib.import_module("ivyea_agent.service")
+    service = importlib.import_module("awen_agent.service")
     note = service._attachments_note({"attachments": _ATTACH})
     assert note.startswith(service.ATTACHMENT_MARKER), "展示端按这个标记截断，前缀不能变"
-    assert "红熊猫" in note and "ivyea-ref://abc123" in note and "trail-cam.png" in note
+    assert "红熊猫" in note and "awen-ref://abc123" in note and "trail-cam.png" in note
     # 用户问的正是"你是通过什么识别图片的"：代读模型的名字必须能答得出来
     assert "Qwen3-VL" in note
     # 模型否认收到过图正是这次的投诉本身，指令必须在场
@@ -54,14 +54,14 @@ def test_note_carries_content_ref_and_the_no_denial_rule():
 
 
 def test_no_attachments_changes_nothing():
-    service = importlib.import_module("ivyea_agent.service")
+    service = importlib.import_module("awen_agent.service")
     assert service._attachments_note({}) == ""
     assert service._attachments_note({"attachments": []}) == ""
     # 读不出内容的图不摆空壳
-    assert service._attachments_note({"attachments": [{"ref": "ivyea-ref://x", "text": "  "}]}) == ""
+    assert service._attachments_note({"attachments": [{"ref": "awen-ref://x", "text": "  "}]}) == ""
 
 
-def test_note_is_persisted_on_the_user_message(ivyea_home):
+def test_note_is_persisted_on_the_user_message(awen_home):
     sessions, service = _mods()
     sid = "20260821-000000-200-test"
     _run(service, {"message": "这张图里面是什么？", "session_id": sid, "persist": True,
@@ -72,7 +72,7 @@ def test_note_is_persisted_on_the_user_message(ivyea_home):
     assert "红熊猫" in asked[0], "附图内容没落进 user 消息 —— 下一轮它就等于没发生过"
 
 
-def test_next_turn_still_sees_the_image(ivyea_home):
+def test_next_turn_still_sees_the_image(awen_home):
     """第二轮不带任何附图，模型手里也必须还有第一轮那张图读出来的内容。"""
     sessions, service = _mods()
     sid = "20260821-000000-201-test"

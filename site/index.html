@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ivyea Agent · 自托管 Amazon 运营 CLI Agent</title>
+<title>awen Agent · 自托管 Amazon 运营 CLI Agent</title>
 <meta name="description" content="自托管的 Amazon 运营命令行 Agent：确定性规则引擎做广告决策、LLM 只做复核与解释；领星 OpenAPI 真实广告数据，写操作审批制 + 审计回滚，记忆 / 知识库 / Skills / 护栏内置，多模型可切，数据全留本机。" />
 <style>
   :root{
@@ -234,18 +234,18 @@
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <a class="brand" href="#top"><span class="mark">›_</span> Ivyea Agent</a>
+  <a class="brand" href="#top"><span class="mark">›_</span> awen Agent</a>
   <nav class="nav-links" id="navLinks">
     <a href="#install" data-zh="安装" data-en="Install">安装</a>
     <a href="#why" data-zh="优势" data-en="Why">优势</a>
     <a href="#features" data-zh="能力" data-en="Capabilities">能力</a>
     <a href="#embed" data-zh="嵌入 Ops" data-en="Embed">嵌入 Ops</a>
     <a href="docs.html" data-zh="文档" data-en="Docs">文档</a>
-    <a href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">GitHub</a>
+    <a href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">GitHub</a>
   </nav>
   <div class="nav-act">
     <button class="lang-btn" id="langToggle">EN</button>
-    <a class="gh-btn" href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">
+    <a class="gh-btn" href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">
       <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       <span>GitHub</span>
     </a>
@@ -267,7 +267,7 @@
          data-en="A deterministic rule engine decides; the LLM only reviews and explains. Real ad data via Lingxing OpenAPI, every write approved + auditable & reversible. Memory, knowledge base, skills and guardrails built in, multi-model — your config, keys and data stay local.">确定性规则引擎做广告决策，LLM 只做复核与解释。领星 OpenAPI 真实广告数据，写操作逐条审批 + 审计回滚；记忆、知识库、Skills、护栏内置，多模型可切——配置、密钥、数据全留本机。</p>
       <div class="cta">
         <a class="btn btn-primary" href="#install"><span data-zh="一行命令安装" data-en="Install in one line">一行命令安装</span> →</a>
-        <a class="btn btn-ghost" href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer"><span data-zh="GitHub 源码" data-en="GitHub source">GitHub 源码</span> ↗</a>
+        <a class="btn btn-ghost" href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer"><span data-zh="GitHub 源码" data-en="GitHub source">GitHub 源码</span> ↗</a>
       </div>
       <div class="hero-meta">
         <span><b>Windows / macOS / Linux</b></span>
@@ -295,38 +295,38 @@
       <div class="term-body">
 <div class="os-pane" data-pane="linux-script">
 <div class="tl"><span class="c"># 1 · </span><span class="c" data-zh="一键安装（自动装 pipx，拉 Release wheel）" data-en="Install (auto-installs pipx, pulls Release wheel)">一键安装（自动装 pipx，拉 Release wheel）</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.sh | bash</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.sh | bash</span></div>
 <div class="tl"><span class="c"># 2 · </span><span class="c" data-zh="选模型 / 配 key（可选接领星）" data-en="Pick model / set key (Lingxing optional)">选模型 / 配 key（可选接领星）</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="c"># 3 · </span><span class="c" data-zh="开始对话" data-en="Start chatting">开始对话</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ </span><span class="ok" data-zh="对话式运营 Agent 就绪" data-en="Conversational ops agent ready">对话式运营 Agent 就绪</span>  <span class="ok">✓</span></div>
 </div>
 <div class="os-pane" data-pane="windows-script" hidden>
 <div class="tl"><span class="c"># 1 · </span><span class="c" data-zh="一键安装（PowerShell）" data-en="Install (PowerShell)">一键安装（PowerShell）</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">iwr https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.ps1 -UseBasicParsing | iex</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">iwr https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.ps1 -UseBasicParsing | iex</span></div>
 <div class="tl"><span class="c"># 2 · </span><span class="c" data-zh="选模型 / 配 key" data-en="Pick model / set key">选模型 / 配 key</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea onboard</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen onboard</span></div>
 <div class="tl"><span class="c"># 3 · </span><span class="c" data-zh="开始对话" data-en="Start chatting">开始对话</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ </span><span class="ok" data-zh="对话式运营 Agent 就绪" data-en="Conversational ops agent ready">对话式运营 Agent 就绪</span>  <span class="ok">✓</span></div>
 </div>
 <div class="os-pane" data-pane="linux-pipx" hidden>
 <div class="tl"><span class="c"># 1 · </span><span class="c" data-zh="用 pipx 从源码安装" data-en="Install from source via pipx">用 pipx 从源码安装</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">pipx install git+https://github.com/Hector-xue/ivyea-agent.git</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">pipx install git+https://github.com/zheng-zhengwen/awen-agent.git</span></div>
 <div class="tl"><span class="c"># 2 · </span><span class="c" data-zh="配置主脑模型与密钥" data-en="Configure model & keys">配置主脑模型与密钥</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea config</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen config</span></div>
 <div class="tl"><span class="c"># 3 · </span><span class="c" data-zh="开始对话" data-en="Start chatting">开始对话</span></div>
-<div class="tl"><span class="p">$ </span><span class="cmd">ivyea chat</span></div>
-<div class="tl"><span class="ok">→ http://127.0.0.1:8765</span>  <span class="dim" data-zh="（ivyea serve 给 IvyeaOps 用）" data-en="(ivyea serve for IvyeaOps)">（ivyea serve 给 IvyeaOps 用）</span></div>
+<div class="tl"><span class="p">$ </span><span class="cmd">awen chat</span></div>
+<div class="tl"><span class="ok">→ http://127.0.0.1:8765</span>  <span class="dim" data-zh="（awen serve 给 awenOps 用）" data-en="(awen serve for awenOps)">（awen serve 给 awenOps 用）</span></div>
 </div>
 <div class="os-pane" data-pane="windows-pipx" hidden>
 <div class="tl"><span class="c"># 1 · </span><span class="c" data-zh="用 pipx 从源码安装" data-en="Install from source via pipx">用 pipx 从源码安装</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">pipx install git+https://github.com/Hector-xue/ivyea-agent.git</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">pipx install git+https://github.com/zheng-zhengwen/awen-agent.git</span></div>
 <div class="tl"><span class="c"># 2 · </span><span class="c" data-zh="配置主脑模型与密钥" data-en="Configure model & keys">配置主脑模型与密钥</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea config</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen config</span></div>
 <div class="tl"><span class="c"># 3 · </span><span class="c" data-zh="开始对话" data-en="Start chatting">开始对话</span></div>
-<div class="tl"><span class="p">PS&gt; </span><span class="cmd">ivyea chat</span></div>
+<div class="tl"><span class="p">PS&gt; </span><span class="cmd">awen chat</span></div>
 <div class="tl"><span class="ok">→ </span><span class="ok" data-zh="就绪" data-en="Ready">就绪</span>  <span class="ok">✓</span></div>
 </div>
 <div class="tl" style="margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.08);white-space:normal;word-break:break-word;line-height:1.6"><span class="dim" data-zh="一键脚本默认装最新 Release wheel，不可用时回退 git 源码安装。内网 / 离线：python scripts/build_offline_bundle.py 生成离线包（含 wheelhouse 与启动器），解压后 bash install.sh 即可。" data-en="The script installs the latest Release wheel, falling back to git source. Intranet / offline: python scripts/build_offline_bundle.py builds a bundle (wheelhouse + launcher); unzip and run bash install.sh.">一键脚本默认装最新 Release wheel，不可用时回退 git 源码安装。内网 / 离线：python scripts/build_offline_bundle.py 生成离线包（含 wheelhouse 与启动器），解压后 bash install.sh 即可。</span></div>
@@ -344,7 +344,7 @@
 <section id="why" class="frame section reveal">
   <div class="section-head">
     <div class="section-left">
-      <div class="sec-tag">Why Ivyea Agent</div>
+      <div class="sec-tag">Why awen Agent</div>
       <h2 data-zh="为什么要单独做一个 Amazon Agent" data-en="Why a dedicated Amazon agent">为什么要单独做一个 Amazon Agent</h2>
     </div>
     <div class="section-right">
@@ -356,7 +356,7 @@
     <article class="mod reveal"><div class="ic">◆</div><h3 data-zh="规则引擎 + LLM 复核" data-en="Rule engine + LLM review">规则引擎 + LLM 复核</h3><p data-zh="决策由确定性规则给出，LLM 只做词分类、归因与措辞，不推翻数据。" data-en="Decisions come from deterministic rules; the LLM only classifies, attributes and phrases — never overrides data.">决策由确定性规则给出，LLM 只做词分类、归因与措辞，不推翻数据。</p></article>
     <article class="mod reveal"><div class="ic">⊘</div><h3 data-zh="审批式写入" data-en="Approval-gated writes">审批式写入</h3><p data-zh="否词 / 调 bid / 预算逐条人工确认，operate 总开关默认关，幅度闸 + 审计回滚。" data-en="Negatives / bids / budgets confirmed one by one; the operate switch is off by default, with a magnitude cap, audit log and rollback.">否词 / 调 bid / 预算逐条人工确认，operate 总开关默认关，幅度闸 + 审计回滚。</p></article>
     <article class="mod reveal"><div class="ic">◐</div><h3 data-zh="影子模式" data-en="Shadow mode">影子模式</h3><p data-zh="动钱前先只记不写，用后续真实花费回测「若照做能省 / 能多卖多少」。" data-en="Before touching spend, record-only — then backtest against real later spend: what you'd have saved or earned.">动钱前先只记不写，用后续真实花费回测「若照做能省 / 能多卖多少」。</p></article>
-    <article class="mod reveal"><div class="ic">⌂</div><h3 data-zh="本地私有" data-en="Local & private">本地私有</h3><p data-zh="配置、API key、记忆、知识库默认都在本机 ~/.ivyea/，不依赖外部数据库。" data-en="Config, API keys, memory and knowledge live in ~/.ivyea/ by default — no external database.">配置、API key、记忆、知识库默认都在本机 <code>~/.ivyea/</code>，不依赖外部数据库。</p></article>
+    <article class="mod reveal"><div class="ic">⌂</div><h3 data-zh="本地私有" data-en="Local & private">本地私有</h3><p data-zh="配置、API key、记忆、知识库默认都在本机 ~/.awen/，不依赖外部数据库。" data-en="Config, API keys, memory and knowledge live in ~/.awen/ by default — no external database.">配置、API key、记忆、知识库默认都在本机 <code>~/.awen/</code>，不依赖外部数据库。</p></article>
     <article class="mod reveal"><div class="ic">⟐</div><h3 data-zh="多模型可切" data-en="Multi-model">多模型可切</h3><p data-zh="DeepSeek / Claude / Gemini / Codex / Qwen / Kimi / Ollama 等 provider，带重试与降级链。" data-en="DeepSeek / Claude / Gemini / Codex / Qwen / Kimi / Ollama and more, with retries and a fallback chain.">DeepSeek / Claude / Gemini / Codex / Qwen / Kimi / Ollama 等 provider，带重试与降级链。</p></article>
     <article class="mod reveal"><div class="ic">▤</div><h3 data-zh="记忆 + 知识库" data-en="Memory + knowledge">记忆 + 知识库</h3><p data-zh="SQLite FTS5 长期记忆 + 持久指令注入；内置 Amazon 运营知识与本地统一检索。" data-en="SQLite FTS5 long-term memory + persistent instructions; built-in Amazon ops knowledge and unified local retrieval.">SQLite FTS5 长期记忆 + 持久指令注入；内置 Amazon 运营知识与本地统一检索。</p></article>
   </div>
@@ -396,15 +396,15 @@
   </div>
 </section>
 
-<!-- EMBED INTO IVYEAOPS -->
+<!-- EMBED INTO AWENOPS -->
 <section id="embed" class="frame section reveal">
   <div class="prod">
     <div class="prod-l">
-      <h3 data-zh="也能嵌入 IvyeaOps 工作台" data-en="Embeds into the IvyeaOps workbench">也能嵌入 IvyeaOps 工作台</h3>
-      <p data-zh-html="同款内核 · <code>ivyea serve</code> 暴露 /v1 REST + 流式对话 + 反向 MCP 配置，供 IvyeaOps 浏览器控制台调用。"
-         data-en-html="Same core · <code>ivyea serve</code> exposes /v1 REST, streaming chat and a reverse MCP config for the IvyeaOps browser console.">同款内核 · <code>ivyea serve</code> 暴露 /v1 REST + 流式对话 + 反向 MCP 配置，供 IvyeaOps 浏览器控制台调用。</p>
+      <h3 data-zh="也能嵌入 awenOps 工作台" data-en="Embeds into the awenOps workbench">也能嵌入 awenOps 工作台</h3>
+      <p data-zh-html="同款内核 · <code>awen serve</code> 暴露 /v1 REST + 流式对话 + 反向 MCP 配置，供 awenOps 浏览器控制台调用。"
+         data-en-html="Same core · <code>awen serve</code> exposes /v1 REST, streaming chat and a reverse MCP config for the awenOps browser console.">同款内核 · <code>awen serve</code> 暴露 /v1 REST + 流式对话 + 反向 MCP 配置，供 awenOps 浏览器控制台调用。</p>
     </div>
-    <a class="btn btn-ghost" href="https://github.com/Hector-xue/IvyeaOps" target="_blank" rel="noreferrer"><span data-zh="了解 IvyeaOps" data-en="Explore IvyeaOps">了解 IvyeaOps</span> ↗</a>
+    <a class="btn btn-ghost" href="https://github.com/zheng-zhengwen/wen-System" target="_blank" rel="noreferrer"><span data-zh="了解 awenOps" data-en="Explore awenOps">了解 awenOps</span> ↗</a>
   </div>
 </section>
 
@@ -412,25 +412,25 @@
 <footer class="frame reveal">
   <div class="foot-top">
     <div class="foot-about">
-      <div class="foot-brand"><span class="mark">›_</span> Ivyea Agent</div>
+      <div class="foot-brand"><span class="mark">›_</span> awen Agent</div>
       <p class="foot-tagline"
          data-zh="自托管的 Amazon 运营命令行 Agent。确定性规则引擎做决策、LLM 做复核，真实写入审批制 —— 数据、密钥与记忆始终留在你自己的机器上。"
          data-en="Self-hosted Amazon ops CLI agent. A deterministic rule engine decides, the LLM reviews, live writes are approval-gated — your data, keys and memory stay on your own machine.">自托管的 Amazon 运营命令行 Agent。确定性规则引擎做决策、LLM 做复核，真实写入审批制 —— 数据、密钥与记忆始终留在你自己的机器上。</p>
-      <a class="foot-star" href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">★ <span data-zh="在 GitHub 上 Star" data-en="Star on GitHub">在 GitHub 上 Star</span></a>
+      <a class="foot-star" href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">★ <span data-zh="在 GitHub 上 Star" data-en="Star on GitHub">在 GitHub 上 Star</span></a>
     </div>
     <div class="foot-col">
       <div class="foot-col-h" data-zh="产品" data-en="Product">产品</div>
       <a href="#install" data-zh="安装" data-en="Install">安装</a>
       <a href="#features" data-zh="能力" data-en="Capabilities">能力</a>
       <a href="#why" data-zh="为什么自托管" data-en="Why self-host">为什么自托管</a>
-      <a href="#embed" data-zh="嵌入 IvyeaOps" data-en="Embed into IvyeaOps">嵌入 IvyeaOps</a>
+      <a href="#embed" data-zh="嵌入 awenOps" data-en="Embed into awenOps">嵌入 awenOps</a>
     </div>
     <div class="foot-col">
       <div class="foot-col-h" data-zh="资源" data-en="Resources">资源</div>
-      <a href="https://github.com/Hector-xue/ivyea-agent" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://github.com/zheng-zhengwen/awen-agent" target="_blank" rel="noreferrer">GitHub</a>
       <a href="docs.html" data-zh="使用文档" data-en="Docs">使用文档</a>
-      <a href="https://github.com/Hector-xue/ivyea-agent/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
-      <a href="https://github.com/Hector-xue/ivyea-agent/issues" target="_blank" rel="noreferrer" data-zh="问题反馈" data-en="Issues">问题反馈</a>
+      <a href="https://github.com/zheng-zhengwen/awen-agent/blob/main/README.md" target="_blank" rel="noreferrer">README</a>
+      <a href="https://github.com/zheng-zhengwen/awen-agent/issues" target="_blank" rel="noreferrer" data-zh="问题反馈" data-en="Issues">问题反馈</a>
     </div>
     <div class="foot-col">
       <div class="foot-col-h" data-zh="技术栈" data-en="Built with">技术栈</div>
@@ -442,7 +442,7 @@
   </div>
   <div class="foot-bottom">
     <div class="foot-meta">
-      <span>© 2026 Ivyea</span>
+      <span>© 2026 awen</span>
       <span>·</span>
       <span data-zh="开源 · 自托管" data-en="Open source · self-hosted">开源 · 自托管</span>
     </div>
@@ -457,9 +457,9 @@ function setLang(lang){
   document.querySelectorAll("[data-zh]").forEach(el=>{ el.textContent = el.dataset[lang] || el.dataset.zh; });
   document.querySelectorAll("[data-zh-html]").forEach(el=>{ el.innerHTML = el.dataset[lang+"Html"] || el.dataset.zhHtml; });
   document.getElementById("langToggle").textContent = lang === "en" ? "中" : "EN";
-  localStorage.setItem("ivyea-agent-lang", lang);
+  localStorage.setItem("awen-agent-lang", lang);
 }
-let curLang = localStorage.getItem("ivyea-agent-lang") || "zh";
+let curLang = localStorage.getItem("awen-agent-lang") || "zh";
 document.getElementById("langToggle").onclick = ()=>{ curLang = curLang === "en" ? "zh" : "en"; setLang(curLang); };
 
 // ── Mobile menu ──
@@ -468,10 +468,10 @@ document.querySelectorAll("#navLinks a").forEach(a=>a.onclick=()=>document.getEl
 
 // ── Install tabs (OS × method) ──
 const OS_CMDS = {
-  "linux-script": "curl -fsSL https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.sh | bash\nivyea onboard\nivyea chat",
-  "windows-script": "iwr https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.ps1 -UseBasicParsing | iex\nivyea onboard\nivyea chat",
-  "linux-pipx": "pipx install git+https://github.com/Hector-xue/ivyea-agent.git\nivyea config\nivyea chat",
-  "windows-pipx": "pipx install git+https://github.com/Hector-xue/ivyea-agent.git\nivyea config\nivyea chat",
+  "linux-script": "curl -fsSL https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.sh | bash\nawen onboard\nawen chat",
+  "windows-script": "iwr https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.ps1 -UseBasicParsing | iex\nawen onboard\nawen chat",
+  "linux-pipx": "pipx install git+https://github.com/zheng-zhengwen/awen-agent.git\nawen config\nawen chat",
+  "windows-pipx": "pipx install git+https://github.com/zheng-zhengwen/awen-agent.git\nawen config\nawen chat",
 };
 let curOS = "linux", curMethod = "script";
 function applyTabs(){

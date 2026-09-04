@@ -1,9 +1,9 @@
 """Structured start/phase/final reporting and its runtime gates."""
 from __future__ import annotations
 
-from ivyea_agent import agent_loop, panels, progress_reporting, task_scope
-from ivyea_agent.agent_tools import TOOL_SCHEMAS, ToolContext
-from ivyea_agent.tools_general import t_progress_update, t_todo_write
+from awen_agent import agent_loop, panels, progress_reporting, task_scope
+from awen_agent.agent_tools import TOOL_SCHEMAS, ToolContext
+from awen_agent.tools_general import t_progress_update, t_todo_write
 
 
 def _plan(ctx: ToolContext) -> str:
@@ -188,8 +188,8 @@ def test_streaming_hides_premature_final_until_report_closes(tmp_path):
 
 def test_phase_end_rejection_tells_the_model_what_to_do_next():
     """拒绝必须带下一步动作 —— 只说"不对"会把模型逼进 90 次重发的死循环（实测）。"""
-    from ivyea_agent import progress_reporting
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import progress_reporting
+    from awen_agent.agent_tools import ToolContext
 
     ctx = ToolContext(workspace=".")
     ctx.todos = [{"content": "A", "status": "completed"}, {"content": "B", "status": "pending"}]
@@ -203,8 +203,8 @@ def test_phase_end_rejection_tells_the_model_what_to_do_next():
 
 
 def test_phase_end_on_the_wrong_index_names_the_right_one():
-    from ivyea_agent import progress_reporting
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import progress_reporting
+    from awen_agent.agent_tools import ToolContext
 
     ctx = ToolContext(workspace=".")
     ctx.todos = [{"content": "A", "status": "in_progress"}, {"content": "B", "status": "pending"}]
@@ -218,7 +218,7 @@ def test_phase_end_on_the_wrong_index_names_the_right_one():
 
 
 def _ctx_with_active_phase(tool_evidence):
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent.agent_tools import ToolContext
     ctx = ToolContext(workspace=".")
     ctx.todos = [{"content": "查资料", "status": "completed"},
                  {"content": "写结论（不调工具）", "status": "in_progress"}]
@@ -231,7 +231,7 @@ def _ctx_with_active_phase(tool_evidence):
 
 def test_a_tool_free_phase_can_still_be_closed():
     """写结论/做汇总这类步骤本来就不调工具，逐阶段要求工具证据等于判它死刑（实测卡死过）。"""
-    from ivyea_agent import progress_reporting
+    from awen_agent import progress_reporting
 
     ctx = _ctx_with_active_phase(["read_file: app.py 82 字节", "glob: 匹配 1 个文件"])
     out = progress_reporting.apply_update(
@@ -244,7 +244,7 @@ def test_a_tool_free_phase_can_still_be_closed():
 
 def test_a_turn_with_zero_tool_evidence_still_cannot_claim_completion():
     """本轮一次工具都没跑通时，"不能只凭文字声称完成"这条必须照样守住。"""
-    from ivyea_agent import progress_reporting
+    from awen_agent import progress_reporting
 
     ctx = _ctx_with_active_phase([])
     out = progress_reporting.apply_update(

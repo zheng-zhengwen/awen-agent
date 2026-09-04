@@ -10,8 +10,8 @@ import pytest
 
 
 @pytest.fixture()
-def mem(ivyea_home):
-    from ivyea_agent import memory, memory_store
+def mem(awen_home):
+    from awen_agent import memory, memory_store
     memory_store.apply("add", name="领星广告方法论", content="规则引擎 + LLM 复核。",
                        category="domain", description="领星广告优化怎么做",
                        keywords="领星,广告,规则引擎")
@@ -91,7 +91,7 @@ def test_recall_tool_still_answers_when_auto_recall_would_not(mem):
 
 def test_auto_recall_does_not_pollute_decay_scores(mem, monkeypatch):
     """自动召回每轮都跑；计入"被使用"会把冷门记忆全刷成热门，遗忘机制当场作废。"""
-    from ivyea_agent import memory_decay
+    from awen_agent import memory_decay
     calls = []
     monkeypatch.setattr(memory_decay, "record_hits", lambda *a, **k: calls.append(a))
     mem.auto_recall_text("领星广告怎么优化")
@@ -100,7 +100,7 @@ def test_auto_recall_does_not_pollute_decay_scores(mem, monkeypatch):
 
 def test_recall_tool_does_record(mem, monkeypatch):
     """反过来：用户/模型主动发起的一次回忆**应该**算作"这条记忆被用到了"。"""
-    from ivyea_agent import memory_decay
+    from awen_agent import memory_decay
     calls = []
     monkeypatch.setattr(memory_decay, "record_hits", lambda *a, **k: calls.append(a))
     mem.recall_core("领星广告怎么优化", record=True)
@@ -114,7 +114,7 @@ def test_recall_tool_and_auto_recall_share_one_core(mem):
     直到某天发现"工具查得到、自动召回查不到"。
     """
     import inspect
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
     src = inspect.getsource(agent_tools._t_recall)
     assert "recall_core" in src
     assert "memory_store.search" not in src
@@ -125,7 +125,7 @@ def test_auto_recall_never_leaks_knowledge_card_bodies(mem, monkeypatch):
 
     自动召回连指针都不给 —— 彻底不存在"拿没登记的 [K?] 标注结论"这条路。
     """
-    from ivyea_agent import knowledge
+    from awen_agent import knowledge
     monkeypatch.setattr(knowledge, "search",
                         lambda *a, **k: [{"title": "禁止出现的知识卡", "id": "K9"}])
     body, _ = mem.auto_recall_text("领星广告怎么优化")

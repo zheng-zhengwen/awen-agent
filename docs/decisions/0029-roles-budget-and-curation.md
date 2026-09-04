@@ -24,7 +24,7 @@
 ### 1. 角色做成数据，用户可扩展
 
 `subagents.Role = (system prompt, 工具白名单, 步数)`。内置 6 个；用户可以在
-`~/.ivyea/agents/*.md` 里自己加（frontmatter + 正文），同名覆盖内置 —— 对标 Claude Code 的
+`~/.awen/agents/*.md` 里自己加（frontmatter + 正文），同名覆盖内置 —— 对标 Claude Code 的
 `.claude/agents/*.md`。
 
 两条硬约束，**靠结构保证而不是靠角色自己记得**：

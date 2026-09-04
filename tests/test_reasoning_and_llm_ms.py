@@ -69,8 +69,8 @@ class _ModelThenToolProvider:
 
 def test_llm_ms_counts_the_model_window_only(monkeypatch):
     """llm_ms 必须把工具时间排除在外 —— 否则它和总时长是同一个数，等于什么都没说。"""
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     clock = _FakeClock(time)
     # 只替换 agent_loop 命名空间里的 time，不动全局 time 模块 —— 否则同进程里
@@ -93,8 +93,8 @@ def test_llm_ms_counts_the_model_window_only(monkeypatch):
 
 def test_llm_ms_is_always_present():
     """没有工具的轮次也要有这个字段 —— 调用方不该为"有时有有时没有"写分支。"""
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     out = agent_loop.run_turn_stream(
         _ReasoningProvider(), ToolContext(), [{"role": "user", "content": "hi"}],
@@ -102,12 +102,12 @@ def test_llm_ms_is_always_present():
     assert "llm_ms" in out["usage"] and out["usage"]["llm_ms"] >= 0
 
 
-def test_serve_keeps_quiet_about_thinking_unless_asked(ivyea_home):
+def test_serve_keeps_quiet_about_thinking_unless_asked(awen_home):
     """**最要紧的一条**：没显式要，SSE 上不许出现 reasoning 事件。
 
     也不许改道跑到别的事件里去 —— 老前端把未知事件当叙述渲染，混进 event 一样刷屏。
     """
-    from ivyea_agent import service
+    from awen_agent import service
 
     events: list[tuple[str, dict]] = []
     result = service.chat_stream(
@@ -121,8 +121,8 @@ def test_serve_keeps_quiet_about_thinking_unless_asked(ivyea_home):
     assert "先看看库存周转" not in "".join(str(d) for _, d in events)
 
 
-def test_serve_streams_thinking_when_asked(ivyea_home):
-    from ivyea_agent import service
+def test_serve_streams_thinking_when_asked(awen_home):
+    from awen_agent import service
 
     events: list[tuple[str, dict]] = []
     result = service.chat_stream(
@@ -141,9 +141,9 @@ def test_serve_streams_thinking_when_asked(ivyea_home):
     assert names[0] == "reasoning"                   # 想在前、说在后
 
 
-def test_thinking_is_redacted_like_everything_else(ivyea_home):
+def test_thinking_is_redacted_like_everything_else(awen_home):
     """模型思考里复述了密钥同样要打码 —— 它和 narrate/token 走的是同一条链路。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     class _LeakyProvider:
         def stream_chat(self, messages, tools=None):

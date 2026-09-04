@@ -4,8 +4,8 @@ from __future__ import annotations
 import threading
 import time
 
-from ivyea_agent import agent_loop
-from ivyea_agent.agent_tools import ToolContext, ToolResult
+from awen_agent import agent_loop
+from awen_agent.agent_tools import ToolContext, ToolResult
 
 
 def _silent(_s):

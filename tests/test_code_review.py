@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from ivyea_agent import code_review
+from awen_agent import code_review
 
 
 def _git(root, *args):

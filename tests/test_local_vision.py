@@ -21,7 +21,7 @@ def _canvas(path, w, h, bg=(255, 255, 255), box=None, box_color=(20, 60, 160)):
 
 
 def test_white_background_and_coverage(tmp_path):
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     # 1000×1000 白底，正中 500×500 色块 → 主体占比应为 25%
     p = _canvas(tmp_path / "main.png", 1000, 1000, box=(250, 250, 749, 749))
@@ -41,7 +41,7 @@ def test_white_background_and_coverage(tmp_path):
 
 
 def test_non_white_background_is_flagged(tmp_path):
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     p = _canvas(tmp_path / "main.png", 800, 800, bg=(240, 220, 200), box=(100, 100, 699, 699))
     res = local_vision.analyze([str(p)], with_ocr=False)
@@ -52,7 +52,7 @@ def test_non_white_background_is_flagged(tmp_path):
 
 
 def test_off_center_and_edge_bleed(tmp_path):
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     # 色块顶到左上角 → 触边 + 明显偏心
     p = _canvas(tmp_path / "main.png", 1000, 1000, box=(0, 0, 399, 399))
@@ -64,7 +64,7 @@ def test_off_center_and_edge_bleed(tmp_path):
 
 
 def test_palette_finds_the_two_real_colours(tmp_path):
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     p = _canvas(tmp_path / "a.png", 600, 600, box=(0, 0, 299, 599), box_color=(200, 0, 0))
     res = local_vision.analyze([str(p)], with_ocr=False)
@@ -82,7 +82,7 @@ def test_palette_survives_a_white_dominated_image(tmp_path):
     这是实打实踩过的坑：按亮度分位数播种 k-means，在极度偏斜的白底分布上会让
     全部质心落进白色簇，产品配色——色板唯一有价值的输出——直接消失。
     """
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     p = _canvas(tmp_path / "main.png", 1200, 1200, box=(450, 450, 749, 749),
                 box_color=(28, 74, 140))
@@ -100,7 +100,7 @@ def test_palette_survives_a_white_dominated_image(tmp_path):
 def test_alpha_channel_is_used_as_mask(tmp_path):
     """有 alpha 时用 alpha 当主体掩膜——那是设计稿导出的真边界，比颜色阈值准。"""
     from PIL import Image
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     im = Image.new("RGBA", (400, 400), (255, 255, 255, 0))
     im.paste((255, 255, 255, 255), (100, 100, 300, 300))   # 纯白但不透明的主体
@@ -116,7 +116,7 @@ def test_alpha_channel_is_used_as_mask(tmp_path):
 
 
 def test_duplicate_detection(tmp_path):
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     _canvas(tmp_path / "a.png", 800, 800, box=(200, 200, 599, 599))
     _canvas(tmp_path / "b.png", 800, 800, box=(200, 200, 599, 599))
@@ -129,7 +129,7 @@ def test_duplicate_detection(tmp_path):
 
 def test_render_for_text_model_states_its_limits(tmp_path):
     """喂给纯文本主脑的那段话必须自带约束，否则模型会照着读数编画面。"""
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     p = _canvas(tmp_path / "main.png", 1500, 1500, box=(300, 300, 1199, 1199))
     res = local_vision.analyze([str(p)], with_ocr=False)
@@ -143,7 +143,7 @@ def test_render_for_text_model_states_its_limits(tmp_path):
 
 
 def test_layout_from_ocr_boxes():
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     boxes = [
         {"bbox": [10, 10, 500, 80]},      # 顶部横幅
@@ -158,12 +158,12 @@ def test_layout_from_ocr_boxes():
 
 
 def test_image_local_cli(tmp_path, capsys):
-    """`ivyea image local` —— 让用户能直接核 T3 到底读到了什么。
+    """`awen image local` —— 让用户能直接核 T3 到底读到了什么。
 
     没有这个出口时本地视觉是个只在带图对话里间接生效的黑盒，降级结果对不对
     用户没法自己验。
     """
-    from ivyea_agent.cli import main
+    from awen_agent.cli import main
 
     _canvas(tmp_path / "main.png", 1200, 1200, box=(300, 300, 899, 899))
     assert main(["image", "local", str(tmp_path)]) == 0
@@ -180,7 +180,7 @@ def test_image_local_cli(tmp_path, capsys):
 
 
 def test_broken_file_does_not_kill_the_batch(tmp_path):
-    from ivyea_agent import local_vision
+    from awen_agent import local_vision
 
     _canvas(tmp_path / "good.png", 600, 600, box=(100, 100, 499, 499))
     (tmp_path / "bad.png").write_bytes(b"\x89PNG\r\n\x1a\nnot-a-real-png")

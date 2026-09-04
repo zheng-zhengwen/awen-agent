@@ -1,6 +1,6 @@
 """serve 的开场白不能被一个 ✓ 崩掉。
 
-回归的是真事：IvyeaOps 起 serve 时把 stdout 接到日志文件/NUL，Windows 于是按
+回归的是真事：awenOps 起 serve 时把 stdout 接到日志文件/NUL，Windows 于是按
 系统代码页（中文机器 = GBK）编码，`print("  ✓ …")` 抛 UnicodeEncodeError，守护
 进程当场退出，用户那边只看得到 "All connection attempts failed"。
 
@@ -23,7 +23,7 @@ class _DummyServer:
 
 
 def _gbk_stdout(monkeypatch) -> io.BytesIO:
-    from ivyea_agent import stdio_utf8
+    from awen_agent import stdio_utf8
 
     raw = io.BytesIO()
     monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(raw, encoding="gbk", errors="strict"))
@@ -32,7 +32,7 @@ def _gbk_stdout(monkeypatch) -> io.BytesIO:
 
 
 def test_force_utf8_rescues_a_gbk_stream(monkeypatch):
-    from ivyea_agent import stdio_utf8
+    from awen_agent import stdio_utf8
 
     raw = _gbk_stdout(monkeypatch)
     stdio_utf8.force_utf8()
@@ -42,7 +42,7 @@ def test_force_utf8_rescues_a_gbk_stream(monkeypatch):
 
 
 def test_serve_banner_survives_a_gbk_stdout(monkeypatch):
-    from ivyea_agent import serve_workers, service
+    from awen_agent import serve_workers, service
 
     monkeypatch.setattr(service, "make_server", lambda *a, **k: _DummyServer())
     monkeypatch.setattr(serve_workers, "start_all",

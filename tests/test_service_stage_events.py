@@ -26,7 +26,7 @@ class _EchoProvider:
 
 
 def _events(message: str = "你好", **payload):
-    from ivyea_agent import service
+    from awen_agent import service
 
     seen: list[tuple[str, dict]] = []
     body = {"message": message, "persist": False, "max_steps": 2, **payload}

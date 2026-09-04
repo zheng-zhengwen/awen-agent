@@ -17,11 +17,11 @@ import pytest
 
 
 @pytest.fixture()
-def amz(ivyea_home, monkeypatch):
+def amz(awen_home, monkeypatch):
     """配好一套假凭据 + 两个站点。"""
     import importlib
 
-    from ivyea_agent import amazon_auth
+    from awen_agent import amazon_auth
     importlib.reload(amazon_auth)
     monkeypatch.setenv(amazon_auth.ENV_CLIENT_ID, "amzn1.application-oa2-client.x")
     monkeypatch.setenv(amazon_auth.ENV_CLIENT_SECRET, "secret")
@@ -117,7 +117,7 @@ def test_spapi_uses_the_right_header_and_flattens_list_params(amz, monkeypatch):
     """
     import httpx
 
-    from ivyea_agent import amazon_spapi
+    from awen_agent import amazon_spapi
 
     monkeypatch.setattr(amazon_spapi, "_MIN_INTERVAL", 0.0)
     calls = _fake_client(monkeypatch, httpx, lambda c: _Resp(
@@ -135,7 +135,7 @@ def test_spapi_uses_the_right_header_and_flattens_list_params(amz, monkeypatch):
 def test_spapi_paginates_by_next_token(amz, monkeypatch):
     import httpx
 
-    from ivyea_agent import amazon_spapi
+    from awen_agent import amazon_spapi
 
     monkeypatch.setattr(amazon_spapi, "_MIN_INTERVAL", 0.0)
     pages = [
@@ -159,7 +159,7 @@ def test_spapi_retries_then_reports_instead_of_hanging(amz, monkeypatch):
     """限流一律退避重试；退到底就如实报错 —— 巡检不能被一个店卡住。"""
     import httpx
 
-    from ivyea_agent import amazon_spapi
+    from awen_agent import amazon_spapi
 
     monkeypatch.setattr(amazon_spapi, "_MIN_INTERVAL", 0.0)
     monkeypatch.setattr(amazon_spapi, "_BACKOFF", (0.0, 0.0))
@@ -187,8 +187,8 @@ _SUMMARY = {
 
 
 def test_inventory_maps_onto_the_canonical_fields(amz, monkeypatch):
-    from ivyea_agent import amazon_spapi, metrics
-    from ivyea_agent.datasources.amazon_source import AmazonSource
+    from awen_agent import amazon_spapi, metrics
+    from awen_agent.datasources.amazon_source import AmazonSource
 
     monkeypatch.setattr(amazon_spapi, "inventory_summaries", lambda mid: [_SUMMARY])
     rows = AmazonSource().fetch(metrics.INVENTORY_FBA.key, {"sid": "1863"})
@@ -205,8 +205,8 @@ def test_inventory_maps_onto_the_canonical_fields(amz, monkeypatch):
 
 
 def test_unknown_sid_raises_instead_of_returning_nothing(amz):
-    from ivyea_agent import metrics
-    from ivyea_agent.datasources.amazon_source import AmazonSource
+    from awen_agent import metrics
+    from awen_agent.datasources.amazon_source import AmazonSource
 
     with pytest.raises(ValueError):
         AmazonSource().fetch(metrics.INVENTORY_FBA.key, {"sid": "不存在"})
@@ -214,8 +214,8 @@ def test_unknown_sid_raises_instead_of_returning_nothing(amz):
 
 def test_campaign_report_uses_v3_column_names(amz, monkeypatch):
     """v3 把花费叫 cost（v2 是 spend）。照抄 v2 会拿到一整列 0 —— 不报错，只是全是 0。"""
-    from ivyea_agent import amazon_ads, metrics
-    from ivyea_agent.datasources.amazon_source import AmazonSource
+    from awen_agent import amazon_ads, metrics
+    from awen_agent.datasources.amazon_source import AmazonSource
 
     monkeypatch.setattr(amazon_ads, "campaign_report", lambda p, s, e: [
         {"date": "2026-08-20", "campaignId": 123, "impressions": 900,
@@ -229,8 +229,8 @@ def test_campaign_report_uses_v3_column_names(amz, monkeypatch):
 
 
 def test_ads_metrics_need_the_profile_id(amz):
-    from ivyea_agent import metrics
-    from ivyea_agent.datasources.amazon_source import AmazonSource
+    from awen_agent import metrics
+    from awen_agent.datasources.amazon_source import AmazonSource
 
     # 9001（美国）没填广告档案 → 明确报错，而不是安静地返回空
     with pytest.raises(ValueError):
@@ -240,8 +240,8 @@ def test_ads_metrics_need_the_profile_id(amz):
 def test_ads_support_is_independent_of_spapi_support(amz, monkeypatch):
     """SP-API 先批下来、广告 API 还在排队，是很常见的中间态：
     那时库存规则就该先跑起来，不该被广告拖着一起停。"""
-    from ivyea_agent import amazon_auth, metrics
-    from ivyea_agent.datasources.amazon_source import AmazonSource
+    from awen_agent import amazon_auth, metrics
+    from awen_agent.datasources.amazon_source import AmazonSource
 
     src = AmazonSource()
     assert src.supports(metrics.INVENTORY_FBA.key)
@@ -253,7 +253,7 @@ def test_ads_support_is_independent_of_spapi_support(amz, monkeypatch):
 
 def test_official_source_outranks_lingxing(amz, monkeypatch):
     """官方是第一手、延迟更低；领星是转手数据。同一指标官方优先。"""
-    from ivyea_agent import datasources, metrics
+    from awen_agent import datasources, metrics
 
     for s in list(metrics.registered()):
         metrics.unregister(s.name)
@@ -264,9 +264,9 @@ def test_official_source_outranks_lingxing(amz, monkeypatch):
         metrics.unregister(s.name)
 
 
-def test_unconfigured_install_registers_no_amazon_source(ivyea_home, monkeypatch):
+def test_unconfigured_install_registers_no_amazon_source(awen_home, monkeypatch):
     """没配凭据还注册的话，每条规则都多出一行"取数失败"，把真问题淹掉。"""
-    from ivyea_agent import amazon_auth, datasources, metrics
+    from awen_agent import amazon_auth, datasources, metrics
 
     monkeypatch.setattr(amazon_auth, "is_configured", lambda ads=False: False)
     for s in list(metrics.registered()):
@@ -281,7 +281,7 @@ def test_unconfigured_install_registers_no_amazon_source(ivyea_home, monkeypatch
 def test_store_list_falls_back_to_amazon_marketplaces(amz, monkeypatch):
     """不做这一步，只用亚马逊官方 API 的人一个店都巡检不了：
     目标解析拿不到清单，每条任务都报"缺少 sid"。"""
-    from ivyea_agent import lingxing_datasets, stores
+    from awen_agent import lingxing_datasets, stores
 
     def _no_lingxing():
         raise RuntimeError("领星未配置")

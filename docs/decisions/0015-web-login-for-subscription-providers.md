@@ -2,13 +2,13 @@
 
 - **日期**：2026-08-21
 - **状态**：已采纳
-- **依据**：IvyeaOps 想让不会用命令行的人也能接自己的 Claude / ChatGPT / Gemini 订阅
+- **依据**：awenOps 想让不会用命令行的人也能接自己的 Claude / ChatGPT / Gemini 订阅
 
 ## 背景
 
 模型接入分两类：填 API key 的，和要走 OAuth 的订阅制（Claude 订阅、OpenAI Codex、
-Gemini Code Assist、Qwen、GitHub Copilot）。前者在 IvyeaOps 的系统配置里填个输入框
-就完事；后者此前只有一条路 —— `ivyea model auth <id> --login`。
+Gemini Code Assist、Qwen、GitHub Copilot）。前者在 awenOps 的系统配置里填个输入框
+就完事；后者此前只有一条路 —— `awen model auth <id> --login`。
 
 于是"不会用 CLI 的人根本接不上自己已经付过钱的订阅"。
 
@@ -49,8 +49,8 @@ serve 共用。往里面塞全局状态，两个调用方就会互相踩。
 - Copilot 的 token 改写 `COPILOT_GITHUB_TOKEN`，不碰 `GH_TOKEN` / `GITHUB_TOKEN`。
   那两个是 gh CLI 和 CI 在用的，被顺手改掉时完全看不出是谁干的。退出登录同理，
   只清自己那一个。
-- **单租户语义**：token 存在服务器的 `~/.ivyea/auth.json`，agent 全局共用。也就是
-  谁登录，这台 agent 上所有对话和定时任务都在用谁的订阅额度。调用方（IvyeaOps）
+- **单租户语义**：token 存在服务器的 `~/.awen/auth.json`，agent 全局共用。也就是
+  谁登录，这台 agent 上所有对话和定时任务都在用谁的订阅额度。调用方（awenOps）
   要把这句话摆在界面上，并把入口限制给管理员。
 - 各家订阅条款通常是限个人使用的，接进多人共用的工作台是不是合规，由部署者判断。
   这里只提供能力，界面上要如实提醒。

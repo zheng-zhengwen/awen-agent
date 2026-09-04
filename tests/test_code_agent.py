@@ -5,11 +5,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from ivyea_agent import code_agent, workspace
+from awen_agent import code_agent, workspace
 
 
 def _make_project(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     subprocess.run(["git", "init"], cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     (tmp_path / "pkg").mkdir()
     (tmp_path / "tests").mkdir()
@@ -160,7 +160,8 @@ def test_patch_apply_loop_dry_run_and_execute(tmp_path, monkeypatch):
     assert dry["test_result"] is None
     assert (root / "pkg" / "calc.py").read_text(encoding="utf-8").endswith("return left + right\n")
 
-    run = code_agent.patch_apply_loop(spec, root=root, test_command="python -m pytest tests/test_calc.py", execute=True)
+    test_command = f"{sys.executable} -m pytest tests/test_calc.py"
+    run = code_agent.patch_apply_loop(spec, root=root, test_command=test_command, execute=True)
     assert run["mode"] == "execute"
     assert run["patch"]["status"] == "applied"
     assert run["test_result"]["ok"] is True
@@ -199,7 +200,7 @@ def test_code_impact_maps_symbol_to_callers_and_tests(tmp_path, monkeypatch):
 
 def test_code_run_loop_dry_run(tmp_path, monkeypatch):
     root = _make_project(tmp_path, monkeypatch)
-    monkeypatch.setattr(code_agent, "CODE_RUN_DIR", tmp_path / ".ivyea" / "code-runs")
+    monkeypatch.setattr(code_agent, "CODE_RUN_DIR", tmp_path / ".awen" / "code-runs")
 
     data = code_agent.run_loop("change add behavior", root=root, persist=True, max_rounds=3)
     assert data["mode"] == "dry-run"
@@ -231,7 +232,7 @@ def test_code_task_bundle_packages_multiround_context(tmp_path, monkeypatch):
     assert "pkg/calc.py" in data["plan"]["relevant_files"]
     assert any(item["name"] == "repair" and item["status"] == "ready" for item in data["phases"])
     assert data["repair"]["failure_summary"][0]["kind"] == "assertion"
-    assert "继续 Ivyea 代码任务" in data["resume_prompt"]
+    assert "继续 awen 代码任务" in data["resume_prompt"]
     rendered = code_agent.render_bundle(data)
     assert "Code Task Bundle" in rendered
     assert "Resume Prompt" in rendered
@@ -301,9 +302,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Review Gate" in code_agent.render_review(result)
 
     proc = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "plan", "change add behavior", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "plan", "change add behavior", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -315,9 +316,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "pkg/calc.py" in proc.stdout
 
     brief = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "brief", "change add behavior", "--root", str(root), "--budget", "1200"],
+        [sys.executable, "-m", "awen_agent", "code", "brief", "change add behavior", "--root", str(root), "--budget", "1200"],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -328,9 +329,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Brief" in brief.stdout
 
     quality = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "quality", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "quality", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -341,9 +342,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Quality" in quality.stdout
 
     bundle = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "bundle", "change add behavior", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "bundle", "change add behavior", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -354,9 +355,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Task Bundle" in bundle.stdout
 
     refs = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "refs", "add", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "refs", "add", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -367,9 +368,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Refs" in refs.stdout
 
     rename = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "rename-plan", "add", "--new-name", "sum_values", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "rename-plan", "add", "--new-name", "sum_values", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -380,9 +381,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Rename Plan" in rename.stdout
 
     diff_brief = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "diff-brief", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "diff-brief", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -393,9 +394,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Diff Brief" in diff_brief.stdout
 
     release = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "release-check", "--root", str(root), "--version", "v0.1.0"],
+        [sys.executable, "-m", "awen_agent", "code", "release-check", "--root", str(root), "--version", "v0.1.0"],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -406,9 +407,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Release Check" in release.stdout
 
     impact = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "impact", "add", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "impact", "add", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -419,9 +420,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Workspace Impact" in impact.stdout
 
     run = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "run", "change add behavior", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "run", "change add behavior", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -433,9 +434,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "needs_input" in run.stdout
 
     runs = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "runs", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "runs", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -446,9 +447,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Runs" in runs.stdout
 
     patch = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "patch", "change add behavior", "--root", str(root)],
+        [sys.executable, "-m", "awen_agent", "code", "patch", "change add behavior", "--root", str(root)],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -459,9 +460,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "Code Patch Candidate" in patch.stdout
 
     llm_patch = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "patch", "change add behavior", "--root", str(root), "--llm"],
+        [sys.executable, "-m", "awen_agent", "code", "patch", "change add behavior", "--root", str(root), "--llm"],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -472,9 +473,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "LLM Request" in llm_patch.stdout
 
     run_llm = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "run", "change add behavior", "--root", str(root), "--llm-patch"],
+        [sys.executable, "-m", "awen_agent", "code", "run", "change add behavior", "--root", str(root), "--llm-patch"],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
@@ -485,9 +486,9 @@ def test_review_ready_and_cli_smoke(tmp_path, monkeypatch):
     assert "request_only" in run_llm.stdout
 
     sandbox = subprocess.run(
-        [sys.executable, "-m", "ivyea_agent", "code", "sandbox", "--root", str(root), "--name", "demo"],
+        [sys.executable, "-m", "awen_agent", "code", "sandbox", "--root", str(root), "--name", "demo"],
         cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "IVYEA_HOME": str(root / ".ivyea-cli")},
+        env={**os.environ, "AWEN_HOME": str(root / ".awen-cli")},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,

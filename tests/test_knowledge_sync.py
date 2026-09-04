@@ -9,7 +9,7 @@ def _response(text: str, *, etag: str = "") -> dict:
 
 
 def test_official_registry_is_allowlisted_and_typed():
-    from ivyea_agent import knowledge_sync
+    from awen_agent import knowledge_sync
 
     data = knowledge_sync.registry()
     assert data["summary"]["sources"] >= 15
@@ -19,8 +19,8 @@ def test_official_registry_is_allowlisted_and_typed():
     assert all(row["authority_tier"] and row["evidence_class"] for row in data["sources"])
 
 
-def test_sync_new_unchanged_changed_enters_review_queue(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_sync_new_unchanged_changed_enters_review_queue(awen_home):
+    from awen_agent import knowledge_sync
 
     first = knowledge_sync.sync(
         force=True,
@@ -59,8 +59,8 @@ def test_sync_new_unchanged_changed_enters_review_queue(ivyea_home):
     assert changed["publication"] == "review_required_before_import"
 
 
-def test_sync_respects_cadence_and_authenticated_sources(ivyea_home):
-    from ivyea_agent import knowledge_sync
+def test_sync_respects_cadence_and_authenticated_sources(awen_home):
+    from awen_agent import knowledge_sync
 
     calls = []
 
@@ -86,7 +86,7 @@ def test_sync_respects_cadence_and_authenticated_sources(ivyea_home):
 
 
 def test_rss_normalization_extracts_reviewable_items():
-    from ivyea_agent import knowledge_sync
+    from awen_agent import knowledge_sync
 
     rss = """<rss><channel><item><title>Release</title><link>https://developer-docs.amazon.com/x</link>
     <pubDate>Sun, 05 Jul 2026 00:00:00 GMT</pubDate><description><![CDATA[<b>Changed</b> schema]]></description>
@@ -97,9 +97,9 @@ def test_rss_normalization_extracts_reviewable_items():
     assert "<b>" not in text
 
 
-def test_unknown_sync_source_is_rejected(ivyea_home):
+def test_unknown_sync_source_is_rejected(awen_home):
     import pytest
-    from ivyea_agent import knowledge_sync
+    from awen_agent import knowledge_sync
 
     with pytest.raises(ValueError, match="unknown knowledge source"):
         knowledge_sync.sync(force=True, source_ids=["not.amazon"])

@@ -1,4 +1,4 @@
-"""按轮次切主脑（IvyeaOps 任务台的模型选择器）+ 任意中转商的模型清单。
+"""按轮次切主脑（awenOps 任务台的模型选择器）+ 任意中转商的模型清单。
 
 这条路的铁律只有一条：**不传 model 时，行为与改动前逐字一致**。所以每个用例都
 成对写 —— 一半验覆盖真的生效，一半验没覆盖时什么都没变。
@@ -11,8 +11,8 @@ import pytest
 
 
 @pytest.fixture()
-def svc(ivyea_home):
-    from ivyea_agent import service
+def svc(awen_home):
+    from awen_agent import service
     return service
 
 
@@ -20,7 +20,7 @@ def svc(ivyea_home):
 
 def test_no_model_field_keeps_global_config(svc):
     """不传 model：拿到的就是全局配置，且 overridden=False。"""
-    from ivyea_agent import config
+    from awen_agent import config
 
     cfg, key, overridden = svc._turn_model_config({"message": "hi"})
     assert overridden is False
@@ -73,7 +73,7 @@ def test_custom_without_base_url_raises(svc, monkeypatch):
 
 def test_custom_inherits_base_url_from_active_settings(svc, monkeypatch):
     """当前主脑就是同一个 custom 端点时，沿用它已经配好的地址。"""
-    from ivyea_agent import config
+    from awen_agent import config
 
     monkeypatch.setenv("CUSTOM_API_KEY", "sk-test")
     s = config.load_settings()
@@ -143,7 +143,7 @@ def test_run_with_bad_model_errors(svc):
 
 # ── 任意中转商的模型清单 ────────────────────────────────────────────────────
 
-def test_catalog_for_ad_hoc_relay(svc, monkeypatch, ivyea_home):
+def test_catalog_for_ad_hoc_relay(svc, monkeypatch, awen_home):
     """中转商不在内置 provider 表里：给 base_url + key 就该能列出模型。"""
     seen: dict[str, str] = {}
 

@@ -1,7 +1,7 @@
 """`-p --input-format stream-json` 的控制通道：stdin 进（追加指令/答案/中止）、stdout 出。
 
 为什么这条通道必须存在：`-p` 是一次性子进程，中间那几十分钟里调用方**没有任何一条路
-走回来**。于是 IvyeaOps 的 /agents 聊天里，ivyea 这一档既插不进话、也弹不出选项卡，
+走回来**。于是 awenOps 的 /agents 聊天里，awen 这一档既插不进话、也弹不出选项卡，
 想停只能 SIGTERM —— 而那样这一轮跑出来的东西一个字都不会落盘。
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ import json
 import threading
 import time
 
-from ivyea_agent.stdio_control import StdioControl
+from awen_agent.stdio_control import StdioControl
 
 
 def _pipe(lines: list[str]) -> io.StringIO:

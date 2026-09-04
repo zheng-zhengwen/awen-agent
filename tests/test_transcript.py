@@ -1,6 +1,6 @@
 """公开投影：注回给模型的门禁提示不能出现在给人看的记录里。
 
-这条契约破过一次 —— IvyeaOps 任务台把 `[知识引用门禁]` 当成用户发的消息画在了
+这条契约破过一次 —— awenOps 任务台把 `[知识引用门禁]` 当成用户发的消息画在了
 右侧绿气泡里，同一轮的三版草稿并排摆成三条回答。根因是"哪些 user 消息是注入的"
 这份清单在展示端各写一份、新门禁上线时没人同步。所以这里钉两件事：
 ① 每个门禁的真实产物都能被 is_injected_user_message 认出来（不是拿字面量对拍）；
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from ivyea_agent import transcript
+from awen_agent import transcript
 
 
 def _citation():
@@ -21,8 +21,8 @@ def _citation():
 # ── ① 各门禁的真实产物都在登记表里 ─────────────────────────────────────────
 
 def test_citation_gate_output_is_recognized():
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     ctx = ToolContext(knowledge_citations=[_citation()])
     status = agent_loop.TurnStatus(max_steps=8)
@@ -31,8 +31,8 @@ def test_citation_gate_output_is_recognized():
 
 
 def test_completion_gate_output_is_recognized():
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
 
     status = agent_loop.TurnStatus(max_steps=8, behavioral_task=True)
     status.wrote_code = True
@@ -42,8 +42,8 @@ def test_completion_gate_output_is_recognized():
 
 
 def test_progress_gate_output_is_recognized():
-    from ivyea_agent import progress_reporting
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import progress_reporting
+    from awen_agent.agent_tools import ToolContext
 
     ctx = ToolContext(progress_required=True, progress_execution_expected=True)
     fb = progress_reporting.completion_feedback(ctx)
@@ -52,7 +52,7 @@ def test_progress_gate_output_is_recognized():
 
 def test_verify_gate_feedback_is_recognized():
     """verify 的反馈首行以 ⚠ 打头，不是方括号标记 —— 单独钉一条防它漂走。"""
-    from ivyea_agent import verify
+    from awen_agent import verify
 
     lines = [transcript.gate_text(transcript.VERIFY_GATE, "，请先处理再收尾（未通过不要宣称完成）：")]
     assert transcript.is_injected_user_message("\n".join(lines))
@@ -123,7 +123,7 @@ def test_visible_turns_ignores_injected_messages():
 
 def test_public_messages_projection_hides_gate_turn():
     """出口处的集成：任务台恢复历史走的就是这条路。"""
-    from ivyea_agent import service
+    from awen_agent import service
 
     rows = service._public_messages([
         {"role": "system", "content": "sys"},

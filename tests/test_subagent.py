@@ -1,7 +1,7 @@
 """Read-only subagent tool (dispatch_subagent)."""
 from __future__ import annotations
 
-from ivyea_agent.agent_tools import TOOL_SCHEMAS, ToolContext, _subagent_schemas, dispatch
+from awen_agent.agent_tools import TOOL_SCHEMAS, ToolContext, _subagent_schemas, dispatch
 
 
 class FakeProvider:

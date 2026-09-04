@@ -1,7 +1,7 @@
 """Bundled Amazon knowledge base."""
 from __future__ import annotations
 
-from ivyea_agent import knowledge
+from awen_agent import knowledge
 
 
 def test_list_and_get_cards():
@@ -137,7 +137,7 @@ def test_business_loop_and_ads_product_knowledge_recall():
         assert expected in ids, (query, ids)
 
 
-def test_user_knowledge_versions_conflict_detection_and_rollback(ivyea_home):
+def test_user_knowledge_versions_conflict_detection_and_rollback(awen_home):
     created = knowledge.import_text(
         "Versioned playbook", "# Version one\n\nKeep the original evidence.", card_id="user.versioned",
     )
@@ -175,7 +175,7 @@ def test_user_knowledge_versions_conflict_detection_and_rollback(ivyea_home):
     assert conflict["error"] == "knowledge_update_conflict"
 
 
-def test_concurrent_user_card_writes_do_not_lose_source_rows(ivyea_home):
+def test_concurrent_user_card_writes_do_not_lose_source_rows(awen_home):
     from concurrent.futures import ThreadPoolExecutor
 
     def write(index):
@@ -192,7 +192,7 @@ def test_concurrent_user_card_writes_do_not_lose_source_rows(ivyea_home):
 
 
 def test_agent_knowledge_tool_registered():
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "knowledge_search" in names
     assert "knowledge_search" in _DISPATCH
@@ -235,7 +235,7 @@ def test_knowledge_source_governance_card_and_audit():
     assert "official" in rendered_sources
 
 
-def test_knowledge_watchlist_and_reviewed_update_flow(ivyea_home, tmp_path):
+def test_knowledge_watchlist_and_reviewed_update_flow(awen_home, tmp_path):
     watch = knowledge.source_watchlist()
     assert watch["summary"]["sources"] >= 1
     assert watch["summary"]["official_sources"] >= 1
@@ -308,7 +308,7 @@ def test_knowledge_watchlist_and_reviewed_update_flow(ivyea_home, tmp_path):
     assert "无内容变更" in knowledge.render_update_draft(noop)
 
 
-def test_knowledge_upload_folder_and_apply_flow(ivyea_home):
+def test_knowledge_upload_folder_and_apply_flow(awen_home):
     payload = (
         "# 上传的广告 SOP\n\n"
         "Sponsored Products 搜索词复盘要先看 CTR、CVR、库存和 Listing 承接，再决定否词或放量。"
@@ -351,7 +351,7 @@ def test_knowledge_upload_folder_and_apply_flow(ivyea_home):
     assert knowledge.get_card("user.uploaded_ad_sop") is None
 
 
-def test_user_knowledge_import_search_audit_rebuild(ivyea_home, tmp_path):
+def test_user_knowledge_import_search_audit_rebuild(awen_home, tmp_path):
     src = tmp_path / "prime-day.md"
     src.write_text("# Prime Day打法\n\nPrime Day 前提高预算，但保护品牌词，不误否核心词。", encoding="utf-8")
 
@@ -387,13 +387,13 @@ def test_user_knowledge_import_search_audit_rebuild(ivyea_home, tmp_path):
     assert user_hit["source_quality"] == "account_local_overrides_generic_knowledge"
 
     # 删除正文后 rebuild 应清理 sources.jsonl 中的缺失项。
-    (ivyea_home / "knowledge" / card["path"]).unlink()
+    (awen_home / "knowledge" / card["path"]).unlink()
     res = knowledge.rebuild()
     assert res["missing_pruned"] == ["user.prime_day_playbook"]
     assert not knowledge.list_user_cards()
 
 
-def test_import_legacy_gbrain_directory(ivyea_home, tmp_path):
+def test_import_legacy_gbrain_directory(awen_home, tmp_path):
     root = tmp_path / "brain"
     (root / "amazon" / "ads").mkdir(parents=True)
     (root / "amazon" / "ads" / "广告优化方法论.md").write_text(
@@ -430,8 +430,8 @@ def test_import_legacy_gbrain_directory(ivyea_home, tmp_path):
     assert scanned_again["summary"]["noop"] == 1
 
 
-def test_knowledge_cli_import_and_rebuild(ivyea_home, tmp_path, capsys):
-    from ivyea_agent.cli import main
+def test_knowledge_cli_import_and_rebuild(awen_home, tmp_path, capsys):
+    from awen_agent.cli import main
 
     src = tmp_path / "listing-note.md"
     src.write_text("主图不清晰会影响 CTR，Listing 承接不足不要急着否词。", encoding="utf-8")
@@ -502,7 +502,7 @@ def test_knowledge_cli_import_and_rebuild(ivyea_home, tmp_path, capsys):
     assert knowledge.get_card("user.listing_update")
 
 
-def test_knowledge_conflict_audit(ivyea_home, tmp_path):
+def test_knowledge_conflict_audit(awen_home, tmp_path):
     src = tmp_path / "negative.md"
     src.write_text("不建议使用 negative keywords，avoid negative targeting。", encoding="utf-8")
     knowledge.import_file(
@@ -519,7 +519,7 @@ def test_knowledge_conflict_audit(ivyea_home, tmp_path):
     assert "user.negative_hot_take" in rendered
 
 
-def test_knowledge_conflict_audit_ignores_generic_compliance_overlap(ivyea_home):
+def test_knowledge_conflict_audit_ignores_generic_compliance_overlap(awen_home):
     knowledge.import_text(
         "Review manipulation guardrail",
         "不要用礼品诱导好评，也不要要求客户删除差评。",
@@ -627,7 +627,7 @@ def test_phase_six_ca_mx_site_cards_and_tax_localization():
 
 
 def test_phase_six_governance_coverage_includes_north_america_and_tax():
-    from ivyea_agent import knowledge_governance
+    from awen_agent import knowledge_governance
 
     data = knowledge_governance.coverage()
     assert data["summary"]["gaps"] == 0
@@ -650,7 +650,7 @@ def test_phase_six_governance_coverage_includes_north_america_and_tax():
         assert by_key[key]["status"] == "strong", (key, by_key[key]["status"])
 
 
-def test_knowledge_cache_isolates_copies_and_reflects_mutations(ivyea_home):
+def test_knowledge_cache_isolates_copies_and_reflects_mutations(awen_home):
     """v1.8.1 caching: cached cards must be copied per call (mutations don't leak)
     and user-card writes must invalidate the cache immediately (mtime/size sig)."""
     # mutate-isolation: mutating a returned card must not poison the cache

@@ -5,7 +5,7 @@ import pytest
 
 
 def _finding(before=100.0, after=85.0, **over):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     kw = dict(code="ads.campaign_out_of_budget", layer="L1", severity="warn",
               action_class=store_health.STANCH, sid=1, scope="campaign",
@@ -19,9 +19,9 @@ def _finding(before=100.0, after=85.0, **over):
 
 
 @pytest.fixture()
-def appr(ivyea_home, monkeypatch):
+def appr(awen_home, monkeypatch):
     """建一个 pending 审批，并把卡片更新与真实写入都挡在门外。"""
-    from ivyea_agent import approval_flow, approvals
+    from awen_agent import approval_flow, approvals
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     a = approvals.create(_finding(), chat_id="oc_1", message_id="om_1")
@@ -29,7 +29,7 @@ def appr(ivyea_home, monkeypatch):
 
 
 def _allow_write(monkeypatch, result=None):
-    from ivyea_agent import lingxing_write
+    from awen_agent import lingxing_write
 
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
     monkeypatch.setattr(lingxing_write, "execute",
@@ -40,7 +40,7 @@ def _allow_write(monkeypatch, result=None):
 
 # ── 闸 4：一次性消费 ────────────────────────────────────────────────────────
 def test_approve_executes_and_marks_executed(appr, monkeypatch):
-    from ivyea_agent import approval_flow, approvals
+    from awen_agent import approval_flow, approvals
 
     _allow_write(monkeypatch)
     r = approval_flow.resolve(appr.id, "approve", operator="ou_me", chat_id="oc_1")
@@ -49,8 +49,23 @@ def test_approve_executes_and_marks_executed(appr, monkeypatch):
     assert "已执行" in str(r["card"])
 
 
+def test_execute_surfaces_adjustment_ledger_sidecar_status(appr, monkeypatch):
+    from awen_agent import approval_flow
+
+    _allow_write(monkeypatch, {
+        "ok": True, "dry_run": False, "audit_id": "aud-ledger",
+        "detail": "写入成功但复盘账本不可用",
+        "adjustment_ledger": {"ok": False, "error": "ledger unavailable"},
+    })
+    result = approval_flow.resolve(appr.id, "approve", chat_id="oc_1")
+
+    assert result["ok"] is True
+    assert result["adjustment_ledger"] == {
+        "ok": False, "error": "ledger unavailable"}
+
+
 def test_second_click_is_rejected(appr, monkeypatch):
-    from ivyea_agent import approval_flow
+    from awen_agent import approval_flow
 
     _allow_write(monkeypatch)
     approval_flow.resolve(appr.id, "approve", chat_id="oc_1")
@@ -60,7 +75,7 @@ def test_second_click_is_rejected(appr, monkeypatch):
 
 
 def test_deny_does_not_execute(appr, monkeypatch):
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     called = []
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
@@ -72,7 +87,7 @@ def test_deny_does_not_execute(appr, monkeypatch):
 
 def test_chat_mismatch_blocks(appr, monkeypatch):
     """卡片被转发到别的会话，那边一点就执行——必须挡住。"""
-    from ivyea_agent import approval_flow, approvals
+    from awen_agent import approval_flow, approvals
 
     _allow_write(monkeypatch)
     r = approval_flow.resolve(appr.id, "approve", chat_id="oc_other")
@@ -80,8 +95,8 @@ def test_chat_mismatch_blocks(appr, monkeypatch):
     assert approvals.get(appr.id).state == approvals.PENDING
 
 
-def test_expired_blocks(ivyea_home, monkeypatch):
-    from ivyea_agent import approval_flow, approvals
+def test_expired_blocks(awen_home, monkeypatch):
+    from awen_agent import approval_flow, approvals
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     a = approvals.create(_finding(), chat_id="oc_1", ttl_seconds=-1)
@@ -91,9 +106,9 @@ def test_expired_blocks(ivyea_home, monkeypatch):
 
 
 # ── 闸 6：幅度硬闸 ──────────────────────────────────────────────────────────
-def test_magnitude_gate_blocks_and_marks_failed(ivyea_home, monkeypatch):
+def test_magnitude_gate_blocks_and_marks_failed(awen_home, monkeypatch):
     """幅度不合法直接判失败，而不是"等你开了写开关再来撞一次"。"""
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     a = approvals.create(_finding(before=100.0, after=10.0), chat_id="oc_1")  # -90%
@@ -113,7 +128,7 @@ def test_magnitude_gate_blocks_and_marks_failed(ivyea_home, monkeypatch):
 def test_operate_off_keeps_approved_for_retry(appr, monkeypatch):
     """写开关关着时保持 approved：用户的批准意愿仍然有效，
     补开开关后可直接重试，不必重新发一遍卡片。"""
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: False)
     r = approval_flow.resolve(appr.id, "approve", chat_id="oc_1")
@@ -127,7 +142,7 @@ def test_operate_off_keeps_approved_for_retry(appr, monkeypatch):
 
 
 def test_execute_requires_approved_state(appr, monkeypatch):
-    from ivyea_agent import approval_flow
+    from awen_agent import approval_flow
 
     _allow_write(monkeypatch)
     r = approval_flow.execute_approved(appr.id)     # 还是 pending
@@ -136,7 +151,7 @@ def test_execute_requires_approved_state(appr, monkeypatch):
 
 # ── 闸 7：写失败 / 回滚 ─────────────────────────────────────────────────────
 def test_write_failure_marks_failed(appr, monkeypatch):
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
     monkeypatch.setattr(lingxing_write, "execute",
@@ -148,7 +163,7 @@ def test_write_failure_marks_failed(appr, monkeypatch):
 
 
 def test_exception_during_write_is_contained(appr, monkeypatch):
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
 
@@ -162,7 +177,7 @@ def test_exception_during_write_is_contained(appr, monkeypatch):
 
 
 def test_rollback_happy_path(appr, monkeypatch):
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     _allow_write(monkeypatch)
     approval_flow.resolve(appr.id, "approve", chat_id="oc_1")
@@ -173,15 +188,31 @@ def test_rollback_happy_path(appr, monkeypatch):
     assert "已回滚" in str(r["card"])
 
 
+def test_rollback_surfaces_adjustment_ledger_sidecar_status(appr, monkeypatch):
+    from awen_agent import approval_flow, lingxing_write
+
+    _allow_write(monkeypatch)
+    approval_flow.resolve(appr.id, "approve", chat_id="oc_1")
+    monkeypatch.setattr(lingxing_write, "rollback", lambda _audit_id: {
+        "ok": True, "detail": "已恢复",
+        "adjustment_ledger": {"ok": True, "created": 1},
+    })
+
+    result = approval_flow.rollback(appr.id, chat_id="oc_1")
+
+    assert result["ok"] is True
+    assert result["adjustment_ledger"] == {"ok": True, "created": 1}
+
+
 def test_rollback_requires_executed(appr, monkeypatch):
-    from ivyea_agent import approval_flow
+    from awen_agent import approval_flow
 
     r = approval_flow.rollback(appr.id, chat_id="oc_1")
     assert not r["ok"] and r["reason"] == "not_executed"
 
 
 def test_rollback_chat_mismatch(appr, monkeypatch):
-    from ivyea_agent import approval_flow
+    from awen_agent import approval_flow
 
     _allow_write(monkeypatch)
     approval_flow.resolve(appr.id, "approve", chat_id="oc_1")
@@ -191,7 +222,7 @@ def test_rollback_chat_mismatch(appr, monkeypatch):
 
 def test_card_update_failure_does_not_fail_the_write(appr, monkeypatch):
     """写已经做了，卡片只是呈现——发不出去不该把成功变成失败。"""
-    from ivyea_agent import approval_flow, approvals, feishu_client
+    from awen_agent import approval_flow, approvals, feishu_client
 
     _allow_write(monkeypatch)
     monkeypatch.undo()          # 恢复真实 _update_card
@@ -207,7 +238,7 @@ def test_card_update_failure_does_not_fail_the_write(appr, monkeypatch):
 
 # ── serve 端点契约（方案 §4.2）──────────────────────────────────────────────
 def test_endpoint_resolve_contract(appr, monkeypatch):
-    from ivyea_agent import approval_flow, service
+    from awen_agent import approval_flow, service
 
     _allow_write(monkeypatch)
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
@@ -226,15 +257,15 @@ def test_endpoint_resolve_contract(appr, monkeypatch):
     {}, {"approval_id": "x"}, {"choice": "approve"},
     {"approval_id": "x", "choice": "drop_table"},
 ])
-def test_endpoint_rejects_bad_payload(ivyea_home, payload):
-    from ivyea_agent import service
+def test_endpoint_rejects_bad_payload(awen_home, payload):
+    from awen_agent import service
 
     code, data = service.feishu_approval_resolve(payload)
     assert code == 400 and not data["ok"]
 
 
-def test_endpoint_unknown_id_is_409(ivyea_home):
-    from ivyea_agent import service
+def test_endpoint_unknown_id_is_409(awen_home):
+    from awen_agent import service
 
     code, data = service.feishu_approval_resolve(
         {"approval_id": "nope", "choice": "approve"})
@@ -242,7 +273,7 @@ def test_endpoint_unknown_id_is_409(ivyea_home):
 
 
 def test_endpoint_get_status(appr):
-    from ivyea_agent import service
+    from awen_agent import service
 
     code, data = service.feishu_approval_get(appr.id)
     assert code == 200
@@ -253,7 +284,7 @@ def test_endpoint_get_status(appr):
 
 
 def test_endpoint_rollback_contract(appr, monkeypatch):
-    from ivyea_agent import approval_flow, lingxing_write, service
+    from awen_agent import approval_flow, lingxing_write, service
 
     _allow_write(monkeypatch)
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)

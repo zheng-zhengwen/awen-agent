@@ -10,6 +10,32 @@
 
 ---
 
+## [Unreleased]
+
+### 新增
+
+- **广告调整复盘中心一期。** 新增独立于技术审计和影子模式的广告调整事件账本，统一接收
+  awen 成功写入、awenOps/上游推送和领星 v2 操作日志；按店铺与来源幂等，保留调整前后值、
+  决策理由、策略证据及父 ASIN / 投放子 ASIN / 未投放兄弟 ASIN 范围。上游 T0 快照、awen 原生
+  候选的决策时快照与领星历史日志同步时快照会明确区分；映射恢复后可补齐缺失范围，但不会改写
+  原动作事实。
+- **3/7/14/30 天只读效果复盘。** T0 不进前后窗，使用等长窗口和 D1–D3、D4–D7、
+  D8–D14、D15–D30 非重叠权重，从汇总分子分母重算 CTR/CVR/CPC/ACoS/ROAS；明确展示
+  日期覆盖、样本、数据、映射、可比性四类置信度及混杂因素；同时分开呈现全链接 sessions/units、
+  对象/广告组/活动表现、投放子体与兄弟体购买、父体利润、关键词排名和库存快照；多父体购买缺少
+  advertised ASIN 时不做猜测归属，只报告相关性信号，不声称单次调整造成结果。
+- **awenOps 与自动化接口。** 增加 `/v1/adjustments*` 列表、详情、汇总、导入、同步、注释、
+  复盘 API，`awen adjustment` CLI、四个 Agent 只读工具、两个 stdio MCP 只读工具，以及
+  `adjustment_sync` / `adjustment_review` 多店计划任务。列表使用稳定游标；数据缺口会按冷却时间有限重试；
+  周期报告会带调整与复盘摘要，但不会重复创建审批。
+
+### 变更
+
+- **项目身份统一为 awen。** Python 包改为 `awen_agent`，发行包改为 `awen-agent`，
+  命令行入口改为 `awen`，本地状态目录改为 `~/.awen`，项目环境变量统一使用
+  `AWEN_*`；嵌入式工作台名称同步改为 `awenOps`，安装、部署、CI、Release、站点、
+  文档和测试均使用同一套命名。本次为明确的破坏性身份迁移，不保留旧入口兼容。
+
 ## [v1.16.8] - 2026-09-03
 
 ### 新增
@@ -21,12 +47,12 @@
     工具证据**判定，只有声称、没有证据的一律算未达成，差距会被注回去让它接着做。
     这是第五道门禁，挂在自验证/汇报/引证/自查之后（见
     [ADR-0039](./docs/decisions/0039-goal-mode-holds-the-verdict.md)）。
-  - **验收标准落盘**（`~/.ivyea/goals/<会话>.json`）且每轮回注上下文，跨压缩不丢 ——
+  - **验收标准落盘**（`~/.awen/goals/<会话>.json`）且每轮回注上下文，跨压缩不丢 ——
     跑到第 80 步也忘不掉最初答应过什么。`/goal show` 随时看进度。
   - **怎么进**：终端里直接说「目标模式」进模式，或者一句话就开跑 ——
     「目标模式：把登录页的报错修好」「用目标模式帮我把测试跑绿」；也有 `/goal` 命令
-    和给无人值守用的 `ivyea chat -p --goal`。**shift+tab 的模式循环没变** ——
-    多按一下不会误落进一个会自己连跑的模式。IvyeaOps 任务台在审批档位旁边多了一枚
+    和给无人值守用的 `awen chat -p --goal`。**shift+tab 的模式循环没变** ——
+    多按一下不会误落进一个会自己连跑的模式。awenOps 任务台在审批档位旁边多了一枚
     「目标模式」芯片，打开时会把档位一并切到「完全放行」（切得看得见，可以改回去）。
   - **四条出口，不会无限跑**：你喊停 · 全部达成 · 撞成本上限（`chat_max_cost_cny`）·
     连续几轮判定毫无推进就熔断。步数预算另算（`goal_max_tool_steps`，默认 600，
@@ -39,7 +65,7 @@
 
 ### 修复
 
-- **网页端（IvyeaOps）终于挂上了主脑。** serve 从来没把 provider 挂到 ToolContext 上，
+- **网页端（awenOps）终于挂上了主脑。** serve 从来没把 provider 挂到 ToolContext 上，
   而三个消费方都是"拿不到就静默降级"—— 于是三样能力在网页端从来没生效过，且没有任何
   报错指向它：
   - **收尾自查门禁**（改过代码/下过写指令的轮次交付前复核一遍）一律空转；
@@ -70,7 +96,7 @@
 
 ### 改进
 
-- **「正在准备」不再是黑盒。** 在网页端（IvyeaOps 任务台）提交一句话之后，屏幕上曾经
+- **「正在准备」不再是黑盒。** 在网页端（awenOps 任务台）提交一句话之后，屏幕上曾经
   只有一句干巴巴的"正在准备"，有时候一等几十秒，不知道它在准备什么、还要多久。
   - 原因是第一个 token 之前要干的活不少 —— 载入会话历史、召回记忆、注入知识证据、
     组工具清单（可能要连 MCP）、语义匹配技能 —— 而**这期间一个字节都不发**：
@@ -90,7 +116,7 @@
   「把改动推送合并发版」会召回「console 双卡合并口径」（"合并"是另一个意思）、
   「这个图片点不开」会被塞两份 Listing 图片审计手册（对上"图片"）。
   - 现在判据是**至少一个强信号词重合**：既不是虚词碎渣，也不是"位置/配置/合并/图片"
-    这类单独出现说明不了什么的词，更不是这个库的万能词（记忆库里 ivyea 占 86%）。
+    这类单独出现说明不了什么的词，更不是这个库的万能词（记忆库里 awen 占 86%）。
   - 「工程任务不注亚马逊知识」那道闸终端一直有、**工作台一直没有** —— 现在两条路
     共用同一套判据，并补齐了界面故障那一类词（点不开/白屏/渲染/配置文件…）。
   - 同一份材料在一次召回里最多占一席：同一篇长文被重复上传三次、切成三张近似卡霸榜
@@ -177,19 +203,19 @@
   - 判不了的不静默放行：统计上还不够（按账户 CVR 算这么多点击拿 0 单的概率）、经济上还不够
     （花费尚未超过单笔毛利）、疑似竞品词（推断）都会作为警告出现在报告里。
   - 「新品期差词」这条护栏当前数据面支撑不了，报告里明文列进"护栏未覆盖项"。
-  - 取舍见 [ADR-0034](./docs/decisions/0034-negation-guardrails-live-in-ivyea-not-the-vendored-script.md)。
-- **`ivyea answer-eval`：评测终于测"回答对不对"，而不只是"卡片召回对不对"。** 真跑主脑生成
+  - 取舍见 [ADR-0034](./docs/decisions/0034-negation-guardrails-live-in-awen-not-the-vendored-script.md)。
+- **`awen answer-eval`：评测终于测"回答对不对"，而不只是"卡片召回对不对"。** 真跑主脑生成
   回答，再用分域 rubric 判分。慢、要花钱、分数有波动，所以是独立命令，不进测试套、不挂定时任务。
 
 - **两张一直缺的知识卡：跟卖/购物车（Featured Offer）与差评/评论政策。** 问"有人跟卖我的
   链接怎么办""最近差评变多了怎么办"过去召不回任何官方依据。两张卡都带**诊断路径**（先分清
   是哪一类问题 → 逐步取证 → 动作 → 护栏），来源已逐条核实亚马逊官方页。
-- **`ivyea knowledge gaps`：知识覆盖薄弱处清单。** 按证据强度从弱到强排，告诉你下一批该补
+- **`awen knowledge gaps`：知识覆盖薄弱处清单。** 按证据强度从弱到强排，告诉你下一批该补
   哪些卡。**一开始是空的**——它要靠真实提问攒，用一段时间再回来看。
   - 为什么不自动判定"这是不是缺口"：两种判据都实测不可靠（问一个库里没有的机制，照样会有
     官方卡被语义近似捞上来）。如实记录、排序给人看，不冒充结论。
   - 缘由见 [ADR-0035](./docs/decisions/0035-knowledge-gaps-must-build-their-own-priority-list.md)。
-- **知识索引可以用稠密向量了**（`ivyea retrieval --dense` + `retrieval sync`）。**默认仍是关的**：
+- **知识索引可以用稠密向量了**（`awen retrieval --dense` + `retrieval sync`）。**默认仍是关的**：
   打开后第一次同步要把全部分块过一遍模型（本机约 2.5 分钟），那种一次性开销不该藏在随便一条
   命令里发生。
   - 挡在前面的两件事都解决了：同步改成**增量**（只重编真正变了的分块，二次同步实测 0.2 秒），
@@ -232,12 +258,12 @@
     或者反过来因为知识库搜不到就说没有这份材料。
   - 缘由与取舍见 [ADR-0032](./docs/decisions/0032-session-attachments-are-not-knowledge.md)。
 - **`show_image`：把一张图给用户看。** 你截的图、跑出来的图表、读到的产品图，现在能
-  真的展示出来，而不是只用文字描述。一个工具名两种形态：嵌在 IvyeaOps 里时委托给
+  真的展示出来，而不是只用文字描述。一个工具名两种形态：嵌在 awenOps 里时委托给
   宿主，网页上直接渲染成图（权限边界也在宿主那边，这边不另开一套）；在终端里不渲染
   画面，只确认这确实是一张图并报出绝对路径。**绝不往 stdout 打字** —— `-p
   --output-format stream-json` 下 stdout 是协议通道。
-- **会话记下自己是从哪儿开的。** 落盘新增 `origin`（`cli` = 终端里敲的 `ivyea chat`）
-  和 `cwd`（开会话时所在目录），`/v1/chat/sessions` 一并透出。IvyeaOps 任务台左栏靠它
+- **会话记下自己是从哪儿开的。** 落盘新增 `origin`（`cli` = 终端里敲的 `awen chat`）
+  和 `cwd`（开会话时所在目录），`/v1/chat/sessions` 一并透出。awenOps 任务台左栏靠它
   把终端会话标成「终端」—— 在这之前它们混在列表里，没有来源也没有归属，看着像一堆
   无主会话。老会话没有这两个字段，取空串，不受影响。
 
@@ -254,9 +280,9 @@
 
 ### 新增
 
-- **`-p` 也有输入通道了**：`ivyea chat -p --input-format stream-json` 会从 stdin 逐行读
+- **`-p` 也有输入通道了**：`awen chat -p --input-format stream-json` 会从 stdin 逐行读
   控制消息。此前 `-p` 是一条单行道（喂一句、读一串、退出），中间那几十分钟里调用方
-  没有任何一条路走回来 —— 于是在 IvyeaOps 的 /agents 聊天里，ivyea 这一档既插不进话、
+  没有任何一条路走回来 —— 于是在 awenOps 的 /agents 聊天里，awen 这一档既插不进话、
   也弹不出选项卡，想停只能 SIGTERM，而那样**这一轮跑出来的东西一个字都不落盘**。
   - `{"type":"user_input","text":"…"}` —— 追加指令，在下一个步边界插进当前这一轮，
     插进去回一条 `injected` 事件供调用方销账。
@@ -281,7 +307,7 @@
 - **拿不准的时候会把选项弹给你选**（新工具 `ask_user_question`）。方案分叉时给
   2-4 个选项、每个写清楚选它会发生什么，并标出推荐项。
   - **五分钟没人选就按推荐项继续**，任务不会卡在一个没人看的问题上；超时时长可用
-    `ivyea config set ask_timeout_seconds N` 调。
+    `awen config set ask_timeout_seconds N` 调。
   - 自动定的项会记账并随 `final.auto_decisions` 端出去，界面据此说明"这几项是替
     你定的"；工具也会要求模型在收尾总结里复述一遍。
   - 无人值守（cron / 飞书 / 管道）下不等待，直接按推荐项走。
@@ -309,17 +335,17 @@
 - **计划不会再"走着走着就忘了"**。多步任务的计划此前只活在内存里，而且从来没有被
   喂回给模型 —— 它知道自己的计划，全靠那几条 `todo_write` 调用还留在对话历史里。
   于是长任务一压缩，计划就跟着蒸发，模型接着干活时已经不记得原本打算干几件事、
-  干到第几件了。现在计划落盘（`~/.ivyea/plans/`），每轮由运行时注回上下文，
+  干到第几件了。现在计划落盘（`~/.awen/plans/`），每轮由运行时注回上下文，
   **压缩时原样保留**，进程重启、会话续跑都还在。
   - `/plan show` 看当前计划（目标、完成标准、每步状态与证据、改过几次）。
   - `/approve`（以及手动退出计划模式、Shift+Tab 切出计划模式）会给计划盖批准戳。
   - 计划模式里产出、又没被批准的计划，回到执行档时不允许直接写操作 ——
     只有真的走过计划模式的会话才有这道闸，普通对话行为不变。
-- **任务的步骤表和模型的计划，从此是同一份**。此前 `ivyea task` 那张步骤表只有模型
+- **任务的步骤表和模型的计划，从此是同一份**。此前 `awen task` 那张步骤表只有模型
   显式调 `task_step` 才会动，而模型实际维护的是 `todo_write` —— 一份计划两处记，结果
   就是**续跑提示照着一份过期的步骤表指路**（"下一步 #2"，而模型早就干到第 4 步了）。
   现在计划台账是唯一真相，任务里的步骤是它的投影：
-  - 模型每更新一次计划，`ivyea task show` / `/v1/task/{id}` / 续跑提示看到的就是最新状态，
+  - 模型每更新一次计划，`awen task show` / `/v1/task/{id}` / 续跑提示看到的就是最新状态，
     每步还带上它真正拿到的证据。
   - 反过来，**你在任务里排好的步骤，agent 接手时看得见了**：会话绑了任务而计划还空着时，
     任务步骤会成为计划的起点，注回模型上下文。此前它只能从续跑提示里读到一句散文。
@@ -355,8 +381,8 @@
   - 复核判"通过"时静默放行，但**发现的问题仍会作为「自查备注」讲给你听** —— 付了钱就要
     拿到东西。拿不准一律按通过：误判成"要修"会逼模型把已经对的答案改坏。
   - 最多逼修正一轮。关掉：`critique_before_done=false`。
-- **`ivyea` 现在记得住"到底验证过什么"**。命令、测试、读写、接口调用会落进证据台账
-  （`~/.ivyea/evidence.db`，30 天过期），跨轮跨会话可查；最终汇报的「验证」一栏在模型
+- **`awen` 现在记得住"到底验证过什么"**。命令、测试、读写、接口调用会落进证据台账
+  （`~/.awen/evidence.db`，30 天过期），跨轮跨会话可查；最终汇报的「验证」一栏在模型
   自述不足时用它兜底 —— 此前那些痕迹只活在当前这一轮的内存里，换一轮就没了。
 - **新增 `/think adaptive`：按这一轮的性质自动定思考深度**。寒暄降到 low（这条路线本来
   就连工具都不挂），其余一律维持 high；多步执行任务无论哪条路线都强制 high。
@@ -370,13 +396,13 @@
   `scripts/`）也点名列出、按需读。
 - **agent 可以自己沉淀技能了**。走完一套值得复用的流程后，它能用 `skill_write` 写成技能，
   写操作照旧走审批、计划模式一律拒绝。
-  - `/learn`（对话里）和 `ivyea learn`（命令行）：把目录、文件、网页、"刚才做的那件事"
+  - `/learn`（对话里）和 `awen learn`（命令行）：把目录、文件、网页、"刚才做的那件事"
     学成技能。大素材（手册、规范、文档集）走"精简索引 + `references/` 分章"的布局，
     一章一写，不会把整份灌进上下文。
   - **落盘前会校验，不合格直接拒绝**：`triggers` 必填（检索不分词，中文全靠触发词命中 ——
     没有它中文用户根本搜不到）、name 要小写连字符、description 必填且不能是一整段。
     正文里提到不存在的工具名会被点出来。
-  - `ivyea skill usage` 看哪些技能真在用；`ivyea skill archive` / `restore` 管生命周期，
+  - `awen skill usage` 看哪些技能真在用；`awen skill archive` / `restore` 管生命周期，
     **只归档不删除**。内置技能不许归档。
 - **技能检索接上了语义层**。此前是纯词法 2-gram + 一张手工停用词表，口语化的问法和技能里的
   正式用词对不上就是零命中。现在按记忆那套双路召回（词法 + 向量 RRF 融合）来找。
@@ -402,8 +428,8 @@
   「把交给你的问题查清楚」。现在有 6 个角色：`code_explorer`（定位实现/调用方/影响面）、
   `data_analyst`（拉数读数）、`listing_auditor`、`ads_reviewer`（复核广告动作：数据够不够、
   护栏有没有越）、`knowledge_auditor`（核对事实来源）、`researcher`（默认，行为与以前完全一样）。
-  - 自己加角色：在 `~/.ivyea/agents/*.md` 写一份（frontmatter + 正文即 system prompt），
-    同名会覆盖内置。`ivyea agents` 看当前有哪些。
+  - 自己加角色：在 `~/.awen/agents/*.md` 写一份（frontmatter + 正文即 system prompt），
+    同名会覆盖内置。`awen agents` 看当前有哪些。
   - **所有角色仍然是只读的**：子 agent 跑在后台，写操作的审批没有人能应答，
     所以不给它执行权。要算数就把数字带回主线算。
 - **记账调用不再吃步数配额**。实测里最近 300 次工具调用有 112 次是 `progress_update`/
@@ -416,7 +442,7 @@
   钱超了是「这轮已经花了多少，你要不要继续花」。
 - **`/resume`：接着上一轮没做完的继续**。撞上限停下来时，「停在哪、已经证明了什么」
   会落进计划台账；`/resume` 把这些带进下一轮，不用你重述一遍。
-- **`ivyea skill curate`：技能库该清理什么，它告诉你**。三类建议：长期没被命中的、
+- **`awen skill curate`：技能库该清理什么，它告诉你**。三类建议：长期没被命中的、
   触发词高度重合的（会互相抢命中）、`audit` 不合格的。
   - **默认只打印建议**，`--apply` 才动手，而且动手也只是归档（可 restore）。
   - 只碰你自建的技能；内置技能不动。重合与不合格**永不自动处理**——合并要判断哪条更好、
@@ -445,11 +471,11 @@
 
 ### 变更
 
-- **记忆开始在 IvyeaOps / 飞书 / 任务台里生效了**。此前记忆只在命令行 `ivyea chat`
+- **记忆开始在 awenOps / 飞书 / 任务台里生效了**。此前记忆只在命令行 `awen chat`
   里有：serve 这条路（工作台对话、飞书、任务台走的都是它）从不注入核心记忆和记忆索引，
   模型不知道记忆库里有什么，也就不会去检索 —— 在网页端用等于没有记忆。同时这些对话
   也不进情景记忆，反思无米下锅，**越在网页端用、记忆越不长**。现在两头都补上了。
-  - 不想让某一轮用记忆：`ivyea chat --no-memory`，或调用时传 `no_memory: true`
+  - 不想让某一轮用记忆：`awen chat --no-memory`，或调用时传 `no_memory: true`
     （只关"写"，已有记忆照常读）。
   - 定时巡检、任务台续跑这类自动化轮次**默认不注入、也不记** —— 它们复用已有的
     `inject_retrieval` 开关，机器的例行输出不会被当成"用户的经历"。
@@ -472,17 +498,17 @@
 - 记忆作用域（按项目/店铺隔离）已打通，但**默认关**：开了之后跨项目的记忆互相看不见，
   可能表现为"以前想得起来的现在想不起来"。要试用 `memory_scope_from_workspace=true`。
 
-- **记忆写坏了能回得去**：`USER.md` / `AGENTS.md` 是摆在 `~/.ivyea` 下、鼓励你亲手改的
+- **记忆写坏了能回得去**：`USER.md` / `AGENTS.md` 是摆在 `~/.awen` 下、鼓励你亲手改的
   文件。现在如果 agent 看过之后、写入之前你改动了它，这次写入会被**拒绝**并备份当前内容，
   由 agent 重新读一遍再改 —— 而不是把你刚写的东西覆盖掉。
 - **压缩上下文时会顺手沉淀记忆**：被压掉的那一段往往正是"结论是怎么来的"，
   此前只进这一条会话的摘要、换个会话就没了。关掉：`memory_reflect_on_compact=false`。
 - **反思不再改得动你亲口定的规矩**：从行为反推出来的"你大概是这么要求的"，
-  只会挂进待定区等你确认（`ivyea memory pending`），不会直接覆盖你说过的话。
+  只会挂进待定区等你确认（`awen memory pending`），不会直接覆盖你说过的话。
 - 记忆写入在同一轮里连续失败 3 次就停手，先把回答给你 —— 记不上是小事，
   为了记一笔把这一轮耗光是大事。
 
-- **记忆终于看得见、管得着**。新增一组 `/v1/memory/*` 端点，IvyeaOps 的
+- **记忆终于看得见、管得着**。新增一组 `/v1/memory/*` 端点，awenOps 的
   「知识库工作台 → 记忆」里可以：确认或驳回 agent 的推断、直接编辑那两份每轮常驻的
   核心记忆、搜索/查看/删除分类记忆、看三层记忆各自的健康状况、手动触发一次整理。
   界面上的写入和 agent 自己的写入走**同一条路**（同一套查重、冲突消解、历史归档），
@@ -521,7 +547,7 @@
   已经产生的消息和步骤落盘。
 
 - **Windows 上服务起不来**（升级到 v1.15.x 后出现）：`serve` 崩在开场白的一个 `✓` 上 ——
-  `UnicodeEncodeError: 'gbk' codec can't encode character '\u2713'`。IvyeaOps 起 serve 时
+  `UnicodeEncodeError: 'gbk' codec can't encode character '\u2713'`。awenOps 起 serve 时
   把输出重定向到日志文件 / NUL，此时 Windows 的 Python 不再用 UTF-8 而是退回系统代码页
   （中文机器 = GBK），编不出这个字符就整个进程退出，工作台那边只看得到
   "All connection attempts failed"。现在每个入口都会先把 stdout/stderr 钉成 UTF-8
@@ -570,7 +596,7 @@
 ### 修复
 
 - **内建的飞书长连接跑着跑着会被自己判成"没在跑"**。长连接线程一旦连上就一直
-  阻塞在 SDK 里，不再上报心跳；心跳过期后，别的进程（`ivyea relay status`、
+  阻塞在 SDK 里，不再上报心跳；心跳过期后，别的进程（`awen relay status`、
   配置向导、doctor）就会一致地说它没运行，然后催用户去装一个**其实正在跑**的服务。
   加了一条独立的心跳循环，按"线程还活着吗"续，间隔取过期窗口的六分之一。
 
@@ -578,25 +604,25 @@
 
 ### 变更
 
-- **巡检节拍器和飞书长连接改成跟着 `ivyea serve` 一起跑，不用再装两个系统服务、
+- **巡检节拍器和飞书长连接改成跟着 `awen serve` 一起跑，不用再装两个系统服务、
   也不用点按钮**。前两版把它们塞进了包、又做成一键安装，但"还要点两下"依然是
-  多余的一步 —— 装了 IvyeaAgent 就该直接能用。
+  多余的一步 —— 装了 awenAgent 就该直接能用。
 
   重看 ADR-1 当初把入站拆成独立服务的两条理由，今天只剩半条站得住：
   "强绑 lark_oapi 会让非中国用户装无用依赖"约束的是**依赖**（已做成可选 extra），
-  不是**进程**；"长连接常驻会污染 CLI 进程模型"说的是 `ivyea chat` 那种短命进程，
+  不是**进程**；"长连接常驻会污染 CLI 进程模型"说的是 `awen chat` 那种短命进程，
   而 `serve` 本来就是常驻守护进程、早就有后台线程。所以入站可以跟着 serve 走。
 
   **跑两份会真出事，所以有两道闸**：外部已有 relay 服务或 systemd timer 在跑时，
   进程内的工人自动让位（两条长连接 = 同一次按钮点击可能执行两遍，因为去重表是
   进程内的；两个节拍器 = 同一份早报推两遍）；多开 serve 时用带过期的文件锁选一个。
-  想要进程隔离的，`ivyea relay install` / `ivyea schedule install` 照旧可用。
+  想要进程隔离的，`awen relay install` / `awen schedule install` 照旧可用。
 
-  工人状态**跨进程可见**（落盘 + 心跳过期判定）：`ivyea relay status`、doctor、
-  IvyeaOps 自检都是别的进程在问，只存内存的话它们会一致地报"没在跑"，
+  工人状态**跨进程可见**（落盘 + 心跳过期判定）：`awen relay status`、doctor、
+  awenOps 自检都是别的进程在问，只存内存的话它们会一致地报"没在跑"，
   然后催用户去装一个其实不需要的服务。
 
-  可以关：`ivyea config set serve_worker_relay off` / `serve_worker_scheduler off`。
+  可以关：`awen config set serve_worker_relay off` / `serve_worker_scheduler off`。
 
 ## [v1.15.12] - 2026-08-23
 
@@ -611,7 +637,7 @@
 
   现在单元内容写在代码里跟着 wheel 走，配置页在检测到缺件时直接给出红色提示条
   和按钮：「一键安装接收端」（缺 SDK 会先装）、「一键启用触发器」。
-  命令行同样可用：`ivyea relay install`、新增 `ivyea schedule install`。
+  命令行同样可用：`awen relay install`、新增 `awen schedule install`。
   没有 systemd 的机器（Windows / macOS）不代劳，而是把该跑的命令原样写给你 ——
   launchctl / schtasks 的失败模式很难在看不见那台机器的情况下判断对错。
 
@@ -624,19 +650,19 @@
   飞书里也没法和 agent 对话。方案里的 R2（飞书对话）和 R6（同意后直接执行）
   对外部用户等于不存在，而界面上那个按钮还看得见、点得动 —— 比没有按钮更糟。
 
-  现在它是包内的 `ivyea_agent.feishu_relay`，两条命令装好：
+  现在它是包内的 `awen_agent.feishu_relay`，两条命令装好：
 
   ```bash
-  pip install "ivyea-agent[feishu]"   # 飞书官方 SDK，42MB，只有用飞书才需要
-  ivyea relay install                 # 写 systemd 单元并启动
+  pip install "awen-agent[feishu]"   # 飞书官方 SDK，42MB，只有用飞书才需要
+  awen relay install                 # 写 systemd 单元并启动
   ```
 
-  新增 `ivyea relay run|status|install`。没有 systemd 的机器（含 Windows）
-  常驻 `python -m ivyea_agent.feishu_relay` 即可。
-  配置向导第 5 步、`ivyea doctor` 的措辞都改成**能直接敲的命令**，
+  新增 `awen relay run|status|install`。没有 systemd 的机器（含 Windows）
+  常驻 `python -m awen_agent.feishu_relay` 即可。
+  配置向导第 5 步、`awen doctor` 的措辞都改成**能直接敲的命令**，
   不再只说一句"未安装"。
 
-  两处打包才会暴露的坑一并修了：会话映射默认从模块目录挪到 `~/.ivyea/relay-state`
+  两处打包才会暴露的坑一并修了：会话映射默认从模块目录挪到 `~/.awen/relay-state`
   （装进 site-packages 后那里通常不可写）；`import config` 这类裸导入改成包内相对导入
   （否则会去撞用户环境里任何一个同名模块）。旧的手工部署单元名继续认，
   升级不会把一个跑得好好的服务显示成"未安装"。
@@ -654,7 +680,7 @@
   它们必须留着（"没告警"不能等于"没问题"），但不该占据视线。早报、周报、月报的
   异常列表也换成同一套读法。
 
-- **接上亚马逊官方 API（SP-API + Ads API）**。在 IvyeaOps 系统配置 → 亚马逊官方 API
+- **接上亚马逊官方 API（SP-API + Ads API）**。在 awenOps 系统配置 → 亚马逊官方 API
   里填 LWA 凭据和站点，**填完即用**：巡检规则自动改吃官方数据，
   官方优先、领星兜底（同一个站点两边填同一个 SID 就会自动接上）。
   只用亚马逊、完全不用领星也能跑 —— 店铺清单会退到亚马逊那边登记的站点。
@@ -663,7 +689,7 @@
   没接的照实说：成本利润（亚马逊不给成本，算不出毛利）和 Listing 快照仍然只有领星有，
   两边是互补不是替代。
 
-  `ivyea amazon verify` 分步自检：凭据 → LWA 换 token → SP-API 真打一次 → 广告档案。
+  `awen amazon verify` 分步自检：凭据 → LWA 换 token → SP-API 真打一次 → 广告档案。
   常见的中间态是「SP-API 批下来了、广告 API 还在排队」，那时前两步该是绿的，
   库存规则照常跑，不该被广告拖着一起停。
 
@@ -685,7 +711,7 @@
 - **巡检节奏改档，并新增周报与月报**。原来是 L1 每 20 分钟 / L2 每小时 —— 20 分钟和
   1 小时对"库存断货、活动被暂停"这类事没有实质差别，却是三倍的接口调用。
   现在默认 **L1 每小时 · L2 每 12 小时 · 早报每天 · 周报每周 · 月报每月**，
-  每一档都能在 IvyeaOps 界面上单独开关和调间隔。
+  每一档都能在 awenOps 界面上单独开关和调间隔。
   周报/月报是**回顾**：本期指标环比、本期批了/执行了/回滚了几条、还剩什么没解决；
   **不带审批按钮** —— 同一条建议早报已经给过按钮，两处都给会让同一个目标挂两条待办，
   批了一条另一条还在，容易对同一个活动改两次预算。
@@ -696,9 +722,9 @@
   这批规则只读指标契约里的多窗口销量字段，换成 SP-API / Ads API 报表后一行不用改。
   整店销量字段全为 0 时报**数据缺口**而不是逐条告警（那 1200 条全是假的）。
 
-- **飞书配置可以在 IvyeaOps 界面里配了**。新增 `/v1/config/feishu`（读状态 / 写凭据）
+- **飞书配置可以在 awenOps 界面里配了**。新增 `/v1/config/feishu`（读状态 / 写凭据）
   与 `/v1/config/feishu/action`（列群 / 列群成员 / 发测试卡片 / 配巡检任务）。
-  凭据同时写 `~/.ivyea/.env` 和当前进程的环境变量——只写文件的话，serve 是常驻进程、
+  凭据同时写 `~/.awen/.env` 和当前进程的环境变量——只写文件的话，serve 是常驻进程、
   `load_env()` 又明确不覆盖已有环境变量，会出现"界面显示新凭据、发出去的还是旧应用"。
 
   审批白名单（谁能点卡片按钮）也挪进了 `settings.json`：`feishu_allowed_senders` /
@@ -710,9 +736,9 @@
   全店任务并存，会让同一个店被巡两遍、飞书里出现两张几乎一样的卡。
 
 - **多店铺巡检**。一条计划任务覆盖全部店铺，不必每个店注册一份：
-  `ivyea schedule set l1 store_l1 --every-minutes 20 --all-stores`。
+  `awen schedule set l1 store_l1 --every-minutes 20 --all-stores`。
   也支持 `--sids 1863,1872` 指定若干店、`--exclude-sids` 排除若干店。
-  `ivyea store health --all-stores` 可以当场跑一遍；`ivyea store list`
+  `awen store health --all-stores` 可以当场跑一遍；`awen store list`
   列出所有店铺并标注哪些未开通广告。
   本机实测：从只看 1 个店扩到 11 个店（欧洲 9 站 + 阿联酋 + 日本），
   多出来的 10 个店此前完全没人看着。
@@ -728,24 +754,24 @@
   顺带省掉每天 144 次注定失败的调用。
 
 
-- **店铺业务巡检**。`ivyea store health --sid <SID> [--layer l1|l2|l3]`。
-  过去 `ivyea alert` 检的是 agent 自己（队列积压、trace 失败），
+- **店铺业务巡检**。`awen store health --sid <SID> [--layer l1|l2|l3]`。
+  过去 `awen alert` 检的是 agent 自己（队列积压、trace 失败），
   现在有了检**店铺**的：库存断货 / 可供天数不足 / 不可售激增 / 活动被暂停 /
   预算被外部改动 / 花费突增 / 曝光归零 / ACOS 超标 / 销量断崖 / 毛利率下滑…
   共 17 条规则，按数据新鲜度分三层跑（快照 20 分钟 · 日内 1 小时 · 隔日每天）。
 
 - **飞书闭环**。异常推成交互卡片，点「批准执行」直接改领星，卡片原地变绿显示
-  审计号并给出回滚按钮。相关命令：`ivyea approval list/show/approve/deny/execute/rollback`。
-  接收端是独立的 `feishu-ivyea-relay` 服务（长连接，不需要开放任何公网端口）。
+  审计号并给出回滚按钮。相关命令：`awen approval list/show/approve/deny/execute/rollback`。
+  接收端是独立的 `feishu-awen-relay` 服务（长连接，不需要开放任何公网端口）。
 
 - **每日早报**。昨日广告/店铺/库存指标 + 环比 + 异常 + 待你决定的建议，一张卡片。
 
-- **定时巡检**。`ivyea schedule set <名> store_l1 --every-minutes 20 --sid <SID>`，
-  配合 `deploy/systemd/ivyea-schedule.timer`。`schedule set` 新增 `--every-minutes`
+- **定时巡检**。`awen schedule set <名> store_l1 --every-minutes 20 --sid <SID>`，
+  配合 `deploy/systemd/awen-schedule.timer`。`schedule set` 新增 `--every-minutes`
   ——分钟级任务写成 `--every-hours 0.333` 既不直观又会漂移。
 
 - **飞书通知通道 `feishu_app`**。走应用身份发交互卡片（原有的 `feishu` 是群机器人
-  webhook 纯文本，保留作兜底）。`ivyea notify test --channel feishu_app`。
+  webhook 纯文本，保留作兜底）。`awen notify test --channel feishu_app`。
 
 - **阈值可在飞书里当场调**。`/threshold` 查看，`/threshold <键> <值>` 修改，
   改完立刻生效不用重启。写错键名会直接报错，不会静默用默认值。
@@ -795,8 +821,8 @@
 
 
 - 测试隔离：`intraday`/`log`/`schedule`/`workspace`/`self_manage`/`task_runner`/
-  `code_agent`/`tools_general` 共 8 个模块在模块级绑定 `config.IVYEA_DIR`
-  却不在 conftest 重载列表里，跑测试会跨用例泄漏、甚至写到真实 `~/.ivyea`。
+  `code_agent`/`tools_general` 共 8 个模块在模块级绑定 `config.AWEN_DIR`
+  却不在 conftest 重载列表里，跑测试会跨用例泄漏、甚至写到真实 `~/.awen`。
 
 ---
 
@@ -814,8 +840,8 @@
   所以升级完什么都不用设置，原来能跑的照样跑 —— 而且 `env` 从此真的生效
   （以前写了也没用）。
 
-  安全仍然渐进拿到，走两条主动路径：`ivyea mcp add` 向导给新服务器写
-  `inherit_env: false`（新加的默认收紧），以及 `ivyea mcp env <名> --secure`。
+  安全仍然渐进拿到，走两条主动路径：`awen mcp add` 向导给新服务器写
+  `inherit_env: false`（新加的默认收紧），以及 `awen mcp env <名> --secure`。
 
   两次弯路的完整记录见
   [ADR-0016 的《修订》](docs/decisions/0016-subprocess-env-allowlist.md)。
@@ -836,21 +862,21 @@
 
 ### 新增
 
-- **`ivyea mcp env <名称>`** —— 不用碰 JSON 就能管一个 stdio 服务器的环境：
+- **`awen mcp env <名称>`** —— 不用碰 JSON 就能管一个 stdio 服务器的环境：
 
   ```bash
-  ivyea mcp env 某服务器                    # 看当前策略、哪些变量有值哪些缺
-  ivyea mcp env 某服务器 --secure           # 收紧到白名单
-  ivyea mcp env 某服务器 --pass GITHUB_TOKEN  # 放行一个
-  ivyea mcp env 某服务器 --set KEY=值        # 直接给值
-  ivyea mcp env 某服务器 --unset KEY         # 去掉
-  ivyea mcp env 某服务器 --inherit          # 放开全部（不推荐）
+  awen mcp env 某服务器                    # 看当前策略、哪些变量有值哪些缺
+  awen mcp env 某服务器 --secure           # 收紧到白名单
+  awen mcp env 某服务器 --pass GITHUB_TOKEN  # 放行一个
+  awen mcp env 某服务器 --set KEY=值        # 直接给值
+  awen mcp env 某服务器 --unset KEY         # 去掉
+  awen mcp env 某服务器 --inherit          # 放开全部（不推荐）
   ```
 
-- **`ivyea mcp add` 向导会问这个服务器需要哪些环境变量**，并把答案写成显式策略
+- **`awen mcp add` 向导会问这个服务器需要哪些环境变量**，并把答案写成显式策略
   —— 所以**新加的服务器默认是收紧的**，且当场提示哪些变量当前环境里没有。
-- **`ivyea mcp list`** 每个 stdio 服务器后面直接标出环境策略。
-- **`ivyea mcp doctor`** 末尾列出还能读到本机全部环境变量的服务器，并给出收紧命令。
+- **`awen mcp list`** 每个 stdio 服务器后面直接标出环境策略。
+- **`awen mcp doctor`** 末尾列出还能读到本机全部环境变量的服务器，并给出收紧命令。
 
 取舍与教训见 [ADR-0016 的《修订》一节](docs/decisions/0016-subprocess-env-allowlist.md)。
 
@@ -918,9 +944,9 @@
 
 - **订阅制 provider 可以从外部调用方登录了**（Claude 订阅 / OpenAI Codex / Gemini
   Code Assist / Qwen / GitHub Copilot）。这几家不是填 API key 而是要走 OAuth，
-  此前只有 CLI 的 `ivyea model auth <id> --login` 一条路，不会用命令行的人就被挡在门外。
+  此前只有 CLI 的 `awen model auth <id> --login` 一条路，不会用命令行的人就被挡在门外。
   新增 `GET /v1/auth` 与 `POST /v1/auth/{id}/start|poll|complete|logout`，
-  IvyeaOps 的网页据此把同一套流程做成引导式界面。
+  awenOps 的网页据此把同一套流程做成引导式界面。
   凭据（PKCE verifier / state / device_code / token）**一律不出服务端**，
   返回的只有用户需要看到的东西：授权链接、user_code、验证地址。
 - 设备码登录拆出了 `qwen_device_start/poll`、`codex_device_start/poll`，粘码登录拆出了
@@ -942,7 +968,7 @@
 
 - **一轮对话可以指定用哪个主脑模型**。`chat` / `chat/stream` 认 `model` 字段
   （`<provider_id>:<model>`，如 `openrouter:x-ai/grok-4.6`），只对这一轮生效。
-  在此之前主脑是纯全局设置，调用方（IvyeaOps 任务台）想让用户"点一下就换模型"，
+  在此之前主脑是纯全局设置，调用方（awenOps 任务台）想让用户"点一下就换模型"，
   唯一的办法是改全局 —— 那会把别的用户和正在跑的定时任务一起换掉。
   不传 `model` 时行为与此前逐字一致。
   指定的模型没配密钥 / 没有接口地址 / id 不认识时**当场报错**
@@ -964,7 +990,7 @@
 
 ### 修复
 
-- **附图的内容跟着会话走了**。调用方（IvyeaOps 任务台）读出来的附图文字此前塞在
+- **附图的内容跟着会话走了**。调用方（awenOps 任务台）读出来的附图文字此前塞在
   `system` 里，而 system 每轮重建、落盘时又被本轮那份整个覆盖 —— 于是"图里是什么"
   只在贴图那一轮存在。用户贴图问完一轮，下一轮问"你是通过什么识别图片的"，模型手里
   一个字都没有，只能否认自己收到过图，还把上一轮如实的描述说成是自己编的（真实投诉）。
@@ -1019,13 +1045,13 @@
   `{used, window, percent, breakdown{system,tools,messages}, estimated}`。工作台据此画
   上下文进度条 —— 窗口还剩多少、是被系统提示词/工具/对话哪一块吃掉的，一眼可见。
   数是**估算**（按字符，与服务商回报的 prompt_tokens 实测相差约 2%），事件里明说。
-  模型窗口按 id 匹配，查不到落 128K 保守值，`ivyea config set context_window` 可覆盖。
+  模型窗口按 id 匹配，查不到落 128K 保守值，`awen config set context_window` 可覆盖。
   会话详情（`chat/sessions/{id}`）也带一份 `context`，**按整份存档算、不随分页变** ——
   这样调用方打开一条历史会话时立刻就能画出进度条，不必等用户再问一句。
 
 ### 修复
 
-- **选了「逐项审批」，模型却仍被告知"当前只读"**。`[IvyeaOps 嵌入模式]` 那句只读提示词
+- **选了「逐项审批」，模型却仍被告知"当前只读"**。`[awenOps 嵌入模式]` 那句只读提示词
   是无条件拼进系统提示的，于是放开写的两档里模型照样只给方案不动手 —— 界面上开关变了、
   行为一点没变。现在这句话跟着档位走，三档三句话。
 
@@ -1054,7 +1080,7 @@
     该调工具"那几步。
   - **其余**——与改动前逐字一致。判不准一律落这条。
 
-  终端（`ivyea chat` 交互和 `-p`）走同一套判定：闲聊不挂工具、不查知识库、不注技能，
+  终端（`awen chat` 交互和 `-p`）走同一套判定：闲聊不挂工具、不查知识库、不注技能，
   也不再为一句问候扫一遍工程上下文。真 pty 实测「你好」首字 3.9s，而「列一下有哪些
   一级目录」照常调工具、5.7s 给出结果。
 - **技能自动注入只认名义命中**（id / 标题 / 描述 / 触发词对上），不再因为正文里撞了几个
@@ -1079,14 +1105,14 @@
 ### 新增
 
 - **技能支持业界通行的 `SKILL.md` + YAML frontmatter 写法**。以前必须在 SKILL.md 旁边再放一个
-  `skill.json` 才认，等于给同一件事发明了第二种格式 —— 外部技能库（比如 IvyeaOps 的 Skill 中心，
+  `skill.json` 才认，等于给同一件事发明了第二种格式 —— 外部技能库（比如 awenOps 的 Skill 中心，
   近百个技能）一个都加载不进来。现在两种都认：`skill.json` 在就按它（老技能一个不动），
   不在就读 frontmatter 的 `name` / `description` / `description_zh` / `version` / `triggers`
   （也兼容 `metadata.hermes.tags`）。
-- **可以挂外部技能库**：`IVYEA_SKILL_ROOTS=/a/skills:/b/skills`（Windows 用 `;`），或
+- **可以挂外部技能库**：`AWEN_SKILL_ROOTS=/a/skills:/b/skills`（Windows 用 `;`），或
   settings.json 里的 `skill_roots`。技能**原地加载，不复制**，那边改完这边立即生效。
   外部库**不能覆盖内置技能**（同 id 时内置优先）—— 顶掉内置技能是很难查的故障。
-  个人技能（`~/.ivyea/skills`）保持原有的覆盖语义。
+  个人技能（`~/.awen/skills`）保持原有的覆盖语义。
 - **带附属文件的技能会告诉模型文件在哪**。技能正文常写着「运行 `scripts/xxx.py`」「参见
   `references/xxx.md`」，以前模型拿不到路径，只能瞎找或凭正文硬编；现在 `render_skill` 和
   自动匹配的上下文里都带上绝对目录。没有附属文件的技能不加这句。
@@ -1110,10 +1136,10 @@
 
 ### 修复
 
-- **`ivyea service stop` 会谎报成功**。它只认 pidfile，进程实际还活着也会报「已停止」。
+- **`awen service stop` 会谎报成功**。它只认 pidfile，进程实际还活着也会报「已停止」。
   这条 bug 的真实杀伤力在于：升级流程以为停干净了，于是新版装上去、旧进程还在跑，表现为
   **「明明升级了却还在跑旧代码」**，而且完全没有报错。
-- **`ivyea self update` 指向了一个不存在的 PyPI 包**。源码安装的走 `git pull`，其余情况
+- **`awen self update` 指向了一个不存在的 PyPI 包**。源码安装的走 `git pull`，其余情况
   才回落到 pip/pipx。
 
 ## [v1.13.0] - 2026-08-16
@@ -1212,7 +1238,7 @@
 
 ### 新增
 
-- **`chat -p --output-format stream-json`** —— 结构化 NDJSON 输出。这是 IvyeaOps 能把 agent
+- **`chat -p --output-format stream-json`** —— 结构化 NDJSON 输出。这是 awenOps 能把 agent
   当 runner 驱动的基础。
 - **hooks**：`pre_tool_use` / `post_tool_use` / `stop` / `session_end` 事件。
 - **压缩保留最近 N 条消息原文**，不再把近期上下文一并摘要掉。
@@ -1223,7 +1249,7 @@
 ### 修复
 
 - **codex 主脑的用量和花费一直显示 0** —— Responses API 的 usage 结构没有归一成内部契约。
-- 冻结的 GUI exe 里跑 `ivyea` 崩 `AttributeError`（isatty 返回 None）。
+- 冻结的 GUI exe 里跑 `awen` 崩 `AttributeError`（isatty 返回 None）。
 
 ## [v1.1.0] – [v1.1.7] - 2026-07-02 → 07-03
 
@@ -1237,7 +1263,7 @@
 - **渐进式 markdown 流式**，消除整段「原文 → 渲染」的跳变
 - **`/rewind` 检查点** —— 对话和代码快照一起回退
 - **后台 / 长任务 bash**：`run_in_background` + `bash_output` + `kill_bash`
-- **`chat -p/--print` 非交互一次性模式**（给 IvyeaOps 这类调用方做 runner 用）
+- **`chat -p/--print` 非交互一次性模式**（给 awenOps 这类调用方做 runner 用）
 - **`self update` 子命令**：源码装的走 git pull，否则 pip / pipx
 - 启动注入 `MEMORY.md` 摘要，开箱就知道 agent 记得什么
 
@@ -1249,7 +1275,7 @@
 
 ### 新增
 
-- **全屏 TUI 聊天界面**并设为默认（`IVYEA_TUI=0` 可退回行式）。分 P0–P5 六步做完：
+- **全屏 TUI 聊天界面**并设为默认（`AWEN_TUI=0` 可退回行式）。分 P0–P5 六步做完：
   骨架 → 核心闭环 → 中断与排队 → 审批内联面板 → 输入对齐 → todo 计划面板。
 - 写代码体验对标 Claude Code / Codex：行号、glob、auto-edit、只读命令放行、改前必读硬护栏、
   `/diff`、流式正文预览、上下文进度条、自动压缩默认开。
@@ -1263,7 +1289,7 @@
 
 ### 新增
 
-- **与 IvyeaOps 打通**：agent 可以调用工作台各板块的工具生成报告（ops-bridge）。
+- **与 awenOps 打通**：agent 可以调用工作台各板块的工具生成报告（ops-bridge）。
 - **MCP 双向对等** —— chat 工具、resources、prompts 两侧都支持。
 - **`dispatch_subagent`** 只读扇出探查工具。
 - **自定义斜杠命令 + 用户 hooks**。
@@ -1280,11 +1306,11 @@
 ### 新增
 
 - **嵌入式服务与本地检索**：对外暴露只读 chat API、只读 MCP server、任务状态 API，
-  IvyeaOps 由此可以把 agent 当成一个常驻服务来用。
+  awenOps 由此可以把 agent 当成一个常驻服务来用。
 - 本地稀疏向量检索 + 持久化检索索引；可选的语义检索后端。
 - 通用 agent 能力：git 写操作、补丁工作流、GitHub CI 状态查询。
 - 在线 provider 模型目录；从模型选择器直接发起 OAuth 登录。
-- 离线部署包；门户站 agent.ivyea.com。
+- 离线部署包；门户站 agent.awen.com。
 
 ### 修复
 
@@ -1299,7 +1325,7 @@
 
 - **P1** 领星只读广告巡检 MVP；**P1.5** 通用 MCP 客户端 + 可配置字段映射
 - **P2** 审核制执行（否词 / 调价）+ 硬护栏 + 审计回滚
-- **P2.5** 对话式 agent（`ivyea chat`）+ Claude Code 式权限审批 + 工具调用循环
+- **P2.5** 对话式 agent（`awen chat`）+ Claude Code 式权限审批 + 工具调用循环
 - **P3** 记忆系统（SQLite FTS5 + 策展 markdown + 自策展）
 - **M1–M6** 对标 Claude Code / Codex / Hermes 的十个里程碑：对话内核重做（流式 + 成本核算
   + 计划模式）、上下文压缩、会话 resume、Claude 原生 provider、通用工具层 + 沙箱 + 工具级
@@ -1309,9 +1335,9 @@
 
 ---
 
-[v1.13.1]: https://github.com/Hector-xue/ivyea-agent/releases/tag/v1.13.1
-[v1.13.0]: https://github.com/Hector-xue/ivyea-agent/releases/tag/v1.13.0
-[v1.12.0]: https://github.com/Hector-xue/ivyea-agent/releases/tag/v1.12.0
-[v1.11.0]: https://github.com/Hector-xue/ivyea-agent/releases/tag/v1.11.0
-[v1.9.0]: https://github.com/Hector-xue/ivyea-agent/releases/tag/v1.9.0
-[v0.4.0]: https://github.com/Hector-xue/ivyea-agent/releases/tag/v0.4.0
+[v1.13.1]: https://github.com/zheng-zhengwen/awen-agent/releases/tag/v1.13.1
+[v1.13.0]: https://github.com/zheng-zhengwen/awen-agent/releases/tag/v1.13.0
+[v1.12.0]: https://github.com/zheng-zhengwen/awen-agent/releases/tag/v1.12.0
+[v1.11.0]: https://github.com/zheng-zhengwen/awen-agent/releases/tag/v1.11.0
+[v1.9.0]: https://github.com/zheng-zhengwen/awen-agent/releases/tag/v1.9.0
+[v0.4.0]: https://github.com/zheng-zhengwen/awen-agent/releases/tag/v0.4.0

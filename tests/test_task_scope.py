@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ivyea_agent import task_scope
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import task_scope
+from awen_agent.agent_tools import ToolContext
 
 
 def _repos(tmp_path: Path) -> tuple[Path, Path]:
-    agent = tmp_path / "ivyea-agent"
-    ops = tmp_path / "ivyea-ops"
+    agent = tmp_path / "awen-agent"
+    ops = tmp_path / "awen-ops"
     for root in (agent, ops):
         (root / ".git").mkdir(parents=True)
         (root / "README.md").write_text(root.name, encoding="utf-8")
@@ -18,11 +18,11 @@ def _repos(tmp_path: Path) -> tuple[Path, Path]:
 def test_current_explicit_project_beats_screenshot_host_and_history(tmp_path):
     agent, ops = _repos(tmp_path)
     messages = [
-        {"role": "user", "content": "之前检查 ivyea-ops 页面"},
+        {"role": "user", "content": "之前检查 awen-ops 页面"},
         {"role": "assistant", "content": "好的"},
     ]
     result = task_scope.resolve(
-        "截图来自 ops.ivyea.com/terminal，但这是 ivyeaagent 的输出任务",
+        "截图来自 ops.awen.com/terminal，但这是 awenagent 的输出任务",
         tmp_path,
         messages=messages,
         locked_root=str(ops),
@@ -37,7 +37,7 @@ def test_recent_user_target_is_retained_for_ambiguous_screenshot_followup(tmp_pa
     agent, _ops = _repos(tmp_path)
     current = "@/tmp/screen.jpg 这种彩色输出能做吗？"
     messages = [
-        {"role": "user", "content": "检查 ivyea-agent 的安装输出"},
+        {"role": "user", "content": "检查 awen-agent 的安装输出"},
         {"role": "assistant", "content": "已检查"},
         {"role": "user", "content": current},
     ]
@@ -49,14 +49,14 @@ def test_recent_user_target_is_retained_for_ambiguous_screenshot_followup(tmp_pa
 
 def test_explicit_new_project_switches_existing_lock(tmp_path):
     agent, ops = _repos(tmp_path)
-    result = task_scope.resolve("现在改 ivyeaops 的前端", tmp_path, locked_root=str(agent))
+    result = task_scope.resolve("现在改 awenops 的前端", tmp_path, locked_root=str(agent))
     assert result.root == str(ops)
     assert result.explicit is True
 
 
 def test_negated_project_mention_does_not_create_false_ambiguity(tmp_path):
     agent, _ops = _repos(tmp_path)
-    result = task_scope.resolve("你找错方向了，跟ivyeaops没关系，这是ivyeaagent的任务", tmp_path)
+    result = task_scope.resolve("你找错方向了，跟awenops没关系，这是awenagent的任务", tmp_path)
     assert result.ambiguous is False
     assert result.root == str(agent)
     assert result.explicit is True
@@ -64,7 +64,7 @@ def test_negated_project_mention_does_not_create_false_ambiguity(tmp_path):
 
 def test_two_explicit_projects_are_ambiguous_and_block_lock(tmp_path):
     _repos(tmp_path)
-    result = task_scope.resolve("比较并同时修改 ivyea-agent 和 ivyea-ops", tmp_path)
+    result = task_scope.resolve("比较并同时修改 awen-agent 和 awen-ops", tmp_path)
     assert result.ambiguous is True
     assert result.root == ""
     assert "先向用户确认" in task_scope.render_note(result, "比较两个项目")
@@ -73,7 +73,7 @@ def test_two_explicit_projects_are_ambiguous_and_block_lock(tmp_path):
 def test_prepare_query_locks_tool_workspace_and_adds_behavior_contract(tmp_path):
     agent, _ops = _repos(tmp_path)
     ctx = ToolContext(workspace=str(tmp_path))
-    note = task_scope.prepare_query(ctx, "优化 ivyeaagent 的终端颜色", [], base=tmp_path)
+    note = task_scope.prepare_query(ctx, "优化 awenagent 的终端颜色", [], base=tmp_path)
     assert ctx.workspace == str(agent)
     assert ctx.target_root == str(agent)
     assert ctx.behavioral_task is True
@@ -84,7 +84,7 @@ def test_prepare_query_locks_tool_workspace_and_adds_behavior_contract(tmp_path)
 def test_irrelevant_chat_does_not_keep_injecting_scope_contract(tmp_path):
     agent, _ops = _repos(tmp_path)
     ctx = ToolContext(workspace=str(tmp_path))
-    task_scope.prepare_query(ctx, "优化 ivyeaagent 的终端颜色", [], base=tmp_path)
+    task_scope.prepare_query(ctx, "优化 awenagent 的终端颜色", [], base=tmp_path)
     assert ctx.target_root == str(agent)
     assert task_scope.prepare_query(ctx, "你好", [], base=tmp_path) == ""
 
@@ -94,7 +94,7 @@ def test_continuation_retains_behavioral_contract_and_resets_explicit_search_dea
     ctx = ToolContext(workspace=str(tmp_path), behavioral_task=True,
                       search_recovery_required=True, consecutive_search_deadends=2,
                       navigation_since_read=8)
-    note = task_scope.prepare_query(ctx, "继续优化 ivyeaagent", [], base=tmp_path)
+    note = task_scope.prepare_query(ctx, "继续优化 awenagent", [], base=tmp_path)
     assert ctx.target_root == str(agent)
     assert ctx.behavioral_task is True
     assert ctx.search_recovery_required is False
@@ -106,7 +106,7 @@ def test_prepare_messages_supports_multimodal_content_without_duplicate_note(tmp
     agent, _ops = _repos(tmp_path)
     ctx = ToolContext(workspace=str(tmp_path))
     messages = [{"role": "user", "content": [
-        {"type": "text", "text": "这是 ivyeaagent 的截图输出"},
+        {"type": "text", "text": "这是 awenagent 的截图输出"},
         {"type": "image_url", "image_url": {"url": "data:image/png;base64,x"}},
     ]}]
     task_scope.prepare_messages(ctx, messages)
@@ -136,12 +136,12 @@ def test_injected_knowledge_does_not_make_a_simple_task_complex():
     命中"动作词 + 长度≥60"，把一步操作判成复杂多步任务 —— 于是整套 todo + 阶段汇报
     状态机启动，同一个动作被拦两轮，来回几十条消息，用户等了 8 分钟才看到结果。
     """
-    from ivyea_agent.task_scope import requires_progress_reporting
+    from awen_agent.task_scope import requires_progress_reporting
 
     plain = "把 UK 站『绿植零号手动』这个广告活动的日预算改成 8"
     injected = plain + """
 
-[Ivyea 本地知识检索 / 亚马逊知识证据]
+[awen 本地知识检索 / 亚马逊知识证据]
 检索决策：risk=medium reason=amazon_domain_question。
 [K1] 2026年7月利润-提成.xlsx | authority=account_local
      执行摘要：分析各 ASIN 的利润与提成，诊断异常项并给出处理建议……
@@ -153,21 +153,21 @@ def test_injected_knowledge_does_not_make_a_simple_task_complex():
 
 def test_really_complex_work_still_triggers_reporting():
     """别为了修上面那个把纪律整个关掉 —— 真的多步工程仍然要走汇报闭环。"""
-    from ivyea_agent.task_scope import requires_progress_reporting
+    from awen_agent.task_scope import requires_progress_reporting
 
     assert requires_progress_reporting(
         "帮我把这个仓库的广告模块重构一遍，先分析现状再制定方案然后逐步实施") is True
 
 
 def test_user_said_strips_every_known_injection_marker():
-    from ivyea_agent.task_scope import _user_said
+    from awen_agent.task_scope import _user_said
 
-    for marker in ("[Ivyea 本地知识检索 / 亚马逊知识证据]", "[知识引用门禁]",
+    for marker in ("[awen 本地知识检索 / 亚马逊知识证据]", "[知识引用门禁]",
                    "[用户显式引用的资料 —— 优先据此作答]", "[角色设定 —— 按这个身份作答]",
                    # 这两条曾经漏掉：模块里有过**两份同名清单**，下面那份把上面那份
                    # 整个遮蔽，而它恰好没有技能这一条。见 task_scope._INJECTED_MARKERS。
-                   "[Ivyea Skill：本轮相关可复用流程]", "[工程上下文]",
-                   "[Ivyea 内置亚马逊知识库：本轮相关摘录]", "[任务范围锁定 / 执行契约]"):
+                   "[awen Skill：本轮相关可复用流程]", "[工程上下文]",
+                   "[awen 内置亚马逊知识库：本轮相关摘录]", "[任务范围锁定 / 执行契约]"):
         assert _user_said(f"改一下预算\n\n{marker}\n一堆注入内容") == "改一下预算"
 
 
@@ -179,7 +179,7 @@ def test_injection_markers_cover_every_real_injection_site():
     """
     import re
     from pathlib import Path
-    from ivyea_agent import task_scope
+    from awen_agent import task_scope
 
     root = Path(task_scope.__file__).parent
     headers: set[str] = set()
@@ -207,12 +207,12 @@ def test_short_command_stays_simple_even_with_skill_injected():
     实测事故：这条判成复杂 → 护栏要求先 todo_write + progress_update → 模型
     18 步里 17 步在写待办和阶段汇报，一个词等了 2 分 16 秒。
     """
-    from ivyea_agent.task_scope import requires_progress_reporting
+    from awen_agent.task_scope import requires_progress_reporting
 
     # 注入块在这里**手写**，不走 skills.context_for_query —— 那边已经加了"名义命中"
     # 闸门、"测试"不再命中任何技能。但判据必须独立扛得住长注入：显式注入
     # （payload 带 skill=）和别的注入块照样会贴上来。
     body = "执行 分析 优化 检查 广告 listing 报表 " * 40
-    injected = "测试\n\n[Ivyea Skill：本轮相关可复用流程]\n" + body
+    injected = "测试\n\n[awen Skill：本轮相关可复用流程]\n" + body
     assert len(injected) > 200, "这条用例的前提就是注入块很长"
     assert requires_progress_reporting(injected) is False

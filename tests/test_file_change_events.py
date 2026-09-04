@@ -10,8 +10,8 @@ import pathlib
 
 import pytest
 
-from ivyea_agent import stream_json, tools_general
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import stream_json, tools_general
+from awen_agent.agent_tools import ToolContext
 
 
 @pytest.fixture
@@ -91,7 +91,7 @@ def test_diff_carries_no_ansi_escapes():
     """这份 diff 是给网页看的。带 ANSI 转义就是一串乱码。"""
     ctx = ToolContext(session_id="s", turn_id="t")
     assert getattr(ctx, "file_changes") == []
-    from ivyea_agent import panels
+    from awen_agent import panels
     d = panels.render_diff("一\n", "二\n", "a.txt", color=False)
     assert "\x1b[" not in d
 
@@ -104,7 +104,7 @@ def test_serve_forwards_file_change_to_the_browser():
     """
     import inspect
 
-    from ivyea_agent import service
+    from awen_agent import service
 
     # 放行名单在 _chat_stream 里（chat_stream 现在是层薄壳，只负责封存活轮日志）。
     src = inspect.getsource(service._chat_stream)

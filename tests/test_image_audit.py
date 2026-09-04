@@ -24,7 +24,7 @@ def _png(path, w=800, h=600):
 
 
 def test_image_audit_scans_dimensions_and_prompt(tmp_path):
-    from ivyea_agent import image_audit
+    from awen_agent import image_audit
 
     img = tmp_path / "main-hero.png"
     _png(img, 800, 600)
@@ -38,8 +38,8 @@ def test_image_audit_scans_dimensions_and_prompt(tmp_path):
 
 
 def test_image_cli_and_agent_tool(tmp_path, capsys):
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
-    from ivyea_agent.cli import main
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
+    from awen_agent.cli import main
 
     img = tmp_path / "feature.png"
     _png(img, 1200, 1200)

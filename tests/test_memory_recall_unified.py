@@ -7,8 +7,8 @@
 from __future__ import annotations
 
 
-def test_recall_surfaces_curated_memory_first(ivyea_home):
-    from ivyea_agent import agent_tools, memory, memory_store
+def test_recall_surfaces_curated_memory_first(awen_home):
+    from awen_agent import agent_tools, memory, memory_store
     memory_store.apply("add", name="宽泛词打法", category="domain",
                        description="对宽泛批发类词一贯保守", content="连续三个月否掉宽泛词。")
     memory.remember("6月否了一批宽泛词：cheap phone case")
@@ -19,23 +19,23 @@ def test_recall_surfaces_curated_memory_first(ivyea_home):
     assert out.index("【分类记忆】") < out.index("【历史记录】")
 
 
-def test_recall_includes_episodic(ivyea_home):
-    from ivyea_agent import agent_tools, memory
+def test_recall_includes_episodic(awen_home):
+    from awen_agent import agent_tools, memory
     memory.remember("这个 ASIN 的库存只剩 12 天")
     out = agent_tools.dispatch("recall", {"query": "库存天数"}, agent_tools.ToolContext())
     assert "库存只剩 12 天" in out
 
 
-def test_recall_empty(ivyea_home):
-    from ivyea_agent import agent_tools
+def test_recall_empty(awen_home):
+    from awen_agent import agent_tools
     out = agent_tools.dispatch("recall", {"query": "完全不存在的东西"}, agent_tools.ToolContext())
     assert "没有相关记录" in out
 
 
-def test_recall_does_not_leak_knowledge_body(ivyea_home):
+def test_recall_does_not_leak_knowledge_body(awen_home):
     """知识卡正文必须经 knowledge_search 走引证登记；recall 只给指针。
     否则模型会拿着没登记的 [K?] 键去标注结论，引证契约当场作废。"""
-    from ivyea_agent import agent_tools, knowledge
+    from awen_agent import agent_tools, knowledge
     cards = knowledge.search("广告", limit=1)
     if not cards:
         return                       # 该环境没有内置知识卡，跳过
@@ -46,19 +46,19 @@ def test_recall_does_not_leak_knowledge_body(ivyea_home):
         assert body[:200] not in out              # 正文没被吐出来
 
 
-def test_recall_survives_missing_knowledge_base(ivyea_home, monkeypatch):
+def test_recall_survives_missing_knowledge_base(awen_home, monkeypatch):
     """知识库出问题不该让回忆整个失败——记忆是更基础的能力。"""
-    from ivyea_agent import agent_tools, knowledge, memory
+    from awen_agent import agent_tools, knowledge, memory
     monkeypatch.setattr(knowledge, "search", lambda *a, **kw: (_ for _ in ()).throw(RuntimeError("boom")))
     memory.remember("一条普通记忆")
     out = agent_tools.dispatch("recall", {"query": "普通记忆"}, agent_tools.ToolContext())
     assert "一条普通记忆" in out
 
 
-def test_search_shape_contract_for_retrieval_module(ivyea_home):
+def test_search_shape_contract_for_retrieval_module(awen_home):
     """retrieval.py / retrieval_index.py 按 text/rowid/asin/ts 消费。改坏这个会静默打挂
-    统一检索和 IvyeaOps 的嵌入索引，而它们没有自己的守卫测试。"""
-    from ivyea_agent import memory
+    统一检索和 awenOps 的嵌入索引，而它们没有自己的守卫测试。"""
+    from awen_agent import memory
     memory.remember("契约验证")
     row = memory.search("契约验证")[0]
     for key in ("text", "rowid", "asin", "ts"):
@@ -66,8 +66,8 @@ def test_search_shape_contract_for_retrieval_module(ivyea_home):
     assert memory.index_rows(limit=5)
 
 
-def test_retrieval_module_still_works_end_to_end(ivyea_home):
-    from ivyea_agent import memory, retrieval
+def test_retrieval_module_still_works_end_to_end(awen_home):
+    from awen_agent import memory, retrieval
     memory.remember("统一检索的回归验证")
     res = retrieval.search("统一检索", limit=5)
     assert res.get("hits") is not None

@@ -1,6 +1,6 @@
 """白名单来源的优先级 —— agent 配置优先，env 兜底。
 
-这条规则安全攸关：搞反了，"在 IvyeaOps 界面上把人从审批白名单里删掉"
+这条规则安全攸关：搞反了，"在 awenOps 界面上把人从审批白名单里删掉"
 就会变成一个假动作（界面上没了，relay 还认着 env 里的旧名单放行）。
 """
 import importlib
@@ -9,13 +9,13 @@ import json
 import pytest
 
 
-from ivyea_agent.feishu_relay import config
+from awen_agent.feishu_relay import config
 
 
 @pytest.fixture
 def fake_home(tmp_path, monkeypatch):
-    """把 ~/.ivyea 指到临时目录。**绝不能让单测读到真机的白名单。**"""
-    monkeypatch.setenv("IVYEA_HOME", str(tmp_path))
+    """把 ~/.awen 指到临时目录。**绝不能让单测读到真机的白名单。**"""
+    monkeypatch.setenv("AWEN_HOME", str(tmp_path))
     monkeypatch.delenv("ALLOWED_SENDER_IDS", raising=False)
     monkeypatch.delenv("ALLOWED_CHAT_IDS", raising=False)
     return tmp_path
@@ -87,7 +87,7 @@ def test_empty_whitelist_no_longer_blocks_startup(monkeypatch):
 
 
 def test_reimport_does_not_read_the_real_home(fake_home):
-    """模块级快照也要跟着 IVYEA_HOME 走，不能焊死 ~/.ivyea。"""
+    """模块级快照也要跟着 AWEN_HOME 走，不能焊死 ~/.awen。"""
     _write(fake_home, {"feishu_allowed_senders": ["ou_snapshot"]})
     reloaded = importlib.reload(config)
     try:

@@ -4,8 +4,8 @@
 """
 from __future__ import annotations
 
-from ivyea_agent import agent_loop, config, context, plan_store
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import agent_loop, config, context, plan_store
+from awen_agent.agent_tools import ToolContext
 
 
 class FakeProvider:
@@ -21,7 +21,7 @@ def _plan(session_id="inj-1"):
     ])
 
 
-def test_plan_note_is_appended_to_the_last_user_message(ivyea_home):
+def test_plan_note_is_appended_to_the_last_user_message(awen_home):
     _plan()
     ctx = ToolContext(workspace=".", session_id="inj-1")
     messages = [{"role": "system", "content": "sys"},
@@ -32,7 +32,7 @@ def test_plan_note_is_appended_to_the_last_user_message(ivyea_home):
     assert messages[0]["content"] == "sys"     # system 不动，多 system 在 Anthropic 那条路会被切走
 
 
-def test_plan_note_is_not_injected_twice(ivyea_home):
+def test_plan_note_is_not_injected_twice(awen_home):
     _plan()
     ctx = ToolContext(workspace=".", session_id="inj-1")
     messages = [{"role": "user", "content": "接着做"}]
@@ -42,7 +42,7 @@ def test_plan_note_is_not_injected_twice(ivyea_home):
     assert messages[-1]["content"] == once
 
 
-def test_multimodal_user_message_gets_a_text_block(ivyea_home):
+def test_multimodal_user_message_gets_a_text_block(awen_home):
     _plan()
     ctx = ToolContext(workspace=".", session_id="inj-1")
     messages = [{"role": "user", "content": [{"type": "text", "text": "看这张图"}]}]
@@ -52,14 +52,14 @@ def test_multimodal_user_message_gets_a_text_block(ivyea_home):
     assert plan_store.PLAN_NOTE_MARKER in blocks[-1]["text"]
 
 
-def test_no_plan_means_no_injection(ivyea_home):
+def test_no_plan_means_no_injection(awen_home):
     ctx = ToolContext(workspace=".", session_id="inj-empty")
     messages = [{"role": "user", "content": "你好"}]
     agent_loop._inject_plan_note(ctx, messages)
     assert messages[-1]["content"] == "你好"
 
 
-def test_subagent_without_session_id_is_untouched(ivyea_home):
+def test_subagent_without_session_id_is_untouched(awen_home):
     """只读子 agent 没有 session_id —— 行为必须与加这套机制之前逐字相同。"""
     ctx = ToolContext(workspace=".")
     messages = [{"role": "user", "content": "查清楚 X"}]
@@ -67,7 +67,7 @@ def test_subagent_without_session_id_is_untouched(ivyea_home):
     assert messages[-1]["content"] == "查清楚 X"
 
 
-def test_plan_survives_midturn_compaction(ivyea_home, monkeypatch):
+def test_plan_survives_midturn_compaction(awen_home, monkeypatch):
     """压缩会把"干到第几步"摘要掉。计划必须原样穿过压缩，而不是靠摘要复述。"""
     _plan("inj-compact")
     monkeypatch.setattr(config, "get_setting",
@@ -91,7 +91,7 @@ def test_plan_survives_midturn_compaction(ivyea_home, monkeypatch):
     assert "▶ 2. 改代码" in joined
 
 
-def test_compact_without_ctx_behaves_exactly_as_before(ivyea_home, monkeypatch):
+def test_compact_without_ctx_behaves_exactly_as_before(awen_home, monkeypatch):
     monkeypatch.setattr(config, "get_setting",
                         lambda k, d=None: {"compact_hard_ceiling_tokens": 10}.get(k, d))
     messages = [{"role": "system", "content": "sys"}] + [
@@ -101,7 +101,7 @@ def test_compact_without_ctx_behaves_exactly_as_before(ivyea_home, monkeypatch):
     assert plan_store.PLAN_NOTE_MARKER not in joined
 
 
-def test_compact_extra_note_is_verbatim(ivyea_home):
+def test_compact_extra_note_is_verbatim(awen_home):
     messages = [{"role": "user" if i % 2 == 0 else "assistant", "content": "x" * 60}
                 for i in range(6)]
     new, summary = context.compact(messages, FakeProvider(), keep_recent=0,
@@ -111,7 +111,7 @@ def test_compact_extra_note_is_verbatim(ivyea_home):
 
 
 # ── 批准闸 ───────────────────────────────────────────────────────────────────
-def test_unapproved_plan_blocks_writes_outside_plan_mode(ivyea_home):
+def test_unapproved_plan_blocks_writes_outside_plan_mode(awen_home):
     plan_store.sync_todos("gate-1", [{"content": "改配置", "status": "pending"}], plan_mode=True)
     ctx = ToolContext(workspace=".", session_id="gate-1", plan_mode=False)
     res, _ms, blocked = agent_loop._run_one(
@@ -120,21 +120,21 @@ def test_unapproved_plan_blocks_writes_outside_plan_mode(ivyea_home):
     assert "还没有得到用户批准" in res.text
 
 
-def test_approved_plan_lets_writes_through(ivyea_home):
+def test_approved_plan_lets_writes_through(awen_home):
     plan_store.sync_todos("gate-2", [{"content": "改配置", "status": "pending"}], plan_mode=True)
     plan_store.approve("gate-2")
     ctx = ToolContext(workspace=".", session_id="gate-2", plan_mode=False)
     assert agent_loop._guard_tool_call(ctx, {"name": "write_file", "arguments": {}}) is None
 
 
-def test_ordinary_chat_is_never_gated_on_approval(ivyea_home):
+def test_ordinary_chat_is_never_gated_on_approval(awen_home):
     """没走过计划模式的普通对话不该凭空多出一道批准闸（老行为必须逐字保留）。"""
     plan_store.sync_todos("gate-3", [{"content": "改配置", "status": "in_progress"}])
     ctx = ToolContext(workspace=".", session_id="gate-3", plan_mode=False)
     assert agent_loop._guard_tool_call(ctx, {"name": "write_file", "arguments": {}}) is None
 
 
-def test_read_tools_are_never_gated_on_approval(ivyea_home):
+def test_read_tools_are_never_gated_on_approval(awen_home):
     plan_store.sync_todos("gate-4", [{"content": "改配置", "status": "pending"}], plan_mode=True)
     ctx = ToolContext(workspace=".", session_id="gate-4", plan_mode=False)
     assert agent_loop._guard_tool_call(ctx, {"name": "read_file", "arguments": {"path": "a"}}) is None

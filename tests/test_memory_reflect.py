@@ -29,7 +29,7 @@ class BoomProvider:
 
 
 def _seed_episodes(n, prefix="[对话:user] "):
-    from ivyea_agent import memory
+    from awen_agent import memory
     conn = memory._conn()
     now = time.time()
     for i in range(n):
@@ -45,9 +45,9 @@ def _op(name="宽泛词打法", operation="add", evidence=3, category="domain"):
             "evidence_count": evidence}
 
 
-def test_significance_gate_blocks_when_too_few(ivyea_home):
+def test_significance_gate_blocks_when_too_few(awen_home):
     """经历不够就不该调 LLM——这是省钱也是省时间的那道闸门。"""
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     _seed_episodes(3)
     p = FakeProvider({"operations": [_op()]})
     res = memory_reflect.reflect(p)
@@ -56,8 +56,8 @@ def test_significance_gate_blocks_when_too_few(ivyea_home):
     assert "不足" in res["message"]
 
 
-def test_force_bypasses_significance_gate(ivyea_home):
-    from ivyea_agent import memory_reflect, memory_store
+def test_force_bypasses_significance_gate(awen_home):
+    from awen_agent import memory_reflect, memory_store
     _seed_episodes(3)
     p = FakeProvider({"operations": [_op()]})
     res = memory_reflect.reflect(p, force=True)
@@ -66,9 +66,9 @@ def test_force_bypasses_significance_gate(ivyea_home):
     assert memory_store.get_pending("宽泛词打法") is not None
 
 
-def test_evidence_gate_drops_single_support_insight(ivyea_home):
+def test_evidence_gate_drops_single_support_insight(awen_home):
     """只被提到一次的东西不准落盘——防止一句口误被固化成长期偏好。"""
-    from ivyea_agent import memory_reflect, memory_store
+    from awen_agent import memory_reflect, memory_store
     _seed_episodes(20)
     p = FakeProvider({"operations": [_op(evidence=1)]})
     res = memory_reflect.reflect(p)
@@ -77,9 +77,9 @@ def test_evidence_gate_drops_single_support_insight(ivyea_home):
     assert memory_store.get("宽泛词打法") is None
 
 
-def test_evidence_gate_does_not_block_update(ivyea_home):
+def test_evidence_gate_does_not_block_update(awen_home):
     """update 是对已有记忆的修正，本来就有历史依据；用证据数卡它会让过时记忆改不掉。"""
-    from ivyea_agent import memory_reflect, memory_store
+    from awen_agent import memory_reflect, memory_store
     memory_store.apply("add", name="宽泛词打法", category="domain",
                        description="旧描述", content="旧结论")
     _seed_episodes(20)
@@ -89,8 +89,8 @@ def test_evidence_gate_does_not_block_update(ivyea_home):
     assert "建议默认否" in memory_store.get("宽泛词打法").body
 
 
-def test_reflection_runs_and_persists(ivyea_home):
-    from ivyea_agent import memory_reflect, memory_store
+def test_reflection_runs_and_persists(awen_home):
+    from awen_agent import memory_reflect, memory_store
     _seed_episodes(20)
     p = FakeProvider({"operations": [_op()]})
     res = memory_reflect.reflect(p)
@@ -99,9 +99,9 @@ def test_reflection_runs_and_persists(ivyea_home):
     assert e.category == "domain" and "默认否" in e.body
 
 
-def test_existing_index_is_given_to_model(ivyea_home):
+def test_existing_index_is_given_to_model(awen_home):
     """必须把现有记忆索引喂给模型，否则它没法判断该 update 哪条 → 必然碎片化。"""
-    from ivyea_agent import memory_reflect, memory_store
+    from awen_agent import memory_reflect, memory_store
     memory_store.apply("add", name="已有记忆", category="project",
                        description="已经记过的事", content="正文")
     _seed_episodes(20)
@@ -110,9 +110,9 @@ def test_existing_index_is_given_to_model(ivyea_home):
     assert "[project/已有记忆]" in p.calls[0]["user"]
 
 
-def test_watermark_advances_even_when_nothing_applied(ivyea_home):
+def test_watermark_advances_even_when_nothing_applied(awen_home):
     """一条都没落盘也要推进水位线，否则下次会把同一批经历再嚼一遍。"""
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     _seed_episodes(20)
     assert memory_reflect.last_reflect_ts() == 0.0
     memory_reflect.reflect(FakeProvider({"operations": []}))
@@ -120,9 +120,9 @@ def test_watermark_advances_even_when_nothing_applied(ivyea_home):
     assert memory_reflect.pending() == []
 
 
-def test_archive_rows_are_not_episodes(ivyea_home):
+def test_archive_rows_are_not_episodes(awen_home):
     """[档] 是策展 markdown 的派生副本，不是新经历——拿它反思等于把结论再嚼一遍。"""
-    from ivyea_agent import memory, memory_reflect
+    from awen_agent import memory, memory_reflect
     conn = memory._conn()
     for i in range(20):
         memory._index(conn, f"[档]  已经沉淀过的第{i}条", "", time.time() + i)
@@ -132,9 +132,9 @@ def test_archive_rows_are_not_episodes(ivyea_home):
     assert not memory_reflect.should_reflect()
 
 
-def test_json_in_code_fence_is_parsed(ivyea_home):
+def test_json_in_code_fence_is_parsed(awen_home):
     """模型爱把 JSON 包在 ```json 里，不能因此整批丢掉。"""
-    from ivyea_agent import memory_reflect, memory_store
+    from awen_agent import memory_reflect, memory_store
     _seed_episodes(20)
     body = json.dumps({"operations": [_op()]}, ensure_ascii=False)
     p = FakeProvider(None, raw=f"好的，我提炼了以下内容：\n```json\n{body}\n```\n以上。")
@@ -143,38 +143,38 @@ def test_json_in_code_fence_is_parsed(ivyea_home):
     assert memory_store.get_pending("宽泛词打法") is not None
 
 
-def test_garbage_output_fails_soft(ivyea_home):
-    from ivyea_agent import memory_reflect
+def test_garbage_output_fails_soft(awen_home):
+    from awen_agent import memory_reflect
     _seed_episodes(20)
     res = memory_reflect.reflect(FakeProvider(None, raw="我拒绝回答"))
     assert not res["ok"] and "JSON" in res["message"]
 
 
-def test_provider_error_fails_soft(ivyea_home):
+def test_provider_error_fails_soft(awen_home):
     """反思挂掉绝不能把主流程带崩——它是锦上添花，不是关键路径。"""
-    from ivyea_agent import memory_reflect
+    from awen_agent import memory_reflect
     _seed_episodes(20)
     res = memory_reflect.reflect(BoomProvider())
     assert not res["ok"] and "失败" in res["message"]
 
 
-def test_malformed_operations_are_ignored(ivyea_home):
-    from ivyea_agent import memory_reflect
+def test_malformed_operations_are_ignored(awen_home):
+    from awen_agent import memory_reflect
     _seed_episodes(20)
     p = FakeProvider({"operations": ["不是字典", {"operation": "bogus", "name": "x"}, 42]})
     res = memory_reflect.reflect(p)
     assert res["ok"]
 
 
-def test_auto_disabled_by_setting(ivyea_home):
-    from ivyea_agent import config, memory_reflect
+def test_auto_disabled_by_setting(awen_home):
+    from awen_agent import config, memory_reflect
     _seed_episodes(50)
     config.set_setting("memory_auto_reflect", False)
     assert not memory_reflect.should_reflect()
 
 
-def test_status_shape(ivyea_home):
-    from ivyea_agent import memory_reflect
+def test_status_shape(awen_home):
+    from awen_agent import memory_reflect
     _seed_episodes(20)
     st = memory_reflect.status()
     assert st["ready"] is True

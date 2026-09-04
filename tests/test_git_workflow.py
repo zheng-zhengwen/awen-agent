@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from ivyea_agent import git_workflow
+from awen_agent import git_workflow
 
 
 def _git(root, *args):
@@ -100,25 +100,25 @@ def test_write_action_rejects_unsafe_path_and_bad_tag(tmp_path):
 
 
 def test_parse_github_remote():
-    assert git_workflow.parse_github_remote("https://github.com/Hector-xue/ivyea-agent.git") == ("Hector-xue", "ivyea-agent")
-    assert git_workflow.parse_github_remote("git@github.com:Hector-xue/ivyea-agent.git") == ("Hector-xue", "ivyea-agent")
-    assert git_workflow.parse_github_remote("ssh://git@github.com/Hector-xue/ivyea-agent.git") == ("Hector-xue", "ivyea-agent")
-    assert git_workflow.parse_github_remote("https://example.com/Hector-xue/ivyea-agent.git") is None
+    assert git_workflow.parse_github_remote("https://github.com/zheng-zhengwen/awen-agent.git") == ("zheng-zhengwen", "awen-agent")
+    assert git_workflow.parse_github_remote("git@github.com:zheng-zhengwen/awen-agent.git") == ("zheng-zhengwen", "awen-agent")
+    assert git_workflow.parse_github_remote("ssh://git@github.com/zheng-zhengwen/awen-agent.git") == ("zheng-zhengwen", "awen-agent")
+    assert git_workflow.parse_github_remote("https://example.com/zheng-zhengwen/awen-agent.git") is None
 
 
 def test_github_repo_from_remote(tmp_path):
     root = _repo(tmp_path)
-    _git(root, "remote", "add", "origin", "git@github.com:Hector-xue/ivyea-agent.git")
+    _git(root, "remote", "add", "origin", "git@github.com:zheng-zhengwen/awen-agent.git")
 
     repo = git_workflow.github_repo(root)
     assert repo["ok"] is True
-    assert repo["full_name"] == "Hector-xue/ivyea-agent"
+    assert repo["full_name"] == "zheng-zhengwen/awen-agent"
 
 
 def test_render_ci_status_success_and_error():
     ok = {
         "ok": True,
-        "repo": {"full_name": "Hector-xue/ivyea-agent"},
+        "repo": {"full_name": "zheng-zhengwen/awen-agent"},
         "source": "gh",
         "runs": [
             {
@@ -129,7 +129,7 @@ def test_render_ci_status_success_and_error():
                 "headBranch": "main",
                 "headSha": "abcdef123456",
                 "createdAt": "2026-06-21T10:00:00Z",
-                "url": "https://github.com/Hector-xue/ivyea-agent/actions/runs/1",
+                "url": "https://github.com/zheng-zhengwen/awen-agent/actions/runs/1",
             }
         ],
     }
@@ -140,7 +140,7 @@ def test_render_ci_status_success_and_error():
 
     bad = {
         "ok": False,
-        "repo": {"full_name": "Hector-xue/ivyea-agent"},
+        "repo": {"full_name": "zheng-zhengwen/awen-agent"},
         "error": "GitHub API HTTP 404",
         "gh_error": "gh auth login",
     }

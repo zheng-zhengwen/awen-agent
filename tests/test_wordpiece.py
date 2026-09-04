@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from ivyea_agent import onnx_embedding, wordpiece
+from awen_agent import onnx_embedding, wordpiece
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +73,7 @@ def test_overlong_word_becomes_unk(vocab):
 def test_matches_huggingface_exactly():
     """和 HuggingFace 逐 token 对拍——这是这个模块唯一真正的正确性标准。"""
     transformers = pytest.importorskip("transformers")
-    model_dir = Path.home() / ".ivyea/models/embedding/bge-small-zh-v1.5"
+    model_dir = Path.home() / ".awen/models/embedding/bge-small-zh-v1.5"
     if not (model_dir / "vocab.txt").exists():
         pytest.skip("本地没有 bge-small-zh-v1.5，跳过对拍")
 
@@ -88,7 +88,7 @@ def test_matches_huggingface_exactly():
     assert {tok: i for i, tok in enumerate(lines)} == hf_vocab, "词表 id 映射与 HF 不一致"
 
     texts = list(SAMPLES)
-    kb = Path(__file__).resolve().parents[1] / "ivyea_agent" / "knowledge_base"
+    kb = Path(__file__).resolve().parents[1] / "awen_agent" / "knowledge_base"
     for p in sorted(kb.rglob("*.md"))[:20]:
         texts.append(p.read_text(encoding="utf-8")[:2000])
 

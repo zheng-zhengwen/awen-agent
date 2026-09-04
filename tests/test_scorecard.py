@@ -1,11 +1,11 @@
 """Operational scorecard."""
 from __future__ import annotations
 
-from ivyea_agent.actions import Action
+from awen_agent.actions import Action
 
 
-def test_scorecard_build_and_render(ivyea_home):
-    from ivyea_agent import action_queue, memory, scorecard
+def test_scorecard_build_and_render(awen_home):
+    from awen_agent import action_queue, memory, scorecard
 
     added = action_queue.enqueue_actions([
         Action(kind="negative", search_term="bad one"),
@@ -22,13 +22,13 @@ def test_scorecard_build_and_render(ivyea_home):
     assert s["approval_rate"] == 1.0
 
     text = scorecard.render_md(s)
-    assert "Ivyea Agent 运营 Scorecard" in text
+    assert "awen Agent 运营 Scorecard" in text
     assert "建议采纳率：100%" in text
     assert "最近巡检" in text
 
 
-def test_cli_scorecard_export(ivyea_home, tmp_path, capsys):
-    from ivyea_agent.cli import build_parser
+def test_cli_scorecard_export(awen_home, tmp_path, capsys):
+    from awen_agent.cli import build_parser
 
     out = tmp_path / "score.md"
     parser = build_parser()

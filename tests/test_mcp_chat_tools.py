@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from ivyea_agent import config, permission, tools_general
-from ivyea_agent import mcp_client as mc
-from ivyea_agent.agent_tools import READONLY_TOOLS, TOOL_SCHEMAS, ToolContext, dispatch
+from awen_agent import config, permission, tools_general
+from awen_agent import mcp_client as mc
+from awen_agent.agent_tools import READONLY_TOOLS, TOOL_SCHEMAS, ToolContext, dispatch
 
 
 class FakeClient:

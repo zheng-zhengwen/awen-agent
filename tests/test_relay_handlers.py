@@ -4,9 +4,9 @@ import json
 import pytest
 
 
-from ivyea_agent.feishu_relay import agent_client
-from ivyea_agent.feishu_relay import gates
-from ivyea_agent.feishu_relay import handlers
+from awen_agent.feishu_relay import agent_client
+from awen_agent.feishu_relay import gates
+from awen_agent.feishu_relay import handlers
 
 
 ME = "ou_me"
@@ -15,7 +15,7 @@ ME = "ou_me"
 @pytest.fixture(autouse=True)
 def allow_me(monkeypatch):
     # 打的是取名单的**函数**，不是启动快照常量：判定已经改成每次现取，
-    # 只打常量的话这里放行的名单根本不会被用到，而真机上 ~/.ivyea 的
+    # 只打常量的话这里放行的名单根本不会被用到，而真机上 ~/.awen 的
     # 白名单会漏进单测。
     monkeypatch.setattr(gates.config, "allowed_sender_ids", lambda: {ME})
     monkeypatch.setattr(gates.config, "allowed_chat_ids", set)
@@ -26,17 +26,17 @@ def _dedup():
 
 
 def _value(action="approve", aid="ap1"):
-    return {"ivyea_action": action, "approval_id": aid}
+    return {"awen_action": action, "approval_id": aid}
 
 
 # ── 契约 ────────────────────────────────────────────────────────────────────
 def test_parse_value_contract():
     assert handlers.parse_value(_value()) == ("approve", "ap1")
-    assert handlers.parse_value({"ivyea_action": "rollback", "approval_id": "x"}) \
+    assert handlers.parse_value({"awen_action": "rollback", "approval_id": "x"}) \
         == ("rollback", "x")
 
 
-@pytest.mark.parametrize("bad", [None, "approve", {}, {"ivyea_action": "rm -rf"},
+@pytest.mark.parametrize("bad", [None, "approve", {}, {"awen_action": "rm -rf"},
                                  {"approval_id": "x"}])
 def test_parse_value_rejects_garbage_without_raising(bad):
     """回调路径上抛异常会让飞书一直重投。"""
@@ -171,7 +171,7 @@ def test_approve_all_uses_clicked_card_message_id(monkeypatch):
     monkeypatch.setattr(agent_client, "action",
                         lambda p: seen.update(p) or (200, {"ok": True, "card": {"x": 1}}))
     card, _n = handlers.handle_card_action(
-        value={"ivyea_action": "approve_all"}, operator_open_id=ME,
+        value={"awen_action": "approve_all"}, operator_open_id=ME,
         chat_id="oc_1", token="t", message_id="om_42", dedup=_dedup())
     assert seen["action"] == "approve_all" and seen["message_id"] == "om_42"
     assert card == {"x": 1}
@@ -181,7 +181,7 @@ def test_approve_all_without_message_id_is_refused(monkeypatch):
     monkeypatch.setattr(agent_client, "action",
                         lambda p: pytest.fail("不该在缺 message_id 时调用"))
     card, note = handlers.handle_card_action(
-        value={"ivyea_action": "approve_all"}, operator_open_id=ME,
+        value={"awen_action": "approve_all"}, operator_open_id=ME,
         chat_id="oc_1", token="t", message_id="", dedup=_dedup())
     assert "无法定位" in json.dumps(card, ensure_ascii=False)
 
@@ -190,7 +190,7 @@ def test_operate_on_passes_minutes(monkeypatch):
     seen = {}
     monkeypatch.setattr(agent_client, "action",
                         lambda p: seen.update(p) or (200, {"ok": True, "card": {"y": 1}}))
-    handlers.handle_card_action(value={"ivyea_action": "operate_on", "minutes": 30},
+    handlers.handle_card_action(value={"awen_action": "operate_on", "minutes": 30},
                                 operator_open_id=ME, chat_id="oc_1", token="t",
                                 dedup=_dedup())
     assert seen["action"] == "operate_on" and seen["minutes"] == 30
@@ -200,13 +200,13 @@ def test_bare_action_still_needs_whitelist(monkeypatch):
     monkeypatch.setattr(agent_client, "action",
                         lambda p: pytest.fail("白名单没挡住批量批准"))
     card, note = handlers.handle_card_action(
-        value={"ivyea_action": "approve_all"}, operator_open_id="ou_stranger",
+        value={"awen_action": "approve_all"}, operator_open_id="ou_stranger",
         chat_id="oc_1", token="t", message_id="om_1", dedup=_dedup())
     assert card is None and "不在白名单" in note
 
 
 def test_single_action_still_requires_approval_id(monkeypatch):
     card, note = handlers.handle_card_action(
-        value={"ivyea_action": "approve"}, operator_open_id=ME, chat_id="oc_1",
+        value={"awen_action": "approve"}, operator_open_id=ME, chat_id="oc_1",
         token="t", dedup=_dedup())
     assert card is None and "缺 approval_id" in note

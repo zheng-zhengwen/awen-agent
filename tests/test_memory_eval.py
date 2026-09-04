@@ -31,76 +31,76 @@ def _seed(memory_store):
 
 
 # ── 指标计算 ────────────────────────────────────────────────────────────────
-def test_metrics_perfect_score(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_metrics_perfect_score(awen_home):
+    from awen_agent import memory_eval
     m = memory_eval._metrics([1, 1, 1])
     assert m["recall@1"] == 1.0 and m["mrr"] == 1.0 and m["missed"] == 0
 
 
-def test_metrics_all_missed(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_metrics_all_missed(awen_home):
+    from awen_agent import memory_eval
     m = memory_eval._metrics([None, None])
     assert m["recall@5"] == 0.0 and m["mrr"] == 0.0 and m["missed"] == 2
 
 
-def test_recall_at_k_boundaries(ivyea_home):
+def test_recall_at_k_boundaries(awen_home):
     """排第 3 的必须算进 recall@3 而不算进 recall@1——边界错了整套数字都没意义。"""
-    from ivyea_agent import memory_eval
+    from awen_agent import memory_eval
     m = memory_eval._metrics([3])
     assert m["recall@1"] == 0.0 and m["recall@3"] == 1.0 and m["recall@5"] == 1.0
 
 
-def test_mrr_rewards_higher_rank(ivyea_home):
+def test_mrr_rewards_higher_rank(awen_home):
     """同样命中，排第 1 必须比排第 5 得分高——这正是 recall@k 看不出的差别。"""
-    from ivyea_agent import memory_eval
+    from awen_agent import memory_eval
     assert memory_eval._metrics([1])["mrr"] > memory_eval._metrics([5])["mrr"]
 
 
-def test_rank_of_matches_case_insensitively(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_rank_of_matches_case_insensitively(awen_home):
+    from awen_agent import memory_eval
     hits = [{"name": "别的"}, {"name": "备货节奏"}]
     assert memory_eval._rank_of(hits, ["备货节奏"]) == 2
     assert memory_eval._rank_of(hits, ["不存在"]) is None
 
 
-def test_rank_of_any_expect_counts(ivyea_home):
+def test_rank_of_any_expect_counts(awen_home):
     """expect 是列表时任一命中即算命中——同一个问题可能有多条合理答案。"""
-    from ivyea_agent import memory_eval
+    from awen_agent import memory_eval
     hits = [{"name": "出价策略"}]
     assert memory_eval._rank_of(hits, ["备货节奏", "出价策略"]) == 1
 
 
 # ── 数据集读写 ──────────────────────────────────────────────────────────────
-def test_dataset_roundtrip(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_dataset_roundtrip(awen_home):
+    from awen_agent import memory_eval
     memory_eval.save_dataset([{"query": "问题", "expect": ["记忆"], "note": ""}])
     assert memory_eval.load_dataset()[0]["query"] == "问题"
 
 
-def test_dataset_normalizes_scalar_expect(ivyea_home):
+def test_dataset_normalizes_scalar_expect(awen_home):
     """手写评测集时 expect 很容易写成字符串而不是列表，不能因此整条丢掉。"""
-    from ivyea_agent import memory_eval
+    from awen_agent import memory_eval
     memory_eval.save_dataset([{"query": "问题", "expect": "记忆"}])
     assert memory_eval.load_dataset()[0]["expect"] == ["记忆"]
 
 
-def test_broken_dataset_does_not_crash(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_broken_dataset_does_not_crash(awen_home):
+    from awen_agent import memory_eval
     p = memory_eval.dataset_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text("{ 这不是合法 JSON", encoding="utf-8")
     assert memory_eval.load_dataset() == []
 
 
-def test_incomplete_rows_skipped(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_incomplete_rows_skipped(awen_home):
+    from awen_agent import memory_eval
     memory_eval.save_dataset([{"query": "有问题没答案"}, {"query": "好的", "expect": ["X"]}])
     assert len(memory_eval.load_dataset()) == 1
 
 
 # ── 跑评测 ──────────────────────────────────────────────────────────────────
-def test_run_scores_real_search(ivyea_home):
-    from ivyea_agent import memory_eval, memory_store
+def test_run_scores_real_search(awen_home):
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     memory_eval.save_dataset([
         {"query": "补货时机", "expect": ["备货节奏"]},
@@ -111,28 +111,28 @@ def test_run_scores_real_search(ivyea_home):
     assert res["recall@5"] == 1.0
 
 
-def test_run_reports_misses(ivyea_home):
-    from ivyea_agent import memory_eval, memory_store
+def test_run_reports_misses(awen_home):
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     memory_eval.save_dataset([{"query": "完全不相干的问题", "expect": ["备货节奏"]}])
     # 强制纯词法：自带语义默认开着，而向量召回在只有两条记忆的语料上必然把两条都返回，
     # "召不回"这件事就再也构造不出来了。这条测的是**记账逻辑**（miss 有没有算对），
     # 不是召回质量，所以把语义关掉才测得准。
-    from ivyea_agent import memory_vectors
+    from awen_agent import memory_vectors
     with memory_vectors.lexical_only():
         res = memory_eval.run(semantic=False)
     assert res["missed"] == 1
     assert "完全不相干的问题" in memory_eval.render(res)
 
 
-def test_run_empty_dataset(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_run_empty_dataset(awen_home):
+    from awen_agent import memory_eval
     assert not memory_eval.run()["ok"]
 
 
-def test_lexical_only_context_manager_restores(ivyea_home):
+def test_lexical_only_context_manager_restores(awen_home):
     """漏还原会让后续所有查询静默降级——比报错更难查，必须测。"""
-    from ivyea_agent import memory_vectors
+    from awen_agent import memory_vectors
     assert memory_vectors._FORCE_LEXICAL is False
     try:
         with memory_vectors.lexical_only():
@@ -143,8 +143,8 @@ def test_lexical_only_context_manager_restores(ivyea_home):
     assert memory_vectors._FORCE_LEXICAL is False
 
 
-def test_compare_shape(ivyea_home):
-    from ivyea_agent import memory_eval, memory_store
+def test_compare_shape(awen_home):
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     memory_eval.save_dataset([{"query": "补货时机", "expect": ["备货节奏"]}])
     res = memory_eval.compare()
@@ -156,17 +156,17 @@ def test_compare_shape(ivyea_home):
 
 
 # ── 生成评测集 ──────────────────────────────────────────────────────────────
-def test_generate_creates_cases(ivyea_home):
-    from ivyea_agent import memory_eval, memory_store
+def test_generate_creates_cases(awen_home):
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     res = memory_eval.generate(FakeProvider(["东西快没了", "什么时候补货", "断货怎么办"]))
     assert res["ok"] and res["added"] == 6        # 2 条记忆 × 3 个问题
     assert len(memory_eval.load_dataset()) == 6
 
 
-def test_generate_skips_already_covered(ivyea_home):
+def test_generate_skips_already_covered(awen_home):
     """反复 --generate 不能让用例翻倍。"""
-    from ivyea_agent import memory_eval, memory_store
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     p = FakeProvider(["问题一"])
     memory_eval.generate(p)
@@ -176,21 +176,21 @@ def test_generate_skips_already_covered(ivyea_home):
     assert p.calls == first_calls              # 已覆盖的记忆一次模型都没调
 
 
-def test_generate_survives_provider_failure(ivyea_home):
-    from ivyea_agent import memory_eval, memory_store
+def test_generate_survives_provider_failure(awen_home):
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     res = memory_eval.generate(BoomProvider())
     assert res["ok"] and res["added"] == 0 and res["failed_entries"] == 2
 
 
-def test_generate_without_memories(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_generate_without_memories(awen_home):
+    from awen_agent import memory_eval
     assert not memory_eval.generate(FakeProvider(["x"]))["ok"]
 
 
-def test_generated_cases_marked(ivyea_home):
+def test_generated_cases_marked(awen_home):
     """手写用例通常来自真实翻车案例，比生成的值钱，要能区分开。"""
-    from ivyea_agent import memory_eval, memory_store
+    from awen_agent import memory_eval, memory_store
     _seed(memory_store)
     memory_eval.save_dataset([{"query": "手写的", "expect": ["备货节奏"]}])
     memory_eval.generate(FakeProvider(["生成的"]))
@@ -198,7 +198,7 @@ def test_generated_cases_marked(ivyea_home):
     assert st["handwritten"] == 1 and st["generated"] >= 1
 
 
-def test_status_shape(ivyea_home):
-    from ivyea_agent import memory_eval
+def test_status_shape(awen_home):
+    from awen_agent import memory_eval
     st = memory_eval.status()
     assert st["cases"] == 0 and st["exists"] is False

@@ -2,7 +2,7 @@
 
 import pytest
 
-from ivyea_agent import routing
+from awen_agent import routing
 
 
 CHAT = [
@@ -58,7 +58,7 @@ def test_board_lane_names_a_real_tool():
 
 
 def test_board_only_when_bridge_is_on():
-    """没接 IvyeaOps 时不存在板块工具，别给一条调不到的指令。"""
+    """没接 awenOps 时不存在板块工具，别给一条调不到的指令。"""
     assert routing.classify("帮我做个市场调研", ops_bridge=False).lane != "board"
 
 
@@ -77,7 +77,7 @@ def test_injected_blocks_do_not_change_the_lane():
     这正是上一次事故的形状：一句「你好」后面被贴了 1600 字技能手册，
     整段拿去判定，于是"简单"变"复杂"。
     """
-    noisy = ("你好\n\n[Ivyea Skill：本轮相关可复用流程]\n"
+    noisy = ("你好\n\n[awen Skill：本轮相关可复用流程]\n"
              + "执行 分析 优化 检查 广告 listing " * 40)
     assert routing.classify(noisy).lane == "chat"
 

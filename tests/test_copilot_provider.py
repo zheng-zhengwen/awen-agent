@@ -10,8 +10,8 @@ class _Resp:
         return {"choices": [{"message": {"content": "hi", "tool_calls": []}}]}
 
 
-def test_from_settings_builds_copilot_provider(ivyea_home):
-    from ivyea_agent.providers import from_settings
+def test_from_settings_builds_copilot_provider(awen_home):
+    from awen_agent.providers import from_settings
     p = from_settings({"kind": "oauth", "api_mode": "copilot_chat_completions",
                        "model": "gpt-4o", "base_url": "https://api.githubcopilot.com"}, "tok")
     assert p.name == "copilot"
@@ -19,7 +19,7 @@ def test_from_settings_builds_copilot_provider(ivyea_home):
 
 
 def test_copilot_provider_sends_required_headers(monkeypatch):
-    from ivyea_agent.providers.copilot_provider import CopilotProvider
+    from awen_agent.providers.copilot_provider import CopilotProvider
     captured = {}
 
     def fake_post(url, headers=None, json=None, timeout=None):
@@ -28,7 +28,7 @@ def test_copilot_provider_sends_required_headers(monkeypatch):
         captured["json"] = json
         return _Resp()
 
-    from ivyea_agent.providers import openai_compat
+    from awen_agent.providers import openai_compat
     monkeypatch.setattr(openai_compat.httpx, "post", fake_post)
     p = CopilotProvider("copilot-token", "gpt-4o", "https://api.githubcopilot.com")
     out = p.chat([{"role": "user", "content": "hello"}])
@@ -41,7 +41,7 @@ def test_copilot_provider_sends_required_headers(monkeypatch):
 
 
 def test_probe_copilot(monkeypatch):
-    from ivyea_agent.providers import copilot_provider, openai_compat
+    from awen_agent.providers import copilot_provider, openai_compat
     monkeypatch.setattr(openai_compat.httpx, "post", lambda *a, **k: _Resp())
     result = copilot_provider.probe_copilot("copilot-token", model="gpt-4o",
                                            base_url="https://api.githubcopilot.com")

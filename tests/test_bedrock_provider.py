@@ -6,8 +6,8 @@ import types
 
 import pytest
 
-from ivyea_agent.providers import bedrock_provider as bp
-from ivyea_agent.providers.base import LLMError
+from awen_agent.providers import bedrock_provider as bp
+from awen_agent.providers.base import LLMError
 
 
 def test_bedrock_messages_and_tools_shape():
@@ -40,8 +40,8 @@ def test_bedrock_extract_response_text_tool_usage():
     assert out["usage"] == {"prompt_tokens": 2, "completion_tokens": 3}
 
 
-def test_from_settings_builds_bedrock_provider(ivyea_home):
-    from ivyea_agent.providers import from_settings
+def test_from_settings_builds_bedrock_provider(awen_home):
+    from awen_agent.providers import from_settings
     p = from_settings({"kind": "native", "api_mode": "bedrock_converse",
                        "model": "us.amazon.nova-pro-v1:0"}, "")
     assert p.name == "bedrock" and p.model == "us.amazon.nova-pro-v1:0"

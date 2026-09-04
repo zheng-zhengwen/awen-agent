@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ivyea_agent import terminal_theme
+from awen_agent import terminal_theme
 
 
 def test_python_highlight_preserves_text_and_uses_semantic_colors(monkeypatch):

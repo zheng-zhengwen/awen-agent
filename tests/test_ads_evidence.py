@@ -31,7 +31,7 @@ def _report_payload() -> dict:
 
 
 def test_report_analysis_calculates_only_defined_ratios():
-    from ivyea_agent import ads_evidence
+    from awen_agent import ads_evidence
 
     result = ads_evidence.analyze(_report_payload())
     assert result["ready_for_analysis"] is True
@@ -51,7 +51,7 @@ def test_report_analysis_calculates_only_defined_ratios():
 
 
 def test_zero_denominators_return_null_and_missing_context_blocks_readiness():
-    from ivyea_agent import ads_evidence
+    from awen_agent import ads_evidence
 
     payload = _report_payload()
     payload["metrics"] = {"impressions": 0, "clicks": 0, "spend": 0, "attributed_sales": 0}
@@ -63,7 +63,7 @@ def test_zero_denominators_return_null_and_missing_context_blocks_readiness():
 
 
 def test_report_analysis_rejects_negative_or_invalid_dates():
-    from ivyea_agent import ads_evidence
+    from awen_agent import ads_evidence
 
     payload = _report_payload()
     payload["metrics"]["spend"] = -1
@@ -80,7 +80,7 @@ def test_report_analysis_rejects_negative_or_invalid_dates():
 
 
 def test_traffic_experiment_keeps_account_inference_below_algorithm_claim():
-    from ivyea_agent import ads_evidence
+    from awen_agent import ads_evidence
 
     payload = {
         **_report_payload(),
@@ -112,7 +112,7 @@ def test_traffic_experiment_keeps_account_inference_below_algorithm_claim():
 
 
 def test_ads_capability_matrix_has_dated_dynamic_boundaries():
-    from ivyea_agent import ads_evidence
+    from awen_agent import ads_evidence
 
     data = ads_evidence.capability_matrix()
     assert data["retrieved_at"] == "2026-07-06"
@@ -121,8 +121,8 @@ def test_ads_capability_matrix_has_dated_dynamic_boundaries():
     assert "developer portal" in data["policy"]["dynamic_fields"]
 
 
-def test_ads_evidence_uses_authorized_redacted_knowledge_pipeline(ivyea_home):
-    from ivyea_agent import knowledge_evidence
+def test_ads_evidence_uses_authorized_redacted_knowledge_pipeline(awen_home):
+    from awen_agent import knowledge_evidence
 
     payload = {
         **_report_payload(),
@@ -142,8 +142,8 @@ def test_ads_evidence_uses_authorized_redacted_knowledge_pipeline(ivyea_home):
     assert "private_account_evidence_review_required" in prepared["draft"]["warnings"]
 
 
-def test_ads_experiment_diagnostic_redacts_nested_private_text(ivyea_home):
-    from ivyea_agent import knowledge_evidence
+def test_ads_experiment_diagnostic_redacts_nested_private_text(awen_home):
+    from awen_agent import knowledge_evidence
 
     report = _report_payload()
     payload = {
@@ -165,8 +165,8 @@ def test_ads_experiment_diagnostic_redacts_nested_private_text(ivyea_home):
     assert prepared["evidence"]["redactions"]["phone"] == 1
 
 
-def test_ads_retrieval_prioritizes_measurement_report_and_algorithm_boundaries(ivyea_home):
-    from ivyea_agent import knowledge
+def test_ads_retrieval_prioritizes_measurement_report_and_algorithm_boundaries(awen_home):
+    from awen_agent import knowledge
 
     metrics = knowledge.evidence_context("亚马逊广告 ACoS 和 ROAS 的归因销售口径", limit=5)
     assert "amazon_ads.metrics_and_denominators" in metrics["ids"]
@@ -177,9 +177,9 @@ def test_ads_retrieval_prioritizes_measurement_report_and_algorithm_boundaries(i
     assert algorithm["ids"][0] == "governance.traffic_algorithm_evidence"
 
 
-def test_ads_cli_and_service_surfaces(ivyea_home, tmp_path, capsys):
-    from ivyea_agent import service
-    from ivyea_agent.cli import main
+def test_ads_cli_and_service_surfaces(awen_home, tmp_path, capsys):
+    from awen_agent import service
+    from awen_agent.cli import main
 
     path = tmp_path / "ads-report.json"
     path.write_text(json.dumps(_report_payload()), encoding="utf-8")

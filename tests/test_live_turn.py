@@ -25,7 +25,7 @@ def _drain(live, from_seq=0, stop_after_end=True):
 
 def test_replay_keeps_text_and_steps_interleaved():
     """正文和工具的**交错顺序**必须逐字还原 —— 分段汇报全靠它。"""
-    from ivyea_agent import live_turn
+    from awen_agent import live_turn
 
     live_turn.reset_for_tests()
     live = live_turn.begin("s1")
@@ -49,7 +49,7 @@ def test_replay_keeps_text_and_steps_interleaved():
 
 def test_answer_reset_clears_the_draft_for_a_live_follower():
     """引证门打回重写：**正在跟着看**的那一份必须把上一稿丢掉，不能两稿粘在一起。"""
-    from ivyea_agent import live_turn
+    from awen_agent import live_turn
 
     live_turn.reset_for_tests()
     live = live_turn.begin("s2")
@@ -82,7 +82,7 @@ def test_answer_reset_clears_the_draft_for_a_live_follower():
 
 def test_a_late_follower_never_sees_a_discarded_draft():
     """半路接进来的那一份只该看到活着的那一稿 —— 作废的草稿不该再冒出来。"""
-    from ivyea_agent import live_turn
+    from awen_agent import live_turn
 
     live_turn.reset_for_tests()
     live = live_turn.begin("s2b")
@@ -97,7 +97,7 @@ def test_a_late_follower_never_sees_a_discarded_draft():
 
 def test_a_follower_joining_late_gets_everything_so_far():
     """半路接进来（切回页面）：从第 0 条开始把整轮补上，不是只看到之后的。"""
-    from ivyea_agent import live_turn
+    from awen_agent import live_turn
 
     live_turn.reset_for_tests()
     live = live_turn.begin("s3")
@@ -124,7 +124,7 @@ def test_a_follower_joining_late_gets_everything_so_far():
 
 
 def test_status_reports_a_running_turn():
-    from ivyea_agent import live_turn
+    from awen_agent import live_turn
 
     live_turn.reset_for_tests()
     assert live_turn.status("s4") == {"running": False, "seq": 0}
@@ -141,25 +141,25 @@ class _DyingProvider:
     """先吐一整段正文，再在收尾那一下报错 —— 额度用尽/断流的真实形状。"""
 
     def stream_chat(self, messages, tools=None):
-        from ivyea_agent.providers import LLMError
+        from awen_agent.providers import LLMError
 
         yield {"type": "text", "text": "已经写完的那半篇报告"}
         raise LLMError("余额不足")
 
     def chat(self, messages, tools=None):
-        from ivyea_agent.providers import LLMError
+        from awen_agent.providers import LLMError
 
         raise LLMError("余额不足")
 
 
-def test_a_model_error_at_the_end_still_persists_what_was_streamed(ivyea_home):
+def test_a_model_error_at_the_end_still_persists_what_was_streamed(awen_home):
     """界面上有字、刷新之后没了 —— 因为报错那条路径压根不落盘。这里钉死它。"""
     import importlib
 
-    from ivyea_agent import live_turn, sessions
+    from awen_agent import live_turn, sessions
     importlib.reload(sessions)
     live_turn.reset_for_tests()
-    from ivyea_agent import service
+    from awen_agent import service
 
     events: list[tuple[str, dict]] = []
     body = {"message": "写个报告", "persist": True, "max_steps": 2}
@@ -175,14 +175,14 @@ def test_a_model_error_at_the_end_still_persists_what_was_streamed(ivyea_home):
     assert "已经写完的那半篇报告" in answers[-1]["content"]
 
 
-def test_the_live_journal_is_closed_when_the_turn_dies(ivyea_home):
+def test_the_live_journal_is_closed_when_the_turn_dies(awen_home):
     """轮次怎么结束都要封存日志，否则跟随者永远挂着等一个不来的 final。"""
     import importlib
 
-    from ivyea_agent import live_turn, sessions
+    from awen_agent import live_turn, sessions
     importlib.reload(sessions)
     live_turn.reset_for_tests()
-    from ivyea_agent import service
+    from awen_agent import service
 
     events: list[tuple[str, dict]] = []
     service.chat_stream({"message": "写个报告", "persist": True, "max_steps": 2},
@@ -191,13 +191,13 @@ def test_the_live_journal_is_closed_when_the_turn_dies(ivyea_home):
     assert live_turn.status(sid)["running"] is False
 
 
-def test_the_live_endpoint_replays_over_http(ivyea_home):
+def test_the_live_endpoint_replays_over_http(awen_home):
     """真起一个 serve，用 HTTP 接进去 —— 路由分发（/live 不能被当成会话 id）
     和 SSE 的形状一起验。"""
     import json
     import urllib.request
 
-    from ivyea_agent import live_turn, service
+    from awen_agent import live_turn, service
 
     live_turn.reset_for_tests()
     live = live_turn.begin("sess-http")

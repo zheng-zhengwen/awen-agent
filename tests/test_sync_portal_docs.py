@@ -17,8 +17,8 @@ def _load_script():
 def test_replace_versions_and_extract_commands():
     mod = _load_script()
     assert mod.replace_versions("use v0.5.2 and v1.2.3", "9.8.7") == "use v9.8.7 and v9.8.7"
-    commands = mod.extract_commands("```bash\nivyea self status\n# skip\ncurl http://x\n```\n")
-    assert commands == ["ivyea self status", "curl http://x"]
+    commands = mod.extract_commands("```bash\nawen self status\n# skip\ncurl http://x\n```\n")
+    assert commands == ["awen self status", "curl http://x"]
 
 
 def test_sync_site_writes_data(tmp_path):

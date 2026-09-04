@@ -2,7 +2,7 @@
 
 这里盯的是两个具体的历史故障：
   1. 视觉能力按**厂商白名单**判，国内 provider 上的 Qwen-VL/GLM-4V 配了 key 也选不中；
-  2. serve 自己 `raise main_brain_no_vision`，导致 IvyeaOps 在主脑无视觉时整块死掉，
+  2. serve 自己 `raise main_brain_no_vision`，导致 awenOps 在主脑无视觉时整块死掉，
      而同一台机器上的 CLI 却有旁路可走。
 """
 from __future__ import annotations
@@ -31,12 +31,12 @@ from tests.test_image_audit import _png
     ("some-unknown-model", None),                 # 看不出来 ≠ 确定没有
 ])
 def test_model_name_vision_matrix(model, expected):
-    from ivyea_agent import models
+    from awen_agent import models
     assert models.model_name_has_vision(model) is expected
 
 
-def test_model_has_vision_requires_a_capable_transport(ivyea_home):
-    from ivyea_agent import models
+def test_model_has_vision_requires_a_capable_transport(awen_home):
+    from awen_agent import models
     # 模型名像视觉模型，但传输格式装不下图 → 判否
     assert models.model_has_vision({"model": "gpt-4o", "api_mode": "some_text_only_mode"}) is False
     assert models.model_has_vision({"model": "gpt-4o", "api_mode": "chat_completions"}) is True
@@ -44,9 +44,9 @@ def test_model_has_vision_requires_a_capable_transport(ivyea_home):
     assert models.model_has_vision({"model": "vlm-prod-v3", "api_mode": "chat_completions"}) is False
 
 
-def test_vision_capable_override_wins(ivyea_home):
+def test_vision_capable_override_wins(awen_home):
     """自建网关的模型名不带任何视觉特征词，必须有一个用户说了算的开关。"""
-    from ivyea_agent import config, models
+    from awen_agent import config, models
     mcfg = {"model": "vlm-prod-v3", "api_mode": "chat_completions"}
     config.set_setting("vision_capable_override", "true")
     assert models.model_has_vision(mcfg) is True
@@ -60,7 +60,7 @@ def test_provider_level_vision_is_broader_than_the_old_whitelist():
     老实现硬编码 {openai, anthropic, gemini, openai-codex} 四家，国内 provider
     和聚合网关全被挡在外面。
     """
-    from ivyea_agent import models
+    from awen_agent import models
     caps = {p["id"]: models.provider_capabilities(p).get("vision") for p in models.providers()}
     assert caps.get("openrouter") is True        # 聚合网关：开放目录
     assert caps.get("ollama") is True            # 本地 VLM：模型随用户拉
@@ -70,19 +70,19 @@ def test_provider_level_vision_is_broader_than_the_old_whitelist():
 # ── serve 接线 ────────────────────────────────────────────────────────────
 
 def _data_url(path) -> str:
-    from ivyea_agent import image_audit
+    from awen_agent import image_audit
     return image_audit.data_url(path)
 
 
-def test_serve_no_longer_raises_on_images_without_main_vision(tmp_path, monkeypatch, ivyea_home):
+def test_serve_no_longer_raises_on_images_without_main_vision(tmp_path, monkeypatch, awen_home):
     """核心回归：serve 收到带图请求且主脑无视觉，必须降级而不是抛异常。"""
-    from ivyea_agent import service, vision
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import service, vision
+    from awen_agent.agent_tools import ToolContext
 
     img = tmp_path / "main.png"
     _png(img, 1200, 1200)
     monkeypatch.setattr(vision, "pick_vision_model", lambda: None)   # 无 T2
-    monkeypatch.setattr("ivyea_agent.config.get_model_config",
+    monkeypatch.setattr("awen_agent.config.get_model_config",
                         lambda: {"provider_id": "deepseek", "model": "deepseek-chat",
                                  "api_mode": "chat_completions"})
 
@@ -96,13 +96,13 @@ def test_serve_no_longer_raises_on_images_without_main_vision(tmp_path, monkeypa
     assert ctx.vision_notes                            # 降级说明要留给调用方去 narrate
 
 
-def test_serve_passes_images_through_when_main_has_vision(tmp_path, monkeypatch, ivyea_home):
-    from ivyea_agent import service, vision
-    from ivyea_agent.agent_tools import ToolContext
+def test_serve_passes_images_through_when_main_has_vision(tmp_path, monkeypatch, awen_home):
+    from awen_agent import service, vision
+    from awen_agent.agent_tools import ToolContext
 
     img = tmp_path / "a.png"
     _png(img)
-    monkeypatch.setattr("ivyea_agent.config.get_model_config",
+    monkeypatch.setattr("awen_agent.config.get_model_config",
                         lambda: {"provider_id": "openai", "model": "gpt-4o",
                                  "api_mode": "chat_completions"})
     ctx = ToolContext()
@@ -114,13 +114,13 @@ def test_serve_passes_images_through_when_main_has_vision(tmp_path, monkeypatch,
     assert ctx.vision_tier["tier"] == vision.TIER_MAIN
 
 
-def test_sidecar_accepts_data_uris_not_just_file_paths(tmp_path, monkeypatch, ivyea_home):
+def test_sidecar_accepts_data_uris_not_just_file_paths(tmp_path, monkeypatch, awen_home):
     """serve（网页上传）传的是 data URI，CLI 传的是文件路径，两种都得收。
 
     实测故障：只按文件路径处理时，data URI 在 read_bytes 上抛异常并被静默吞掉，
     视觉模型一张图没收到却照常作答——编出过一整张不存在的柱状图，数字有名有姓。
     """
-    from ivyea_agent import mentions, vision, providers
+    from awen_agent import mentions, vision, providers
 
     img = tmp_path / "a.png"
     _png(img, 800, 800)
@@ -152,9 +152,9 @@ def test_sidecar_accepts_data_uris_not_just_file_paths(tmp_path, monkeypatch, iv
     assert len([p for p in both if p.get("type") == "image_url"]) == 2
 
 
-def test_sidecar_refuses_to_answer_with_zero_images(monkeypatch, ivyea_home):
+def test_sidecar_refuses_to_answer_with_zero_images(monkeypatch, awen_home):
     """全部图片都挂不上时必须抛错降 T3，绝不能对着纯文字让视觉模型硬答。"""
-    from ivyea_agent import vision, providers
+    from awen_agent import vision, providers
 
     called = []
     monkeypatch.setattr(providers, "from_settings",
@@ -166,9 +166,9 @@ def test_sidecar_refuses_to_answer_with_zero_images(monkeypatch, ivyea_home):
     assert not called
 
 
-def test_route_images_degrades_when_sidecar_cannot_attach(tmp_path, monkeypatch, ivyea_home):
+def test_route_images_degrades_when_sidecar_cannot_attach(tmp_path, monkeypatch, awen_home):
     """接上上一条：这种失败要走到 T3，而不是把编造的描述当成结果。"""
-    from ivyea_agent import vision, providers
+    from awen_agent import vision, providers
 
     img = tmp_path / "main.png"
     _png(img, 1000, 1000)
@@ -186,17 +186,17 @@ def test_route_images_degrades_when_sidecar_cannot_attach(tmp_path, monkeypatch,
     assert kept == []
 
 
-def test_health_exposes_vision_chain(monkeypatch, ivyea_home):
-    """IvyeaOps 判 agent 能不能接带图任务，读的就是这个字段。"""
-    from ivyea_agent import service
+def test_health_exposes_vision_chain(monkeypatch, awen_home):
+    """awenOps 判 agent 能不能接带图任务，读的就是这个字段。"""
+    from awen_agent import service
     chain = service.health()["vision_chain"]
     assert "tier" in chain and "effective" in chain
     assert "local_cv" in chain and "sidecar" in chain
 
 
-def test_vision_configure_roundtrip(ivyea_home):
+def test_vision_configure_roundtrip(awen_home):
     """ops 下推视觉槽 → 立刻变成 T2，且响应里不回显 key。"""
-    from ivyea_agent import service, vision
+    from awen_agent import service, vision
 
     res = service.vision_configure({"provider": "custom", "model": "qwen2.5-vl-72b",
                                     "base_url": "https://gw.internal/v1", "api_key": "sk-secret"})

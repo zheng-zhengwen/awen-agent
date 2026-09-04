@@ -4,8 +4,8 @@
 """
 from __future__ import annotations
 
-from ivyea_agent.providers import anthropic_provider as ap
-from ivyea_agent.providers.anthropic_provider import AnthropicProvider
+from awen_agent.providers import anthropic_provider as ap
+from awen_agent.providers.anthropic_provider import AnthropicProvider
 
 
 class _Blk:

@@ -18,8 +18,8 @@ import sys
 
 import pytest
 
-from ivyea_agent import hooks, subproc_env
-from ivyea_agent.mcp_client import MCPClient
+from awen_agent import hooks, subproc_env
+from awen_agent.mcp_client import MCPClient
 
 
 SECRET = "DEEPSEEK_API_KEY"
@@ -82,7 +82,7 @@ def test_inherit_all_is_the_escape_hatch():
 
 
 def test_extra_wins_over_everything():
-    """extra 是内核自己注入的（如 IVYEA_HOOK_EVENT），优先级最高。"""
+    """extra 是内核自己注入的（如 AWEN_HOOK_EVENT），优先级最高。"""
     env = subproc_env.build_env({"K": "from-config"}, extra={"K": "from-kernel"})
     assert env["K"] == "from-kernel"
 
@@ -163,7 +163,7 @@ def test_hook_entry_tightens_only_on_explicit_false():
                                "inherit_env": False}])[0]
     env = hooks._hook_env("stop", None, entry=entry)             # noqa: SLF001
     assert SECRET not in env
-    assert env["IVYEA_HOOK_EVENT"] == "stop"
+    assert env["AWEN_HOOK_EVENT"] == "stop"
 
 
 def test_mcp_spec_passthrough(monkeypatch):
@@ -208,10 +208,10 @@ def test_hook_env_excludes_secrets():
 
 
 def test_hook_env_keeps_its_own_contract():
-    """IVYEA_HOOK_EVENT / IVYEA_HOOK_PAYLOAD 是 hook 的 API，不能因为清洗丢掉。"""
+    """AWEN_HOOK_EVENT / AWEN_HOOK_PAYLOAD 是 hook 的 API，不能因为清洗丢掉。"""
     env = hooks._hook_env("pre_tool_use", {"tool_name": "x"})   # noqa: SLF001
-    assert env["IVYEA_HOOK_EVENT"] == "pre_tool_use"
-    assert "tool_name" in env["IVYEA_HOOK_PAYLOAD"]
+    assert env["AWEN_HOOK_EVENT"] == "pre_tool_use"
+    assert "tool_name" in env["AWEN_HOOK_PAYLOAD"]
 
 
 def test_hook_env_keeps_path_and_home():

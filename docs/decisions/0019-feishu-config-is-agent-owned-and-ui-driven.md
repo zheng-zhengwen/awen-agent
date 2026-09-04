@@ -2,12 +2,12 @@
 
 - **日期**：2026-08-23
 - **状态**：已采纳
-- **相关**：ADR-0017（巡检与审批闭环）、IvyeaOps 的 ADR-0024（同一件事在 ops 那边的记录）
+- **相关**：ADR-0017（巡检与审批闭环）、awenOps 的 ADR-0024（同一件事在 ops 那边的记录）
 
 ## 背景
 
-飞书这套东西落地后，同一个飞书应用的凭据散在三处：`~/.ivyea/.env`（agent 发卡片）、
-`/etc/feishu-ivyea-relay.env`（relay 收回调）、IvyeaOps 的 `hub_settings.json`
+飞书这套东西落地后，同一个飞书应用的凭据散在三处：`~/.awen/.env`（agent 发卡片）、
+`/etc/feishu-awen-relay.env`（relay 收回调）、awenOps 的 `hub_settings.json`
 （CPU 告警）。三处互不知情，漏配任何一处的表现都一样：**保存成功、也不报错、
 就是收不到消息**。审批白名单更麻烦——它只在 relay 的 EnvironmentFile 里，
 改一次要 SSH 上机器编辑再重启服务。
@@ -17,11 +17,11 @@
 
 ## 决策
 
-### 一、agent 侧新增配置端点，凭 IvyeaOps 界面驱动
+### 一、agent 侧新增配置端点，凭 awenOps 界面驱动
 
 `GET/POST /v1/config/feishu` + `POST /v1/config/feishu/action`（列群 / 列成员 /
 发测试卡片 / 配巡检任务）。沿用 `/v1/config/vision` 的成例：**ops 不直接碰
-`~/.ivyea`**，一律走端点，agent 自己决定什么落 settings、什么落 .env。
+`~/.awen`**，一律走端点，agent 自己决定什么落 settings、什么落 .env。
 
 ### 二、凭据写文件的同时写进程环境
 
@@ -59,12 +59,12 @@
 
 ## 补记（2026-08-23，v1.15.11）
 
-本 ADR 一直把 relay 称作"独立的 `feishu-ivyea-relay` 服务"，但**它从来没有随任何
+本 ADR 一直把 relay 称作"独立的 `feishu-awen-relay` 服务"，但**它从来没有随任何
 release 发出去过** —— 它只存在于开发机的一个本地目录里。后果是：拿到开源包的人
 卡片收得到、按钮点了没反应、飞书里也没法对话，而界面上按钮还看得见、点得动。
 
-已改为包内的 `ivyea_agent.feishu_relay`，随 wheel 发布，SDK 走可选依赖
-`ivyea-agent[feishu]`，装法收成 `ivyea relay install` 一条命令。
+已改为包内的 `awen_agent.feishu_relay`，随 wheel 发布，SDK 走可选依赖
+`awen-agent[feishu]`，装法收成 `awen relay install` 一条命令。
 `tests/test_packaging_feishu_relay.py` 盯着"必须进 wheel"这件事 ——
 它漏了不会报错，只会让用户点按钮时什么都不发生。
 
@@ -80,7 +80,7 @@ release 发出去过** —— 它只存在于开发机的一个本地目录里�
 
 - 老部署（只有 EnvironmentFile、从没用过界面）行为不变：settings 里没有那两个键，
   自动回退到 env。
-- 单测必须用 `IVYEA_HOME` 隔离——relay 的白名单解析会读 `~/.ivyea`，
+- 单测必须用 `AWEN_HOME` 隔离——relay 的白名单解析会读 `~/.awen`，
   常量写死路径的话，单测读的就是这台机器上真实的审批白名单。已在
   `tests/test_config_source.py` 里守住。
 

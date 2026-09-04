@@ -14,7 +14,7 @@ def no_rapidocr(monkeypatch):
     引擎探测是运行时做的且带模块级缓存，装没装 RapidOCR 的机器会走出两套行为；
     不钉死这一项，同一份测试在开发机（装了）和 CI（没装）上结论相反。
     """
-    from ivyea_agent import ocr
+    from awen_agent import ocr
     monkeypatch.setattr(ocr, "_RAPID_CACHE", None)
     monkeypatch.setattr(ocr, "_RAPID_FAILED", "forced-off")
     return ocr
@@ -34,8 +34,8 @@ def test_ocr_unavailable(tmp_path, monkeypatch, no_rapidocr):
 
 
 def test_ocr_available_and_agent_cli(tmp_path, monkeypatch, capsys, no_rapidocr):
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
-    from ivyea_agent.cli import main
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
+    from awen_agent.cli import main
 
     img = tmp_path / "feature.png"
     _png(img, 1200, 1200)
@@ -77,7 +77,7 @@ def test_tesseract_rows_carry_empty_boxes(tmp_path, monkeypatch, no_rapidocr):
 
 def test_rapidocr_branch_emits_boxes(tmp_path, monkeypatch):
     """RapidOCR 分支要把四点坐标压成 bbox，并带上原图尺寸供版面推断。"""
-    from ivyea_agent import ocr
+    from awen_agent import ocr
 
     _png(tmp_path / "b.png", 1000, 500)
 

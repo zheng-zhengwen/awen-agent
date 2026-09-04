@@ -1,9 +1,9 @@
 """Phase A：read_file 行号 + edit 容错、glob、accept-edits、只读命令自动放行。"""
 from __future__ import annotations
 
-from ivyea_agent import policy
-from ivyea_agent import tools_general as tg
-from ivyea_agent.agent_tools import ToolContext, dispatch
+from awen_agent import policy
+from awen_agent import tools_general as tg
+from awen_agent.agent_tools import ToolContext, dispatch
 
 
 def _ctx(tmp_path, allow=()):
@@ -95,10 +95,9 @@ def test_is_readonly_command():
 
 
 def test_run_command_readonly_auto_runs(tmp_path):
-    (tmp_path / "a.txt").write_text("hi", encoding="utf-8")
     ctx = _ctx(tmp_path)   # 没有任何 session_allow / 审批
-    out = tg.t_run_command({"command": "ls"}, ctx)
-    assert "a.txt" in out and "退出码 0" in out
+    out = tg.t_run_command({"command": "echo readonly-ok"}, ctx)
+    assert "readonly-ok" in out and "退出码 0" in out
 
 
 def test_run_command_write_still_gated_in_plan_mode(tmp_path):

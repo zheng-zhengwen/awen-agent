@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def test_offer_audit_blocks_unprofitable_low_inventory_scaling():
-    from ivyea_agent import offer_audit
+    from awen_agent import offer_audit
 
     res = offer_audit.audit(
         price=39.99,
@@ -22,8 +22,8 @@ def test_offer_audit_blocks_unprofitable_low_inventory_scaling():
 
 
 def test_offer_cli_and_agent_tool(capsys):
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
-    from ivyea_agent.cli import main
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH, ToolContext
+    from awen_agent.cli import main
 
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "run_offer_audit" in names

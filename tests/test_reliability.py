@@ -5,9 +5,9 @@ import pytest
 
 
 # ── 连续计数 ────────────────────────────────────────────────────────────────
-def test_consecutive_not_cumulative(ivyea_home):
+def test_consecutive_not_cumulative(awen_home):
     """巡检按小时级反复跑，偶发超时是常态；累计计数迟早触发 = 狼来了。"""
-    from ivyea_agent import reliability as r
+    from awen_agent import reliability as r
 
     assert r.record_failure("k") == 1
     assert r.record_failure("k") == 2
@@ -16,9 +16,9 @@ def test_consecutive_not_cumulative(ivyea_home):
     assert r.record_failure("k") == 1        # 重新从 1 开始
 
 
-def test_alert_fires_only_on_crossing(ivyea_home):
+def test_alert_fires_only_on_crossing(awen_home):
     """只在跨过门槛那一次报，之后持续失败不再轰炸。"""
-    from ivyea_agent import reliability as r
+    from awen_agent import reliability as r
 
     fired = []
     for _ in range(6):
@@ -28,15 +28,15 @@ def test_alert_fires_only_on_crossing(ivyea_home):
     assert fired == [3]
 
 
-def test_keys_are_independent(ivyea_home):
-    from ivyea_agent import reliability as r
+def test_keys_are_independent(awen_home):
+    from awen_agent import reliability as r
 
     r.record_failure("a"); r.record_failure("a"); r.record_failure("b")
     assert r.count("a") == 2 and r.count("b") == 1
 
 
-def test_corrupt_file_does_not_crash(ivyea_home):
-    from ivyea_agent import reliability as r
+def test_corrupt_file_does_not_crash(awen_home):
+    from awen_agent import reliability as r
 
     r.record_failure("k")
     r._FILE.write_text("{ broken", encoding="utf-8")
@@ -44,16 +44,16 @@ def test_corrupt_file_does_not_crash(ivyea_home):
     assert r.record_failure("k") == 1        # 仍可继续记
 
 
-def test_detail_is_kept_and_truncated(ivyea_home):
-    from ivyea_agent import reliability as r
+def test_detail_is_kept_and_truncated(awen_home):
+    from awen_agent import reliability as r
 
     r.record_failure("k", "x" * 2000)
     assert 0 < len(r.detail("k")) <= 500
 
 
 # ── 降级链 ──────────────────────────────────────────────────────────────────
-def test_primary_success_no_fallback(ivyea_home, monkeypatch):
-    from ivyea_agent import notify
+def test_primary_success_no_fallback(awen_home, monkeypatch):
+    from awen_agent import notify
 
     monkeypatch.setattr(notify, "send_card",
                         lambda *a, **k: {"ok": True, "message_id": "om_1"})
@@ -62,8 +62,8 @@ def test_primary_success_no_fallback(ivyea_home, monkeypatch):
     assert r["ok"] and r["degraded"] is False
 
 
-def test_fallback_to_webhook(ivyea_home, monkeypatch):
-    from ivyea_agent import notify
+def test_fallback_to_webhook(awen_home, monkeypatch):
+    from awen_agent import notify
 
     monkeypatch.setattr(notify, "send_card", lambda *a, **k: {"ok": False, "error": "down"})
     monkeypatch.setattr(notify, "_configured_webhook_url", lambda ch, override="": "https://h/x")
@@ -72,9 +72,9 @@ def test_fallback_to_webhook(ivyea_home, monkeypatch):
     assert r["ok"] and r["degraded"] is True and r["degraded_from"] == "feishu_app"
 
 
-def test_no_webhook_configured_is_explicit(ivyea_home, monkeypatch):
+def test_no_webhook_configured_is_explicit(awen_home, monkeypatch):
     """没有兜底通道时要说清楚，不能只报一句"发送失败"。"""
-    from ivyea_agent import notify
+    from awen_agent import notify
 
     monkeypatch.setattr(notify, "send_card", lambda *a, **k: {"ok": False, "error": "down"})
     monkeypatch.setattr(notify, "_configured_webhook_url", lambda ch, override="": "")
@@ -82,8 +82,8 @@ def test_no_webhook_configured_is_explicit(ivyea_home, monkeypatch):
     assert not r["ok"] and "无兜底通道" in r["error"] and "down" in r["error"]
 
 
-def test_both_channels_fail_lists_all_reasons(ivyea_home, monkeypatch):
-    from ivyea_agent import notify
+def test_both_channels_fail_lists_all_reasons(awen_home, monkeypatch):
+    from awen_agent import notify
 
     monkeypatch.setattr(notify, "send_card", lambda *a, **k: {"ok": False, "error": "e1"})
     monkeypatch.setattr(notify, "_configured_webhook_url", lambda ch, override="": "https://h/x")
@@ -95,7 +95,7 @@ def test_both_channels_fail_lists_all_reasons(ivyea_home, monkeypatch):
 
 # ── 巡检接线 ────────────────────────────────────────────────────────────────
 def _gapped(sid, **kw):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     res = store_health.CheckResult(sid=sid, layer="L1")
     res.gaps.append("领星取数失败：超时")
@@ -103,12 +103,12 @@ def _gapped(sid, **kw):
 
 
 def _clean(sid, **kw):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
     return store_health.CheckResult(sid=sid, layer="L1")
 
 
-def test_patrol_alerts_after_three_consecutive_gaps(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, reliability, schedule, store_health
+def test_patrol_alerts_after_three_consecutive_gaps(awen_home, monkeypatch):
+    from awen_agent import notify, reliability, schedule, store_health
 
     monkeypatch.setattr(store_health, "check_l1", _gapped)
     alerts = []
@@ -120,8 +120,8 @@ def test_patrol_alerts_after_three_consecutive_gaps(ivyea_home, monkeypatch):
     assert reliability.count("patrol.store_l1.1") == 5
 
 
-def test_recovery_resets_the_counter(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, reliability, schedule, store_health
+def test_recovery_resets_the_counter(awen_home, monkeypatch):
+    from awen_agent import notify, reliability, schedule, store_health
 
     monkeypatch.setattr(notify, "send_alert", lambda text, **k: {"ok": True})
     monkeypatch.setattr(store_health, "check_l1", _gapped)
@@ -132,9 +132,9 @@ def test_recovery_resets_the_counter(ivyea_home, monkeypatch):
     assert reliability.count("patrol.store_l1.1") == 0
 
 
-def test_daily_alerts_after_two(ivyea_home, monkeypatch):
+def test_daily_alerts_after_two(awen_home, monkeypatch):
     """早报一天一次，等三次要等三天，所以门槛更低。"""
-    from ivyea_agent import notify, schedule, store_health
+    from awen_agent import notify, schedule, store_health
 
     monkeypatch.setattr(store_health, "check_l3", _gapped)
     monkeypatch.setattr(store_health, "daily_summary",
@@ -148,8 +148,8 @@ def test_daily_alerts_after_two(ivyea_home, monkeypatch):
     assert alerts.count("数据源异常") == 1
 
 
-def test_counters_are_per_store(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, reliability, schedule, store_health
+def test_counters_are_per_store(awen_home, monkeypatch):
+    from awen_agent import notify, reliability, schedule, store_health
 
     monkeypatch.setattr(store_health, "check_l1", _gapped)
     monkeypatch.setattr(notify, "send_alert", lambda text, **k: {"ok": True})
@@ -160,8 +160,8 @@ def test_counters_are_per_store(ivyea_home, monkeypatch):
 
 
 # ── §8.4 异步执行预案 ───────────────────────────────────────────────────────
-def _appr(ivyea_home):
-    from ivyea_agent import approvals, store_health
+def _appr(awen_home):
+    from awen_agent import approvals, store_health
 
     return approvals.create(store_health.Finding(
         code="x", layer="L1", severity="warn", action_class=store_health.STANCH,
@@ -171,23 +171,23 @@ def _appr(ivyea_home):
         chat_id="oc_1")
 
 
-def test_sync_is_the_default(ivyea_home, monkeypatch):
+def test_sync_is_the_default(awen_home, monkeypatch):
     """方案明确说异步是预案非默认 —— 不能自作主张改默认行为。"""
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
     monkeypatch.setattr(lingxing_write, "execute",
                         lambda i, dry_run=True: {"ok": True, "audit_id": "a", "detail": "d"})
-    a = _appr(ivyea_home)
+    a = _appr(awen_home)
     r = approval_flow.resolve(a.id, "approve", chat_id="oc_1")
     assert r["state"] == approvals.EXECUTED and "async" not in r
 
 
-def test_async_returns_immediately_and_finishes_in_background(ivyea_home, monkeypatch):
+def test_async_returns_immediately_and_finishes_in_background(awen_home, monkeypatch):
     import time
 
-    from ivyea_agent import approval_flow, approvals, config, lingxing_write
+    from awen_agent import approval_flow, approvals, config, lingxing_write
 
     settings = config.load_settings()
     settings["feishu_async_execute"] = True
@@ -201,7 +201,7 @@ def test_async_returns_immediately_and_finishes_in_background(ivyea_home, monkey
         return {"ok": True, "audit_id": "a1", "detail": "已执行"}
 
     monkeypatch.setattr(lingxing_write, "execute", _slow)
-    a = _appr(ivyea_home)
+    a = _appr(awen_home)
     t0 = time.time()
     r = approval_flow.resolve(a.id, "approve", chat_id="oc_1")
     assert time.time() - t0 < 0.2, "异步模式下不该等写入完成"
@@ -213,13 +213,13 @@ def test_async_returns_immediately_and_finishes_in_background(ivyea_home, monkey
     assert approvals.get(a.id).state == approvals.EXECUTED
 
 
-def test_execution_time_is_recorded(ivyea_home, monkeypatch):
-    from ivyea_agent import approval_flow, lingxing_write
+def test_execution_time_is_recorded(awen_home, monkeypatch):
+    from awen_agent import approval_flow, lingxing_write
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
     monkeypatch.setattr(lingxing_write, "execute",
                         lambda i, dry_run=True: {"ok": True, "audit_id": "a", "detail": "d"})
-    a = _appr(ivyea_home)
+    a = _appr(awen_home)
     r = approval_flow.resolve(a.id, "approve", chat_id="oc_1")
     assert "elapsed" in r and r["elapsed"] >= 0

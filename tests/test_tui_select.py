@@ -1,7 +1,7 @@
 """Interactive arrow-key selector (tui.select) + permission integration."""
 from __future__ import annotations
 
-from ivyea_agent import permission, tui
+from awen_agent import permission, tui
 
 OPTS = [("approve", "批准本次"), ("session", "本会话同类都批准"), ("deny", "拒绝"), ("abort", "全部停止")]
 

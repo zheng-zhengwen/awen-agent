@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a single-file Ivyea Agent executable with PyInstaller."""
+"""Build a single-file awen Agent executable with PyInstaller."""
 from __future__ import annotations
 
 import argparse
@@ -14,20 +14,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def project_version() -> str:
-    # Single source of truth: ivyea_agent/__init__.py.__version__ (pyproject.toml
+    # Single source of truth: awen_agent/__init__.py.__version__ (pyproject.toml
     # declares version dynamically from this same attr, so it's no longer static).
-    for line in (ROOT / "ivyea_agent" / "__init__.py").read_text(encoding="utf-8").splitlines():
+    for line in (ROOT / "awen_agent" / "__init__.py").read_text(encoding="utf-8").splitlines():
         s = line.strip()
         if s.startswith("__version__"):
             return s.split("=", 1)[1].strip().strip('"').strip("'")
-    raise SystemExit("could not read __version__ from ivyea_agent/__init__.py")
+    raise SystemExit("could not read __version__ from awen_agent/__init__.py")
 
 
 def exe_name(version: str) -> str:
     system = platform.system().lower() or "unknown"
     machine = platform.machine().lower() or "unknown"
     suffix = ".exe" if system == "windows" else ""
-    return f"ivyea-agent-{version}-{system}-{machine}{suffix}"
+    return f"awen-agent-{version}-{system}-{machine}{suffix}"
 
 
 def pyinstaller_available(python: str) -> bool:
@@ -68,9 +68,9 @@ def main(argv: list[str] | None = None) -> int:
         shutil.rmtree(build_dir, ignore_errors=True)
         shutil.rmtree(spec_dir, ignore_errors=True)
     spec_dir.mkdir(parents=True, exist_ok=True)
-    entry = spec_dir / "ivyea_entry.py"
+    entry = spec_dir / "awen_entry.py"
     entry.write_text(
-        "from ivyea_agent.cli import main\n\n"
+        "from awen_agent.cli import main\n\n"
         "if __name__ == '__main__':\n"
         "    raise SystemExit(main())\n",
         encoding="utf-8",
@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
         "--specpath",
         str(spec_dir),
         "--collect-data",
-        "ivyea_agent",
+        "awen_agent",
         str(entry),
     ]
     if not args.no_onefile:

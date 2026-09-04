@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from ivyea_agent import cli
+from awen_agent import cli
 
 
 def _strip(s):

@@ -1,7 +1,7 @@
 """@文件引用展开（mentions.expand）+ @路径补全。"""
 from __future__ import annotations
 
-from ivyea_agent import mentions
+from awen_agent import mentions
 
 
 def test_text_file_inlined(tmp_path):
@@ -55,15 +55,15 @@ def test_providers_accept_multimodal_content(tmp_path):
     content = mentions.build_user_content("这是什么", [str(png)])
     msgs = [{"role": "user", "content": content}]
     # codex → input_image
-    from ivyea_agent.providers.codex_provider import CodexProvider
+    from awen_agent.providers.codex_provider import CodexProvider
     _, items = CodexProvider.__new__(CodexProvider)._input(msgs)
     assert any(c.get("type") == "input_image" for it in items for c in it.get("content", []))
     # anthropic → image 块
-    from ivyea_agent.providers.anthropic_provider import _split_messages
+    from awen_agent.providers.anthropic_provider import _split_messages
     _, out = _split_messages(msgs)
     assert any(b.get("type") == "image" for m in out for b in (m.get("content") or []) if isinstance(b, dict))
     # gemini → inlineData
-    from ivyea_agent.providers.gemini_provider import _messages_to_gemini
+    from awen_agent.providers.gemini_provider import _messages_to_gemini
     _, contents = _messages_to_gemini(msgs)
     assert any("inlineData" in p for c in contents for p in c.get("parts", []))
 
@@ -72,7 +72,7 @@ def test_at_path_completion(tmp_path):
     (tmp_path / "alpha.py").write_text("x", encoding="utf-8")
     (tmp_path / "beta.txt").write_text("y", encoding="utf-8")
     import os
-    from ivyea_agent import chat_input
+    from awen_agent import chat_input
     cwd = os.getcwd()
     try:
         os.chdir(tmp_path)

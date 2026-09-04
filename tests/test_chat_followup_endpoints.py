@@ -1,13 +1,13 @@
 """serve 这一层：追加指令端点、选项卡回答端点、活轮清单、逐轮时刻表。
 
 这里跑的是**真实的 chat_stream**（桩 provider），检查它实际发出的事件和实际写进
-存档的东西 —— 消费方（IvyeaOps 工作台）就是照这些字段渲染的。
+存档的东西 —— 消费方（awenOps 工作台）就是照这些字段渲染的。
 """
 from __future__ import annotations
 
 import time
 
-from ivyea_agent import ask, live_turn, sessions, service, turn_inbox
+from awen_agent import ask, live_turn, sessions, service, turn_inbox
 
 
 def teardown_function():
@@ -96,7 +96,7 @@ def _captured_contexts(runs: list[dict]) -> list:
 
 def test_ask_channel_is_wired_regardless_of_approval_tier():
     """问问题不是写操作：只读档下也得能弹选项卡，否则模型只能自己猜一条路。"""
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
 
     captured = _captured_contexts([
         {"interactive": True},                                  # 默认 = 只读档
@@ -150,7 +150,7 @@ def test_final_carries_the_turn_clock():
     assert result["ms"] == final["ms"]
 
 
-def test_turn_times_are_persisted_and_projected_into_the_detail(ivyea_home):
+def test_turn_times_are_persisted_and_projected_into_the_detail(awen_home):
     import importlib
     importlib.reload(sessions)
     importlib.reload(service)
@@ -166,7 +166,7 @@ def test_turn_times_are_persisted_and_projected_into_the_detail(ivyea_home):
     assert detail["turn_times"] == times          # 详情页拿到的就是落盘那份
 
 
-def test_detail_only_returns_the_times_of_the_page_it_serves(ivyea_home):
+def test_detail_only_returns_the_times_of_the_page_it_serves(awen_home):
     import importlib
     importlib.reload(sessions)
     importlib.reload(service)
@@ -208,7 +208,7 @@ class _EndlessProvider:
                                "arguments": {"path": "."}}]}
 
 
-def test_cancel_really_stops_the_turn(ivyea_home):
+def test_cancel_really_stops_the_turn(awen_home):
     """点停止 = 模型不会再往下走一步，而不是"我不看了、你接着烧"。"""
     import importlib
     importlib.reload(sessions)
@@ -261,7 +261,7 @@ class _SlowProvider:
         yield {"type": "final", "content": "字" * 200, "tool_calls": [], "usage": {}}
 
 
-def test_cancel_hands_back_the_queued_followups(ivyea_home):
+def test_cancel_hands_back_the_queued_followups(awen_home):
     """停在半路时，还没被读到的追加指令不能无声吞掉 —— 端回给调用方。"""
     import importlib
     importlib.reload(sessions)
@@ -281,7 +281,7 @@ def test_cancel_hands_back_the_queued_followups(ivyea_home):
     assert turn_inbox.pending(sid) == []
 
 
-def test_cancel_stops_mid_generation(ivyea_home):
+def test_cancel_stops_mid_generation(awen_home):
     """在模型吐字的过程中按停止，也要当场停 —— 不能等它把这一段说完。"""
     import importlib
     importlib.reload(sessions)

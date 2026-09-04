@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import threading
 
-from ivyea_agent import agent_loop, budget
-from ivyea_agent.agent_tools import ToolContext, ToolResult
+from awen_agent import agent_loop, budget
+from awen_agent.agent_tools import ToolContext, ToolResult
 
 
 def test_bookkeeping_calls_do_not_eat_the_quota():
@@ -60,8 +60,8 @@ def test_budget_is_thread_safe():
     assert round(b.cost_cny, 3) == 4.0
 
 
-def test_from_settings_respects_an_explicit_cap(ivyea_home):
-    from ivyea_agent import config
+def test_from_settings_respects_an_explicit_cap(awen_home):
+    from awen_agent import config
     config.set_setting("chat_max_tool_steps", 42)
     config.set_setting("chat_max_cost_cny", 2.5)
     assert budget.from_settings().max_steps == 42
@@ -69,8 +69,8 @@ def test_from_settings_respects_an_explicit_cap(ivyea_home):
     assert budget.from_settings(7).max_steps == 7      # 调用方显式传的说了算
 
 
-def test_a_broken_setting_falls_back(ivyea_home):
-    from ivyea_agent import config
+def test_a_broken_setting_falls_back(awen_home):
+    from awen_agent import config
     config.set_setting("chat_max_cost_cny", "不是数字")
     assert budget.from_settings().max_cost_cny == 0.0
 
@@ -97,7 +97,7 @@ def test_the_limit_text_says_which_gate_was_hit():
     assert "chat_max_cost_cny" in text     # 告诉用户怎么放宽
 
 
-def test_the_payload_reports_the_refund(ivyea_home):
+def test_the_payload_reports_the_refund(awen_home):
     b = budget.TurnBudget(max_steps=2)
     status = agent_loop.TurnStatus(max_steps=2, budget=b)
     for name in ("todo_write", "todo_write", "read_file", "read_file"):
@@ -120,9 +120,9 @@ def test_step_cost_never_raises():
     assert agent_loop._step_cost(None, None) == 0.0
 
 
-def test_hitting_the_cost_gate_marks_the_plan_for_resume(ivyea_home):
+def test_hitting_the_cost_gate_marks_the_plan_for_resume(awen_home):
     """撞闸停下来时，"停在哪"必须落盘 —— 否则命令行这条路进程一退就只剩一句提示。"""
-    from ivyea_agent import plan_store
+    from awen_agent import plan_store
     plan_store.sync_todos("b2", [{"content": "第一步", "status": "in_progress"},
                                  {"content": "第二步", "status": "pending"}])
     b = budget.TurnBudget(max_steps=100, max_cost_cny=0.5)

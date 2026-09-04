@@ -74,7 +74,7 @@ DeepSeek 开源了 [deepseek-harness](https://github.com/deepseek-ai/deepseek-ha
 本来就不需要。但这是 96k 行代码的地基，正确做法是先在旁边加一条 append-only 日志、新功能走新路，
 而不是重写 `sessions.py`。
 
-参照物留在本机：`harness.ivyea.com` 跑着一份实物，源码在
+参照物留在本机：`harness.awen.com` 跑着一份实物，源码在
 `/root/.hermes/node/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/`，每个包都有中文 README。
 
 本 ADR 覆盖的执行架构部分，与 [对标改造计划](../对标Codex-Claude-Hermes改造计划.md) 的 P7 是同一批工作。

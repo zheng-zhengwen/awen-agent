@@ -1,7 +1,7 @@
 """技能写入校验闸：规范是代码，不是 prompt 里的祈祷。"""
 from __future__ import annotations
 
-from ivyea_agent import skill_authoring
+from awen_agent import skill_authoring
 
 
 def _meta(**kw):
@@ -120,7 +120,7 @@ def test_ordinary_backticked_words_are_not_flagged():
 
 # ── frontmatter 渲染 ─────────────────────────────────────────────────────────
 def test_frontmatter_round_trips_through_the_loader():
-    from ivyea_agent import skills
+    from awen_agent import skills
     text = skill_authoring.render_frontmatter(_meta(), _body())
     fm, body = skills._parse_frontmatter(text)
     assert fm["name"] == "lingxing-ad-patrol"
@@ -130,7 +130,7 @@ def test_frontmatter_round_trips_through_the_loader():
 
 def test_colons_in_a_description_do_not_break_the_yaml():
     """中文描述里冒号很常见；不加引号 YAML 会把它解析成映射然后**静默**丢掉整段。"""
-    from ivyea_agent import skills
+    from awen_agent import skills
     meta = _meta(description="做一件事：把广告巡检跑完")
     fm, _body_text = skills._parse_frontmatter(skill_authoring.render_frontmatter(meta, _body()))
     assert fm["description"] == "做一件事：把广告巡检跑完"

@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# Ivyea Agent 一键安装（Linux / macOS）。
+# awen Agent 一键安装（Linux / macOS）。
 # 用法：
-#   curl -fsSL https://raw.githubusercontent.com/Hector-xue/ivyea-agent/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/zheng-zhengwen/awen-agent/main/scripts/install.sh | bash
 # 可选环境变量：
-#   IVYEA_VERSION=latest      # latest 或 v0.5.5 这种 tag；默认 latest release wheel
-#   IVYEA_REF=main            # 从 git 分支/标签安装（开发/私有仓库 fallback）
-#   IVYEA_LOCAL=/path/to/repo # 从本地仓库装（离线/开发）
-#   IVYEA_AUTO_INSTALL=1      # 缺 Python/pipx 时尽量自动安装；默认 1
+#   AWEN_VERSION=latest      # latest 或 v0.5.5 这种 tag；默认 latest release wheel
+#   AWEN_REF=main            # 从 git 分支/标签安装（开发/私有仓库 fallback）
+#   AWEN_LOCAL=/path/to/repo # 从本地仓库装（离线/开发）
+#   AWEN_AUTO_INSTALL=1      # 缺 Python/pipx 时尽量自动安装；默认 1
 #   GITHUB_TOKEN=...          # 私有仓库读取 release 时可用
 #   PIP_INDEX_URL=...         # pip 镜像（国内可用清华源加速）
-#   IVYEA_WITH_SEMANTIC=1     # 同时安装本地语义检索依赖 sentence-transformers
+#   AWEN_WITH_SEMANTIC=1     # 同时安装本地语义检索依赖 sentence-transformers
 set -euo pipefail
 
-OWNER_REPO="${IVYEA_GITHUB_REPO:-Hector-xue/ivyea-agent}"
-REPO="${IVYEA_REPO:-https://github.com/${OWNER_REPO}.git}"
-VERSION="${IVYEA_VERSION:-latest}"
-REF="${IVYEA_REF:-}"
-AUTO_INSTALL="${IVYEA_AUTO_INSTALL:-1}"
+OWNER_REPO="${AWEN_GITHUB_REPO:-zheng-zhengwen/awen-agent}"
+REPO="${AWEN_REPO:-https://github.com/${OWNER_REPO}.git}"
+VERSION="${AWEN_VERSION:-latest}"
+REF="${AWEN_REF:-}"
+AUTO_INSTALL="${AWEN_AUTO_INSTALL:-1}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd -P || pwd)"
-WHEELHOUSE="${IVYEA_WHEELHOUSE:-${SCRIPT_DIR}/wheelhouse}"
+WHEELHOUSE="${AWEN_WHEELHOUSE:-${SCRIPT_DIR}/wheelhouse}"
 
-say() { printf '\033[32m[ivyea]\033[0m %s\n' "$*"; }
-die() { printf '\033[31m[ivyea] %s\033[0m\n' "$*" >&2; exit 1; }
+say() { printf '\033[32m[awen]\033[0m %s\n' "$*"; }
+die() { printf '\033[31m[awen] %s\033[0m\n' "$*" >&2; exit 1; }
 
 can_sudo() {
   [ "$(id -u)" = "0" ] || command -v sudo >/dev/null 2>&1
@@ -56,22 +56,22 @@ install_python() {
 
 find_local_wheel() {
   [ -d "$WHEELHOUSE" ] || return 0
-  find "$WHEELHOUSE" -maxdepth 1 \( -name 'ivyea_agent-*.whl' -o -name 'ivyea-agent-*.whl' \) | sort -V | tail -n 1 || true
+  find "$WHEELHOUSE" -maxdepth 1 \( -name 'awen_agent-*.whl' -o -name 'awen-agent-*.whl' \) | sort -V | tail -n 1 || true
 }
 
 install_from_wheelhouse() {
   local wheel="$1"
-  local install_dir="${IVYEA_INSTALL_DIR:-$HOME/.ivyea/runtime}"
-  local bin_dir="${IVYEA_BIN_DIR:-$HOME/.local/bin}"
+  local install_dir="${AWEN_INSTALL_DIR:-$HOME/.awen/runtime}"
+  local bin_dir="${AWEN_BIN_DIR:-$HOME/.local/bin}"
   local venv_python="$install_dir/bin/python"
   local venv_pip="$install_dir/bin/pip"
-  local launcher="$bin_dir/ivyea"
+  local launcher="$bin_dir/awen"
 
   say "发现离线依赖包：$WHEELHOUSE"
   say "安装到本地运行环境：$install_dir"
   "$PY" -m venv --clear "$install_dir" || die "创建 venv 失败。Linux 如缺 venv，请安装 python3-venv。"
   "$venv_pip" install --no-index --find-links "$WHEELHOUSE" "$wheel"
-  if [ "${IVYEA_WITH_SEMANTIC:-0}" = "1" ] || [ -f "$WHEELHOUSE/.ivyea-semantic" ]; then
+  if [ "${AWEN_WITH_SEMANTIC:-0}" = "1" ] || [ -f "$WHEELHOUSE/.awen-semantic" ]; then
     say "安装本地语义检索依赖（sentence-transformers）…"
     "$venv_pip" install --no-index --find-links "$WHEELHOUSE" "sentence-transformers>=3.0"
   fi
@@ -79,7 +79,7 @@ install_from_wheelhouse() {
   mkdir -p "$bin_dir"
   cat > "$launcher" <<EOF
 #!/usr/bin/env sh
-exec "$venv_python" -m ivyea_agent.cli "\$@"
+exec "$venv_python" -m awen_agent.cli "\$@"
 EOF
   chmod +x "$launcher"
 
@@ -95,7 +95,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 manifest = json.loads((root / "semantic-manifest.json").read_text(encoding="utf-8"))
 src = root / manifest["model_dir"]
-dst_root = Path(os.environ.get("IVYEA_EMBEDDING_MODEL_DIR", str(Path.home() / ".ivyea" / "models" / "embedding")))
+dst_root = Path(os.environ.get("AWEN_EMBEDDING_MODEL_DIR", str(Path.home() / ".awen" / "models" / "embedding")))
 dst = dst_root / manifest["name"]
 if not src.is_dir():
     raise SystemExit(f"bundled embedding model missing: {src}")
@@ -118,13 +118,13 @@ PY
   fi
 
   say "✓ 离线安装完成。"
-  if ! command -v ivyea >/dev/null 2>&1; then
+  if ! command -v awen >/dev/null 2>&1; then
     say "提示：重开终端，或先执行  export PATH=\"$bin_dir:\$PATH\""
   fi
   "$launcher" self doctor || true
   say "初始化本地检索索引…"
   "$launcher" retrieval sync --json >/dev/null || true
-  say "下一步：  ivyea config   （配置主脑模型/密钥），然后  ivyea chat"
+  say "下一步：  awen config   （配置主脑模型/密钥），然后  awen chat"
 }
 
 # 1) Python 3.9+
@@ -169,7 +169,7 @@ import json, os, sys, urllib.request, urllib.error
 
 repo, version, repo_url = sys.argv[1], sys.argv[2], sys.argv[3]
 token = os.environ.get("GITHUB_TOKEN", "")
-UA = {"User-Agent": "ivyea-install"}
+UA = {"User-Agent": "awen-install"}
 
 def head_ok(url):
     req = urllib.request.Request(url, method="HEAD", headers=dict(UA))
@@ -200,10 +200,10 @@ def latest_tag():
 
 tag = version if version and version not in ("", "latest") else latest_tag()
 
-# 1) 直链 wheel（约定命名 ivyea_agent-<ver>-py3-none-any.whl）
+# 1) 直链 wheel（约定命名 awen_agent-<ver>-py3-none-any.whl）
 if tag:
     ver = tag[1:] if tag.startswith("v") else tag
-    url = f"https://github.com/{repo}/releases/download/{tag}/ivyea_agent-{ver}-py3-none-any.whl"
+    url = f"https://github.com/{repo}/releases/download/{tag}/awen_agent-{ver}-py3-none-any.whl"
     if head_ok(url):
         print(url)
         raise SystemExit(0)
@@ -231,34 +231,34 @@ print(f"git+{repo_url}@{tag}" if tag else f"git+{repo_url}@refs/heads/main")
 PY
 }
 
-# 4) 安装 / 升级 ivyea-agent
-if [ -n "${IVYEA_LOCAL:-}" ]; then
-  SPEC="$IVYEA_LOCAL"
+# 4) 安装 / 升级 awen-agent
+if [ -n "${AWEN_LOCAL:-}" ]; then
+  SPEC="$AWEN_LOCAL"
 elif [ -n "$REF" ]; then
   SPEC="git+${REPO}@${REF}"
 else
   say "查找安装来源（${OWNER_REPO}@${VERSION}）…"
-  SPEC="$(install_spec 2>/tmp/ivyea-install-release.err || true)"
+  SPEC="$(install_spec 2>/tmp/awen-install-release.err || true)"
   if [ -z "$SPEC" ]; then
-    say "解析安装来源失败：$(cat /tmp/ivyea-install-release.err 2>/dev/null || true)"
-    say "回退到 git main 安装。私有仓库请先配置 GitHub 凭据，或设置 GITHUB_TOKEN/IVYEA_REF。"
+    say "解析安装来源失败：$(cat /tmp/awen-install-release.err 2>/dev/null || true)"
+    say "回退到 git main 安装。私有仓库请先配置 GitHub 凭据，或设置 GITHUB_TOKEN/AWEN_REF。"
     SPEC="git+${REPO}@refs/heads/main"
   fi
 fi
-say "安装 ivyea-agent（来源：$SPEC）…"
+say "安装 awen-agent（来源：$SPEC）…"
 pipx install --force "$SPEC"
-if [ "${IVYEA_WITH_SEMANTIC:-0}" = "1" ]; then
+if [ "${AWEN_WITH_SEMANTIC:-0}" = "1" ]; then
   say "安装本地语义检索依赖（sentence-transformers）…"
-  pipx inject ivyea-agent "sentence-transformers>=3.0"
+  pipx inject awen-agent "sentence-transformers>=3.0"
 fi
 
 say "✓ 安装完成。"
-# pipx 把 ivyea 装进 ~/.local/bin；当前 shell 可能还没更新 PATH，先临时加上再自检。
+# pipx 把 awen 装进 ~/.local/bin；当前 shell 可能还没更新 PATH，先临时加上再自检。
 export PATH="$HOME/.local/bin:$PATH"
-if ! command -v ivyea >/dev/null 2>&1; then
+if ! command -v awen >/dev/null 2>&1; then
   say "提示：重开终端，或先执行  export PATH=\"\$HOME/.local/bin:\$PATH\""
 else
-  ivyea self doctor || true
+  awen self doctor || true
 fi
-ivyea retrieval sync --json >/dev/null 2>&1 || true
-say "下一步：  ivyea config   （配置主脑模型/密钥），然后  ivyea chat"
+awen retrieval sync --json >/dev/null 2>&1 || true
+say "下一步：  awen config   （配置主脑模型/密钥），然后  awen chat"

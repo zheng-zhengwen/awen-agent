@@ -8,7 +8,7 @@
 技能系统此前是**只读的，而且读不全**。
 
 1. **模型手上只有 `skill_search` 一个工具。** 它可以刚刚走完一套完整的领星广告巡检流程，
-   然后眼睁睁看着这套流程随会话消失 —— 建技能必须人去敲 `ivyea skill create`。
+   然后眼睁睁看着这套流程随会话消失 —— 建技能必须人去敲 `awen skill create`。
 2. **自动注入把正文截到 700 字，而剩下的部分模型根本够不着。** 没有任何工具能读技能全文。
    于是一本三千字的审计手册，模型永远只看得到开头那段"何时使用"，真正的步骤和护栏全在
    截断线以下 —— 它照着残缺的手册干活，还以为自己看全了。附属文件（`references/`、
@@ -40,7 +40,7 @@ hermes 把整套规范塞进 `/learn` 的 prompt 里指望模型照做。它自�
 所以 `skill_authoring.validate` 在落盘前当场判定，不过就不写。
 
 **规则只从本仓真实存在的约束里来。** hermes 要求 description ≤ 60 字符，理由是它的技能索引
-按 60 字截断；ivyea **没有这个截断**（`render_search` 打全文、`_score_parts` 也吃全文，
+按 60 字截断；awen **没有这个截断**（`render_search` 打全文、`_score_parts` 也吃全文，
 `render_list` 干脆不显示 description），照搬这个数字就是 cargo cult。换成有依据的两条：
 
 - **`triggers` 必填（硬错误）** —— `_terms()` 不分词，中文查询几乎完全靠触发词作为子串命中
@@ -55,7 +55,7 @@ hermes 把整套规范塞进 `/learn` 的 prompt 里指望模型照做。它自�
 
 学技能需要的能力 agent 全都有：`glob`/`read_file` 读目录、`web_fetch` 抓网页、
 "刚才那件事"就在会话里、`skill_write` 落盘。`learn_prompt` 只产出**一段指令**，
-交给当前会话按正常一轮跑掉 —— CLI（`/learn`、`ivyea learn`）、serve、飞书三个入口自动都有了。
+交给当前会话按正常一轮跑掉 —— CLI（`/learn`、`awen learn`）、serve、飞书三个入口自动都有了。
 
 大素材走知识库布局（精简 SKILL.md 索引 + `references/` 分章，**一章一写**）。这不是排版偏好：
 把一本书塞进一次对话会直接撑爆上下文，而摘要式压缩会把结构（决策规则、阈值表、反模式）压没 ——
@@ -75,14 +75,14 @@ hermes 把整套规范塞进 `/learn` 的 prompt 里指望模型照做。它自�
   「完全不存在的东西」也能匹配出三条技能 —— 那正是那次老事故的语义版。
   按语义找技能是 `skill_search` 的事，那时候用户在主动翻库。
 
-配套给 `ivyea eval` 补了技能召回 golden set，**反例和正例一起进**：5 条该命中的 +
+配套给 `awen eval` 补了技能召回 golden set，**反例和正例一起进**：5 条该命中的 +
 5 条自动注入一条都不该命中的（含事故原句）。一条正例测不出检索质量 —— 改检索最容易出的事故
 不是"该召的没召"，是"不该召的召了"。
 
 ### 5. 使用统计 + 归档
 
-`skill_usage` 记命中次数/最近命中/命中来源，落 `~/.ivyea/skills/usage.json`。
-`ivyea skill usage` 看，`archive` / `restore` 管生命周期 —— **只归档不删除**。
+`skill_usage` 记命中次数/最近命中/命中来源，落 `~/.awen/skills/usage.json`。
+`awen skill usage` 看，`archive` / `restore` 管生命周期 —— **只归档不删除**。
 
 ## 落地时打出来的三个真 bug
 
@@ -92,7 +92,7 @@ hermes 把整套规范塞进 `/learn` 的 prompt 里指望模型照做。它自�
    （`skills._slug`），于是 `name: lingxing-ad-patrol` 被推成 `id: lingxing.lingxing_ad_patrol`。
    后续 `skill_view` / `archive` 按原 id 全找不着。修法：`write_user_skill` 把 `id` 显式写进
    frontmatter。
-2. **归档等于没归档。** `_archive/` 是 `~/.ivyea/skills/` 的子目录，扫描器照样把它当技能加载。
+2. **归档等于没归档。** `_archive/` 是 `~/.awen/skills/` 的子目录，扫描器照样把它当技能加载。
    修法：`_iter_root` 显式跳过。
 3. **语义层泄进了注入路径**（见上）。
 

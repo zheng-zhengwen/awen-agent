@@ -6,7 +6,7 @@ import types
 
 import pytest
 
-from ivyea_agent import oauth_auth as oa
+from awen_agent import oauth_auth as oa
 
 
 class _Resp:
@@ -79,14 +79,14 @@ def test_resolve_provider_token_refreshes_when_expiring(monkeypatch):
 
 # ── provider OAuth 模式 ──
 def test_from_settings_builds_oauth_provider():
-    from ivyea_agent.providers import base
+    from awen_agent.providers import base
     p = base.from_settings({"kind": "anthropic", "model": "claude-sonnet-4-6",
                             "api_mode": "anthropic_oauth", "auth_type": "oauth_external"}, "bearer-tok")
     assert p.oauth is True and p.name == "anthropic"
 
 
 def test_oauth_client_uses_bearer_and_beta(monkeypatch):
-    from ivyea_agent.providers.anthropic_provider import AnthropicProvider
+    from awen_agent.providers.anthropic_provider import AnthropicProvider
     captured = {}
     fake = types.ModuleType("anthropic")
     fake.Anthropic = lambda **kw: captured.update(kw) or object()
@@ -98,7 +98,7 @@ def test_oauth_client_uses_bearer_and_beta(monkeypatch):
 
 
 def test_oauth_system_prepends_claude_code_identity():
-    from ivyea_agent.providers.anthropic_provider import AnthropicProvider
+    from awen_agent.providers.anthropic_provider import AnthropicProvider
     p = AnthropicProvider("t", "claude-sonnet-4-6", oauth=True)
     blocks = p._system("你是亚马逊运营 Agent")
     assert blocks[0]["text"].startswith("You are Claude Code")
@@ -111,7 +111,7 @@ def test_oauth_system_prepends_claude_code_identity():
 
 # ── 登记 ──
 def test_models_entry_registered():
-    from ivyea_agent import models
+    from awen_agent import models
     e = models.provider_by_id("anthropic-oauth")
     assert e and e["kind"] == "anthropic" and e["api_mode"] == "anthropic_oauth"
     assert e["auth_type"] == "oauth_external"

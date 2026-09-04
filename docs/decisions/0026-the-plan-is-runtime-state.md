@@ -16,7 +16,7 @@
    那几条 `todo_write` 调用随之消失。模型接着干活时已经不知道自己原本打算干几件事、
    干到第几件了 —— 而这恰恰发生在长任务最需要计划的时候。
 3. **它掉电即失。** 进程重启、会话续跑、任务台接管，计划都不在了。与此同时
-   `task_runner` 已经在 `~/.ivyea/tasks/*.json` 里存着一份**另一套**步骤表
+   `task_runner` 已经在 `~/.awen/tasks/*.json` 里存着一份**另一套**步骤表
    （`task_step` 维护），两套并行、互不知情。
 
 这与记忆此前踩的是同一个坑，见 [ADR-0025](./0025-memory-is-runtime-driven.md)：
@@ -26,7 +26,7 @@
 
 **计划升格为运行时状态，由 `plan_store` 持有并每轮回注。**
 
-- 落盘 `~/.ivyea/plans/<session>.json`：目标、范围、完成标准、每步状态与证据、
+- 落盘 `~/.awen/plans/<session>.json`：目标、范围、完成标准、每步状态与证据、
   批准戳、修订历史。
 - `todo_write` 写台账、再同步回 `ctx.todos`；`ctx.todos` 降级为缓存。汇报状态机
   一行不改。
@@ -69,7 +69,7 @@
 上面留的"还没做"已经做完，方向定为 **计划台账是唯一真相，`task_runner` 的 `steps`
 降级为它的投影**：
 
-- **计划 → 任务**：`plan_store.save()` 落盘成功后投影进 `~/.ivyea/tasks/<id>.json`
+- **计划 → 任务**：`plan_store.save()` 落盘成功后投影进 `~/.awen/tasks/<id>.json`
   （`task_runner.sync_plan_steps`）。此前那张表只有模型显式调 `task_step` 才会动，
   而模型实际维护的是 `todo_write` —— 于是 `task_continue` 生成续跑提示时
   （`next_step` → `_default_resume_prompt`）照着一份过期的步骤表指路。
@@ -92,5 +92,5 @@
   `todo_write`，走的还是原本那条被校验过的路。
 - **`cancelled` 不复活**。人工取消的任务不该被一次步骤同步改回 `in_progress`。
 
-`task_step` 工具保留原样（纯 CLI `ivyea task step` 的老用法必须一字不差照旧能用），
+`task_step` 工具保留原样（纯 CLI `awen task step` 的老用法必须一字不差照旧能用），
 只在会话已有计划时多回一句提示：步骤的真相在计划台账，请用 `todo_write` 推进。

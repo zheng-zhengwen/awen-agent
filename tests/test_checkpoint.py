@@ -8,7 +8,7 @@ import subprocess
 
 import pytest
 
-from ivyea_agent import git_workflow as gw
+from awen_agent import git_workflow as gw
 
 
 def _git(root, *args):

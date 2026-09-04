@@ -27,30 +27,30 @@ import pytest
 #
 # **用例自带数据**，不读开发机上的真实记忆库：CI 上那个库是空的，空库当然不会误注，
 # 整批负例会变成假绿 —— 比没有用例更糟。下面这份小库照着真实库的形态造：
-# 多数条目都带 "ivyea"（真实库里 86%），标题里有"配置""位置""合并"这类通用词。
+# 多数条目都带 "awen"（真实库里 86%），标题里有"配置""位置""合并"这类通用词。
 
 
 @pytest.fixture()
-def memlib(ivyea_home):
+def memlib(awen_home):
     """一个复现过真实误召的小型记忆库。"""
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
 
     rows = [
         ("reference", "DeepSeek harness 凭据配置位置",
          "本机 dsh harness 的 DeepSeek key 存哪、从哪搬的",
          "harness 的 key 放在 /etc/dsh-web.env，从 ~/.dsh 搬过去的。"),
-        ("project", "ivyea-note 服务器环境与进度",
-         "Ivyea Note 的服务器环境、构建与进度",
-         "ivyea note 部署在 note.ivyea.com，Go 服务端 + SQLite，构建走 CI。"),
-        ("project", "ivyea-ops console 双卡合并口径",
+        ("project", "awen-note 服务器环境与进度",
+         "awen Note 的服务器环境、构建与进度",
+         "awen note 部署在 note.awen.com，Go 服务端 + SQLite，构建走 CI。"),
+        ("project", "awen-ops console 双卡合并口径",
          "任务台两张卡合并显示的口径",
-         "ivyea ops 的执行过程卡和回答卡合并成一段，按轮次合并。"),
-        ("project", "ivyea-agent 发版流程",
-         "ivyea agent 的发版步骤",
-         "ivyea agent 推 tag 触发 release，版本号写在 __init__。"),
-        ("project", "ivyea note 同步方案",
-         "Ivyea Note 的多端同步设计",
-         "ivyea note 用 OPFS + 服务端同步，冲突按最后写入。"),
+         "awen ops 的执行过程卡和回答卡合并成一段，按轮次合并。"),
+        ("project", "awen-agent 发版流程",
+         "awen agent 的发版步骤",
+         "awen agent 推 tag 触发 release，版本号写在 __init__。"),
+        ("project", "awen note 同步方案",
+         "awen Note 的多端同步设计",
+         "awen note 用 OPFS + 服务端同步，冲突按最后写入。"),
         ("domain", "否词护栏",
          "广告否词的判定护栏",
          "≥15 点击 0 单才建议否定，品牌词一律拦下。"),
@@ -67,8 +67,8 @@ MEMORY_REJECT = [
      "只因为标题里的「位置」两字，召回了 DeepSeek harness 凭据配置位置"),
     ("这个配置放在什么位置", "harness",
      "同上，「配置」「位置」都是万能词"),
-    ("我想给 ivyea-agent 加一个导出会话的功能", "note",
-     "「ivyea」对上了，召回一堆 ivyea-note 的记忆"),
+    ("我想给 awen-agent 加一个导出会话的功能", "note",
+     "「awen」对上了，召回一堆 awen-note 的记忆"),
     ("把之前的改动都推送合并发版吧", "双卡合并",
      "「合并」撞上了完全另一个意思的「console 双卡合并口径」"),
 ]
@@ -76,7 +76,7 @@ MEMORY_REJECT = [
 
 @pytest.mark.parametrize("query,forbidden,why", MEMORY_REJECT)
 def test_auto_recall_does_not_inject_unrelated_memories(memlib, query, forbidden, why):
-    from ivyea_agent import memory
+    from awen_agent import memory
 
     _, names = memory.auto_recall_text(query, limit=4)
     hit = [n for n in names if forbidden.lower() in n.lower()]
@@ -85,7 +85,7 @@ def test_auto_recall_does_not_inject_unrelated_memories(memlib, query, forbidden
 
 def test_auto_recall_still_finds_what_it_should(memlib):
     """准确度是两头的："什么都不注"不许拿满分。"""
-    from ivyea_agent import memory
+    from awen_agent import memory
 
     _, names = memory.auto_recall_text("harness 的 deepseek key 配在哪", limit=4)
     assert any("harness" in n.lower() for n in names), \
@@ -103,7 +103,7 @@ SKILL_REJECT = [
 
 @pytest.mark.parametrize("query,forbidden,why", SKILL_REJECT)
 def test_skill_autoinject_does_not_match_on_generic_words(query, forbidden, why):
-    from ivyea_agent import skills
+    from awen_agent import skills
 
     _, ids = skills.context_for_query(query)
     hit = [i for i in ids if any(f in i for f in forbidden)]
@@ -129,7 +129,7 @@ def test_same_source_cannot_take_more_than_one_evidence_slot():
     实测「亚马逊图片怎么优化」的前四条里有三条是同一篇文章的不同切片 ——
     这不是"证据充分"，是把证据位浪费在同一句话上。
     """
-    from ivyea_agent import knowledge
+    from awen_agent import knowledge
 
     ev = knowledge.evidence_context("亚马逊图片怎么优化", limit=4)
     ids = [str(h.get("id")) for h in (ev.get("hits") or [])]
@@ -157,7 +157,7 @@ DOMAIN_GATE = [
 
 @pytest.mark.parametrize("query,want,why", DOMAIN_GATE)
 def test_serve_domain_gate_matches_cli(query, want, why):
-    from ivyea_agent.service import _wants_domain_context
+    from awen_agent.service import _wants_domain_context
 
     got = _wants_domain_context(query)
     assert got is want, f"{why}\n  查询：{query}\n  期望{'注入' if want else '不注入'}，实际相反"
@@ -167,7 +167,7 @@ def test_serve_and_cli_share_one_domain_judgement():
     """两条路必须用同一套判据，不许各写一套 —— 它们分叉过一次。"""
     from pathlib import Path
 
-    from ivyea_agent import service
+    from awen_agent import service
 
     src = Path(service.__file__).read_text(encoding="utf-8")
     assert "_looks_like_code_task" in src and "_is_amazon_domain" in src, \
@@ -175,7 +175,7 @@ def test_serve_and_cli_share_one_domain_judgement():
 
 
 # ── 索引层：少而重要的类别不许被条目多的类别挤没 ────────────────────────────
-def test_index_layer_reserves_a_slot_for_every_category(ivyea_home):
+def test_index_layer_reserves_a_slot_for_every_category(awen_home):
     """预算按类别顺序先到先得时，排在后面的类别会整类消失。
 
     实测：133 条的库里 project 占 120 条，吃掉大半预算，排在 CATEGORIES 最后的
@@ -184,7 +184,7 @@ def test_index_layer_reserves_a_slot_for_every_category(ivyea_home):
     """
     import re
 
-    from ivyea_agent import memory_store
+    from awen_agent import memory_store
 
     root = memory_store.mem_dir()
 
@@ -215,7 +215,7 @@ def test_reflection_reads_the_full_index_not_the_trimmed_one():
     """反思靠目录判断"这条已经有了"。给它摘要版会让它重复建记忆。"""
     from pathlib import Path
 
-    from ivyea_agent import memory_reflect, memory_store
+    from awen_agent import memory_reflect, memory_store
 
     src = Path(memory_reflect.__file__).read_text(encoding="utf-8")
     assert src.count("REFLECTION_INDEX_CHARS") == 2, "反思的两个调用点都要用全量索引"

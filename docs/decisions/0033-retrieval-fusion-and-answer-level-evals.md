@@ -36,7 +36,7 @@
 **评测侧**：案例集从"召回对不对"扩展到"证据够不够回答"——加 `golden_points`（黄金要点覆盖）、
 `forbidden`（禁止说法）、`expect_guard`（幻觉陷阱题必须带上护栏卡）、`expect_gap`。
 另加 `known_gap`(xfail) 机制，和一层真跑主脑生成回答、复用 `critique.py` 分域 rubric 判分的
-`answer_evals`（独立命令 `ivyea answer-eval`，不进 CI）。
+`answer_evals`（独立命令 `awen answer-eval`，不进 CI）。
 
 ## 理由
 

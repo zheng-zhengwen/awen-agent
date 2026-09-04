@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from ivyea_agent import markdown
+from awen_agent import markdown
 
 
 def _plain(s: str) -> str:
@@ -19,16 +19,16 @@ def test_heading_and_bold(monkeypatch):
 
 
 def test_inline_code_and_list():
-    out = markdown.render("- 跑 `ivyea patrol`\n- 看报告")
+    out = markdown.render("- 跑 `awen patrol`\n- 看报告")
     assert "•" in out                                   # 列表项变圆点
     assert "`" not in out
-    assert "ivyea patrol" in _plain(out)
+    assert "awen patrol" in _plain(out)
     assert "48;5" not in out and "bg:" not in out
 
 
 def test_code_block():
-    out = markdown.render("```bash\nivyea lingxing probe\n```")
-    assert "ivyea lingxing probe" in _plain(out)
+    out = markdown.render("```bash\nawen lingxing probe\n```")
+    assert "awen lingxing probe" in _plain(out)
     assert "```" not in out
     assert "48;5" not in out
 
@@ -56,9 +56,9 @@ def hello(name):
 
 def test_tilde_fence_and_inline_code_get_structural_color(monkeypatch):
     monkeypatch.delenv("NO_COLOR", raising=False)
-    out = markdown.render("运行 `ivyea chat`：\n\n~~~bash\necho ok\n~~~")
+    out = markdown.render("运行 `awen chat`：\n\n~~~bash\necho ok\n~~~")
     assert "`" not in out and "~~~" not in out
-    assert "\033[36mivyea chat\033[0m" in out
+    assert "\033[36mawen chat\033[0m" in out
     assert "bash" in _plain(out) and "echo ok" in _plain(out)
 
 

@@ -51,15 +51,17 @@ git log 记得住「改了什么」，记不住「为什么不选另一条路」
 | [0031](./0031-a-running-turn-can-still-be-talked-to.md) | 一轮跑着的时候，人还能说话（也能叫停） | 2026-08-28 |
 | [0032](./0032-session-attachments-are-not-knowledge.md) | 会话附件不是知识：只抽正文、不进知识库 | 2026-08-30 |
 | [0033](./0033-retrieval-fusion-and-answer-level-evals.md) | 中文查询要真的能检索，评测要测回答而不是召回 | 2026-08-30 |
-| [0034](./0034-negation-guardrails-live-in-ivyea-not-the-vendored-script.md) | 否词护栏放在自己这边，不动 vendor 进来的脚本 | 2026-08-30 |
+| [0034](./0034-negation-guardrails-live-in-awen-not-the-vendored-script.md) | 否词护栏放在自己这边，不动 vendor 进来的脚本 | 2026-08-30 |
 | [0035](./0035-knowledge-gaps-must-build-their-own-priority-list.md) | 补哪些知识卡，让数据自己排，别替人判 | 2026-08-30 |
 | [0036](./0036-illustrations-come-from-og-image.md) | 回答里的配图去网页上找，不去模型里画 | 2026-09-02 |
 | [0037](./0037-quick-lane-for-knowledge-questions.md) | 知识型提问单开一条车道，只挂只读检索工具 | 2026-09-02 |
 | [0038](./0038-injection-precision-over-recall.md) | 注入精度优先于召回率，且必须先能度量 | 2026-09-02 |
 | [0039](./0039-goal-mode-holds-the-verdict.md) | 目标模式：判定权归运行时，不归模型 | 2026-09-03 |
+| [0040](./0040-awen-project-identity.md) | 项目标识统一为 awen | 2026-09-04 |
+| [0041](./0041-adjustment-ledger-and-observational-review.md) | 广告调整事实与效果复盘分层，不做因果冒充 | 2026-09-04 |
 
 相关的工作台侧决策见
-[IvyeaOps 的 ADR 目录](https://github.com/Hector-xue/IvyeaOps/tree/main/docs/decisions)，
+[awenOps 的 ADR 目录](https://github.com/zheng-zhengwen/wen-System/tree/main/docs/decisions)，
 其中 ADR-0009（自己做 agent）是本项目的立项依据。
 
 ## 模板

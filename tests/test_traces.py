@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 
-def test_trace_record_stats_and_render(ivyea_home):
-    from ivyea_agent import traces
+def test_trace_record_stats_and_render(awen_home):
+    from awen_agent import traces
 
     traces.record("s1", "t1", "tool_call", "knowledge_search", ok=True, duration_ms=12, summary="ok")
     traces.record("s1", "t1", "tool_call", "run_patrol", ok=False, duration_ms=30, summary="failed")
@@ -17,9 +17,9 @@ def test_trace_record_stats_and_render(ivyea_home):
     assert "run_patrol" in text
 
 
-def test_trace_cli(ivyea_home, capsys):
-    from ivyea_agent import traces
-    from ivyea_agent.cli import main
+def test_trace_cli(awen_home, capsys):
+    from awen_agent import traces
+    from awen_agent.cli import main
 
     traces.record("s2", "t1", "tool_call", "skill_search", summary="ok")
     assert main(["trace", "stats"]) == 0

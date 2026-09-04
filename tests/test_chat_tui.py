@@ -5,7 +5,7 @@ import io
 import re
 
 
-from ivyea_agent import chat_tui
+from awen_agent import chat_tui
 
 
 def _plain(s: str) -> str:
@@ -16,14 +16,14 @@ def test_tui_default_on_and_opt_out(monkeypatch):
     import types
     monkeypatch.setattr(chat_tui.sys, "stdin", types.SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr(chat_tui.sys, "stdout", types.SimpleNamespace(isatty=lambda: True))
-    monkeypatch.delenv("IVYEA_TUI", raising=False)
-    monkeypatch.delenv("IVYEA_LIVE", raising=False)
+    monkeypatch.delenv("AWEN_TUI", raising=False)
+    monkeypatch.delenv("AWEN_LIVE", raising=False)
     assert chat_tui.tui_enabled() is True                 # 默认全屏 alt-screen TUI（输入框钉死）
     for off in ("0", "false", "Off", "NO"):
-        monkeypatch.setenv("IVYEA_TUI", off)
-        assert chat_tui.tui_enabled() is False            # IVYEA_TUI=0 → 滚动区/行式
-    monkeypatch.delenv("IVYEA_TUI", raising=False)
-    monkeypatch.setenv("IVYEA_LIVE", "1")                 # IVYEA_LIVE=1（要滚动区）→ 不进 alt-screen
+        monkeypatch.setenv("AWEN_TUI", off)
+        assert chat_tui.tui_enabled() is False            # AWEN_TUI=0 → 滚动区/行式
+    monkeypatch.delenv("AWEN_TUI", raising=False)
+    monkeypatch.setenv("AWEN_LIVE", "1")                 # AWEN_LIVE=1（要滚动区）→ 不进 alt-screen
     assert chat_tui.tui_enabled() is False
 
 
@@ -31,11 +31,11 @@ def test_tui_disabled_when_not_tty(monkeypatch):
     import types
     monkeypatch.setattr(chat_tui.sys, "stdin", types.SimpleNamespace(isatty=lambda: False))
     monkeypatch.setattr(chat_tui.sys, "stdout", types.SimpleNamespace(isatty=lambda: True))
-    monkeypatch.delenv("IVYEA_TUI", raising=False)        # 默认开，但非 TTY 也回退
+    monkeypatch.delenv("AWEN_TUI", raising=False)        # 默认开，但非 TTY 也回退
     assert chat_tui.tui_enabled() is False
 
 
-def _run_headless(keys: str, status="  ivyea · GPT-5.5 · dry-run "):
+def _run_headless(keys: str, status="  awen · GPT-5.5 · dry-run "):
     from prompt_toolkit.input import create_pipe_input
     from prompt_toolkit.output.vt100 import Vt100_Output
     from prompt_toolkit.data_structures import Size
@@ -127,7 +127,7 @@ def test_turn_error_surfaced():
 
 # ---- P2 中断 + 排队 ----
 def test_run_turn_stream_cancel_check_raises():
-    from ivyea_agent import agent_loop, agent_tools
+    from awen_agent import agent_loop, agent_tools
 
     class _P:
         def stream_chat(self, *a, **k):
@@ -175,7 +175,7 @@ def test_tui_queue_auto_continues():
 def test_approval_marshaled_from_tool_thread():
     import threading
     import time
-    from ivyea_agent import tui as tui_mod
+    from awen_agent import tui as tui_mod
 
     tui = chat_tui.ChatTUI(status_fn=lambda: "s", turn_fn=lambda *a, **k: {"text": ""},
                            render_markdown=lambda s: s)
@@ -206,7 +206,7 @@ def test_approval_marshaled_from_tool_thread():
 
 # ---- P4 输入对齐 ----
 def test_handle_submit_routes():
-    from ivyea_agent.cli import _plan_mode_intent
+    from awen_agent.cli import _plan_mode_intent
     called = {}
     tui = chat_tui.ChatTUI(
         status_fn=lambda: "s", turn_fn=lambda *a, **k: {"text": ""}, render_markdown=lambda s: s,
@@ -238,7 +238,7 @@ def test_completer_slash():
 def test_approval_ctrl_c_picks_last_abort():
     import threading
     import time
-    from ivyea_agent import tui as tui_mod
+    from awen_agent import tui as tui_mod
 
     tui = chat_tui.ChatTUI(status_fn=lambda: "s", turn_fn=lambda *a, **k: {"text": ""},
                            render_markdown=lambda s: s)

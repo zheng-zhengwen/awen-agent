@@ -5,8 +5,8 @@ import pytest
 
 
 @pytest.fixture()
-def index(ivyea_home):
-    from ivyea_agent import retrieval_index
+def index(awen_home):
+    from awen_agent import retrieval_index
     return retrieval_index
 
 
@@ -27,7 +27,7 @@ def test_second_sync_reuses_everything(index):
 def test_changed_card_only_reencodes_its_own_chunks(index, monkeypatch):
     """改一张卡，只该重编这张卡的分块，别的原样留着。"""
     index.sync_incremental()
-    from ivyea_agent import knowledge
+    from awen_agent import knowledge
 
     real_get_card = knowledge.get_card
 
@@ -82,7 +82,7 @@ def test_dense_is_off_by_default(index):
 
 def test_dense_toggle_changes_signature(index):
     """换档位要让签名变，否则开了稠密也不会重编，等于开关无效。"""
-    from ivyea_agent import config
+    from awen_agent import config
 
     sparse_sig = index._vector_signature("some chunk text")
     config.set_setting(index.DENSE_SETTING, True)

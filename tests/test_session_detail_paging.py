@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 
-from ivyea_agent import service, sessions, transcript
+from awen_agent import service, sessions, transcript
 
 
 def _turn(idx: int, with_tool: bool = True) -> list[dict]:
@@ -119,7 +119,7 @@ def test_turnless_session_does_not_blow_up():
 
 # ── 落盘 ────────────────────────────────────────────────────────────────────
 
-def test_steps_are_appended_not_overwritten(ivyea_home):
+def test_steps_are_appended_not_overwritten(awen_home):
     """并发收尾时整份覆盖会让先写的那一轮消失 —— 消息早就是追加语义，步骤同理。"""
     sid = sessions.new_id()
     sessions.append_turn(sid, "sys", _turn(0), steps=[{"id": "call-0", "status": "ok"}])
@@ -128,7 +128,7 @@ def test_steps_are_appended_not_overwritten(ivyea_home):
     assert [s["id"] for s in got["steps"]] == ["call-0", "call-1"]
 
 
-def test_plain_save_keeps_the_steps(ivyea_home):
+def test_plain_save_keeps_the_steps(awen_home):
     """`save()` 是整份覆盖语义（CLI 每轮就这么写），它不认识步骤，
     但不该顺手把已经落盘的执行过程抹掉。"""
     sid = sessions.new_id()
@@ -137,7 +137,7 @@ def test_plain_save_keeps_the_steps(ivyea_home):
     assert [s["id"] for s in sessions.load(sid)["steps"]] == ["call-0"]
 
 
-def test_step_history_is_capped(ivyea_home):
+def test_step_history_is_capped(awen_home):
     """长会话不能让步骤数组无限长下去。"""
     sid = sessions.new_id()
     sessions.append_turn(sid, "sys", _turn(0),
@@ -147,7 +147,7 @@ def test_step_history_is_capped(ivyea_home):
     assert kept[-1]["id"] == f"c{sessions._STEPS_MAX + 49}"      # 留的是最近的
 
 
-def test_persisted_session_is_still_valid_json_for_the_model(ivyea_home):
+def test_persisted_session_is_still_valid_json_for_the_model(awen_home):
     """步骤必须存在 messages **之外**：messages 里的 dict 会原样回灌给模型 API，
     多一个自定义键就有被 provider 拒的风险。"""
     sid = sessions.new_id()
@@ -159,7 +159,7 @@ def test_persisted_session_is_still_valid_json_for_the_model(ivyea_home):
         assert set(msg) <= allowed, f"消息里混进了自定义键：{set(msg) - allowed}"
 
 
-def test_a_real_turn_persists_its_execution_steps(ivyea_home):
+def test_a_real_turn_persists_its_execution_steps(awen_home):
     """端到端：跑一轮带工具的对话，步骤要真的落盘、并能按轮取回来。
 
     这条才是"刷新之后执行过程还在"的真凭据 —— 上面那些用例喂的是手搓数据。

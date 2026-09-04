@@ -5,7 +5,7 @@ import pytest
 
 
 def _finding(before=100.0, after=85.0, target="C1", **over):
-    from ivyea_agent import store_health
+    from awen_agent import store_health
 
     kw = dict(code="ads.campaign_out_of_budget", layer="L1", severity="warn",
               action_class=store_health.STANCH, sid=1, scope="campaign",
@@ -19,8 +19,8 @@ def _finding(before=100.0, after=85.0, target="C1", **over):
 
 
 # ── 阈值 ────────────────────────────────────────────────────────────────────
-def test_threshold_override_and_reset(ivyea_home):
-    from ivyea_agent import store_health as sh
+def test_threshold_override_and_reset(awen_home):
+    from awen_agent import store_health as sh
 
     assert sh.threshold("stock.days_low.days") == sh.THRESHOLDS["stock.days_low.days"]
     sh.set_threshold("stock.days_low.days", 21)
@@ -29,9 +29,9 @@ def test_threshold_override_and_reset(ivyea_home):
     assert sh.threshold("stock.days_low.days") == sh.THRESHOLDS["stock.days_low.days"]
 
 
-def test_unknown_threshold_key_raises(ivyea_home):
+def test_unknown_threshold_key_raises(awen_home):
     """手滑写错键名必须报错，不能静默用默认值还以为改成功了。"""
-    from ivyea_agent import store_health as sh
+    from awen_agent import store_health as sh
 
     with pytest.raises(KeyError):
         sh.threshold("nope.nope")
@@ -39,18 +39,18 @@ def test_unknown_threshold_key_raises(ivyea_home):
         sh.set_threshold("nope.nope", 1)
 
 
-def test_threshold_type_is_coerced_and_validated(ivyea_home):
-    from ivyea_agent import store_health as sh
+def test_threshold_type_is_coerced_and_validated(awen_home):
+    from awen_agent import store_health as sh
 
     assert sh.set_threshold("stock.days_low.days", "18") == 18.0     # 飞书传来的是字符串
     with pytest.raises(ValueError):
         sh.set_threshold("stock.days_low.days", "很多")
 
 
-def test_threshold_change_takes_effect_in_rules(ivyea_home, monkeypatch):
+def test_threshold_change_takes_effect_in_rules(awen_home, monkeypatch):
     """改完立刻生效——不用改代码重启。"""
-    from ivyea_agent import metrics, datasources, store_health as sh
-    from ivyea_agent.datasources.lingxing_source import LingxingSource
+    from awen_agent import metrics, datasources, store_health as sh
+    from awen_agent.datasources.lingxing_source import LingxingSource
 
     class _S:
         name, label = "fake", "t"
@@ -74,8 +74,8 @@ def test_threshold_change_takes_effect_in_rules(ivyea_home, monkeypatch):
         metrics.unregister(s.name)
 
 
-def test_threshold_table_marks_overrides(ivyea_home):
-    from ivyea_agent import store_health as sh
+def test_threshold_table_marks_overrides(awen_home):
+    from awen_agent import store_health as sh
 
     sh.set_threshold("ads.cpc_jump.pct", 0.5)
     rows = {r["key"]: r for r in sh.threshold_table()}
@@ -86,8 +86,8 @@ def test_threshold_table_marks_overrides(ivyea_home):
 
 # ── 批量批准 ────────────────────────────────────────────────────────────────
 @pytest.fixture()
-def batch(ivyea_home, monkeypatch):
-    from ivyea_agent import approval_flow, approvals
+def batch(awen_home, monkeypatch):
+    from awen_agent import approval_flow, approvals
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     ids = []
@@ -100,7 +100,7 @@ def batch(ivyea_home, monkeypatch):
 
 def test_approve_all_requires_confirmation(batch, monkeypatch):
     """一次点击执行 N 个写操作，风险与收益不对称，必须二次确认。"""
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     called = []
     monkeypatch.setattr(lingxing_write, "operate_active",
@@ -112,12 +112,12 @@ def test_approve_all_requires_confirmation(batch, monkeypatch):
 
     import json
     btn = [e for e in r["card"]["elements"] if e.get("tag") == "action"][0]["actions"][0]
-    assert btn["value"]["ivyea_action"] == "approve_all_confirm"
+    assert btn["value"]["awen_action"] == "approve_all_confirm"
     assert "3" in json.dumps(r["card"], ensure_ascii=False)
 
 
 def test_approve_all_confirm_executes_only_that_card(batch, monkeypatch):
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: True)
     monkeypatch.setattr(lingxing_write, "execute",
@@ -131,7 +131,7 @@ def test_approve_all_confirm_executes_only_that_card(batch, monkeypatch):
 
 
 def test_approve_all_reports_partial_failure(batch, monkeypatch):
-    from ivyea_agent import approval_flow, lingxing_write
+    from awen_agent import approval_flow, lingxing_write
 
     seq = {"n": 0}
 
@@ -148,23 +148,23 @@ def test_approve_all_reports_partial_failure(batch, monkeypatch):
     assert "领星超时" in str(r["card"])
 
 
-def test_approve_all_on_empty_card(ivyea_home):
-    from ivyea_agent import approval_flow
+def test_approve_all_on_empty_card(awen_home):
+    from awen_agent import approval_flow
 
     r = approval_flow.approve_all("om_nothing")
     assert not r["ok"] and r["reason"] == "nothing_pending"
 
 
 def test_approve_all_respects_chat_scope(batch, monkeypatch):
-    from ivyea_agent import approval_flow
+    from awen_agent import approval_flow
 
     r = approval_flow.approve_all("om_1", chat_id="oc_other")
     assert not r["ok"] and r["reason"] == "nothing_pending"
 
 
 # ── 写开关按钮 ──────────────────────────────────────────────────────────────
-def test_operate_on_sets_switch_with_ttl(ivyea_home):
-    from ivyea_agent import approval_flow, lingxing_write
+def test_operate_on_sets_switch_with_ttl(awen_home):
+    from awen_agent import approval_flow, lingxing_write
 
     assert lingxing_write.operate_active() is False
     r = approval_flow.set_operate(minutes=30, operator="ou_me")
@@ -173,18 +173,18 @@ def test_operate_on_sets_switch_with_ttl(ivyea_home):
     assert approval_flow.operate_status()["active"] is True
 
 
-def test_operate_minutes_are_clamped(ivyea_home):
-    from ivyea_agent import approval_flow
+def test_operate_minutes_are_clamped(awen_home):
+    from awen_agent import approval_flow
 
     assert approval_flow.set_operate(minutes=99999)["expires_in_minutes"] == 480
     assert approval_flow.set_operate(minutes=0)["expires_in_minutes"] == 120
 
 
-def test_operate_off_card_offers_the_button(ivyea_home, monkeypatch):
+def test_operate_off_card_offers_the_button(awen_home, monkeypatch):
     """被"写开关未开"挡住时，出路不该是"你去登服务器敲命令"。"""
     import json
 
-    from ivyea_agent import approval_flow, approvals, lingxing_write
+    from awen_agent import approval_flow, approvals, lingxing_write
 
     monkeypatch.setattr(approval_flow, "_update_card", lambda a, c: True)
     monkeypatch.setattr(lingxing_write, "operate_active", lambda: False)
@@ -196,7 +196,7 @@ def test_operate_off_card_offers_the_button(ivyea_home, monkeypatch):
 
 # ── 端点 ────────────────────────────────────────────────────────────────────
 def test_action_endpoint_contract(batch, monkeypatch):
-    from ivyea_agent import service
+    from awen_agent import service
 
     code, data = service.feishu_action({"action": "approve_all", "message_id": "om_1",
                                         "chat_id": "oc_1"})
@@ -209,8 +209,8 @@ def test_action_endpoint_contract(batch, monkeypatch):
     assert code3 == 400 and "未知动作" in data3["error"]
 
 
-def test_action_endpoint_threshold(ivyea_home):
-    from ivyea_agent import service
+def test_action_endpoint_threshold(awen_home):
+    from awen_agent import service
 
     code, data = service.feishu_action({"action": "threshold_list"})
     assert code == 200 and data["thresholds"]
@@ -227,8 +227,8 @@ def test_action_endpoint_threshold(ivyea_home):
     assert code4 == 400
 
 
-def test_action_endpoint_operate(ivyea_home):
-    from ivyea_agent import service
+def test_action_endpoint_operate(awen_home):
+    from awen_agent import service
 
     code, data = service.feishu_action({"action": "operate_on", "minutes": 15})
     assert code == 200 and data["expires_in_minutes"] == 15

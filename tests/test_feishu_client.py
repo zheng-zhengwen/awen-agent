@@ -8,11 +8,11 @@ import pytest
 
 
 @pytest.fixture()
-def wired(ivyea_home, monkeypatch):
-    from ivyea_agent import config, feishu_client
+def wired(awen_home, monkeypatch):
+    from awen_agent import config, feishu_client
 
-    monkeypatch.setenv("IVYEA_FEISHU_APP_ID", "cli_test")
-    monkeypatch.setenv("IVYEA_FEISHU_APP_SECRET", "secret_test")
+    monkeypatch.setenv("AWEN_FEISHU_APP_ID", "cli_test")
+    monkeypatch.setenv("AWEN_FEISHU_APP_SECRET", "secret_test")
     s = config.load_settings()
     s["feishu_default_chat_id"] = "oc_default"
     config.save_settings(s)
@@ -129,7 +129,7 @@ def test_send_card_serializes_content(wired, monkeypatch):
 
 
 def test_missing_chat_id_errors(wired, monkeypatch):
-    from ivyea_agent import config
+    from awen_agent import config
 
     s = config.load_settings()
     s["feishu_default_chat_id"] = ""
@@ -154,25 +154,25 @@ def test_api_error_is_raised_with_code(wired, monkeypatch):
     assert e.value.code == 230001
 
 
-def test_not_configured(ivyea_home, monkeypatch):
-    from ivyea_agent import feishu_client
+def test_not_configured(awen_home, monkeypatch):
+    from awen_agent import feishu_client
 
-    monkeypatch.delenv("IVYEA_FEISHU_APP_ID", raising=False)
-    monkeypatch.delenv("IVYEA_FEISHU_APP_SECRET", raising=False)
+    monkeypatch.delenv("AWEN_FEISHU_APP_ID", raising=False)
+    monkeypatch.delenv("AWEN_FEISHU_APP_SECRET", raising=False)
     assert feishu_client.is_configured() is False
     assert feishu_client.verify()["ok"] is False
 
 
-def test_notify_channel_reports_missing_creds(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, feishu_client
+def test_notify_channel_reports_missing_creds(awen_home, monkeypatch):
+    from awen_agent import notify, feishu_client
 
     monkeypatch.setattr(feishu_client, "is_configured", lambda: False)
     r = notify.send("x", channel="feishu_app")
     assert not r["ok"] and "凭据" in r["error"]
 
 
-def test_notify_feishu_app_sends_card(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, feishu_client
+def test_notify_feishu_app_sends_card(awen_home, monkeypatch):
+    from awen_agent import notify, feishu_client
 
     sent = []
     monkeypatch.setattr(feishu_client, "is_configured", lambda: True)
@@ -185,8 +185,8 @@ def test_notify_feishu_app_sends_card(ivyea_home, monkeypatch):
     assert "卡片已发送" in notify.render_result(r)
 
 
-def test_notify_redacts_before_sending(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, feishu_client
+def test_notify_redacts_before_sending(awen_home, monkeypatch):
+    from awen_agent import notify, feishu_client
 
     sent = []
     monkeypatch.setattr(feishu_client, "is_configured", lambda: True)
@@ -197,8 +197,8 @@ def test_notify_redacts_before_sending(ivyea_home, monkeypatch):
     assert "abc123xyz" not in json.dumps(sent[0], ensure_ascii=False)
 
 
-def test_long_message_is_chunked_into_multiple_cards(ivyea_home, monkeypatch):
-    from ivyea_agent import notify, feishu_client
+def test_long_message_is_chunked_into_multiple_cards(awen_home, monkeypatch):
+    from awen_agent import notify, feishu_client
 
     sent = []
     monkeypatch.setattr(feishu_client, "is_configured", lambda: True)

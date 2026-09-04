@@ -4,9 +4,9 @@ from __future__ import annotations
 import threading
 
 
-def test_run_turn_stream_passes_custom_tools(ivyea_home):
+def test_run_turn_stream_passes_custom_tools(awen_home):
     """回归：run_turn_stream 把传入的受限工具子集喂给 provider（此前硬编码全量）。"""
-    from ivyea_agent import agent_loop, agent_tools
+    from awen_agent import agent_loop, agent_tools
     seen = {}
 
     class _P:
@@ -22,15 +22,15 @@ def test_run_turn_stream_passes_custom_tools(ivyea_home):
     assert seen["tools"] is subset
 
 
-def test_dispatch_subagent_is_parallel_safe(ivyea_home):
-    from ivyea_agent.agent_tools import PARALLEL_SAFE, READONLY_TOOLS
+def test_dispatch_subagent_is_parallel_safe(awen_home):
+    from awen_agent.agent_tools import PARALLEL_SAFE, READONLY_TOOLS
     assert "dispatch_subagent" in PARALLEL_SAFE
     assert "dispatch_subagent" not in READONLY_TOOLS   # 子 agent 不能递归再派子 agent
 
 
-def test_two_subagents_run_concurrently(ivyea_home):
+def test_two_subagents_run_concurrently(awen_home):
     """真并行验证：两个子 agent 的 chat() 用 Barrier(2) 互相等——只有并发才能双双过闸。"""
-    from ivyea_agent import agent_loop, agent_tools
+    from awen_agent import agent_loop, agent_tools
 
     barrier = threading.Barrier(2, timeout=10)
 
@@ -66,9 +66,9 @@ def test_two_subagents_run_concurrently(ivyea_home):
     assert tool_msgs[1]["tool_call_id"] == "s2" and "查B" in tool_msgs[1]["content"]
 
 
-def test_subagent_max_steps_cap_configurable(ivyea_home):
+def test_subagent_max_steps_cap_configurable(awen_home):
     """max_steps 上限从写死 20 → 配置键 subagent_max_steps_cap（默认 40）。"""
-    from ivyea_agent import agent_tools, config
+    from awen_agent import agent_tools, config
 
     captured = {}
 
@@ -76,7 +76,7 @@ def test_subagent_max_steps_cap_configurable(ivyea_home):
         def chat(self, messages, tools=None, **kw):
             return {"content": "done", "tool_calls": []}
 
-    import ivyea_agent.agent_loop as agent_loop
+    import awen_agent.agent_loop as agent_loop
     orig = agent_loop.run_turn
 
     def _spy(provider, ctx, messages, max_steps=None, **kw):
@@ -104,9 +104,9 @@ def test_parallel_branch_announces_everything_before_executing(tmp_path):
 
     改成"边announce边执行"不会让任何后端测试变红，但会让界面开始说假话，所以钉在这。
     """
-    from ivyea_agent import agent_loop
-    from ivyea_agent.agent_tools import ToolContext
-    from ivyea_agent.agent_loop import TurnStatus
+    from awen_agent import agent_loop
+    from awen_agent.agent_tools import ToolContext
+    from awen_agent.agent_loop import TurnStatus
 
     events: list[tuple[str, str]] = []
 

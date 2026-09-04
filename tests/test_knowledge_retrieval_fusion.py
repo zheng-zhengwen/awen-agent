@@ -1,7 +1,7 @@
 """检索融合层：中文分词、BM25 长度归一化、摘录质量、预算分配、热路径守卫。"""
 from __future__ import annotations
 
-from ivyea_agent import knowledge, knowledge_quality
+from awen_agent import knowledge, knowledge_quality
 
 
 def test_chinese_query_is_tokenized_into_ngrams():
@@ -114,7 +114,7 @@ def test_market_bonus_is_generic_across_marketplaces():
 
 def test_vector_path_never_rebuilds_index_on_hot_path(monkeypatch):
     """注入是热路径：索引缺失时必须放弃向量路，绝不触发同步重建。"""
-    from ivyea_agent import retrieval_index
+    from awen_agent import retrieval_index
 
     called = {"search": 0, "rebuild": 0}
 
@@ -140,7 +140,7 @@ def test_vector_path_never_rebuilds_index_on_hot_path(monkeypatch):
 
 def test_vector_path_degrades_on_error(monkeypatch):
     """向量路出任何问题都退回纯词法，不能让一次检索抛异常。"""
-    from ivyea_agent import retrieval_index
+    from awen_agent import retrieval_index
 
     monkeypatch.setattr(retrieval_index, "status", lambda: {"enabled": True, "chunks": 10})
 
@@ -203,7 +203,7 @@ def test_hallucination_trap_retrieves_guardrail_card():
 
 # ---- 证据强度日志（补卡优先级的数据来源）----
 
-def test_retrieval_log_records_evidence_strength(ivyea_home):
+def test_retrieval_log_records_evidence_strength(awen_home):
     """每次亚马逊域检索都要留一笔证据强度。
 
     补卡优先级本该按真实提问频次排，但会话历史里只有 21 条非命令提问、且基本是开发
@@ -217,7 +217,7 @@ def test_retrieval_log_records_evidence_strength(ivyea_home):
     assert "广告花了钱不出单" in queries
 
 
-def test_retrieval_log_ranks_weakest_evidence_first(ivyea_home):
+def test_retrieval_log_ranks_weakest_evidence_first(awen_home):
     """排序按证据强度：权威卡少、词法分低的排前面。"""
     knowledge.evidence_context("有人跟卖我的链接怎么办", limit=4)      # 有真覆盖
     knowledge.evidence_context("亚马逊超级铂金标怎么申请", limit=4)     # 编造的机制
@@ -226,13 +226,13 @@ def test_retrieval_log_ranks_weakest_evidence_first(ivyea_home):
     assert order.index("亚马逊超级铂金标怎么申请") < order.index("有人跟卖我的链接怎么办")
 
 
-def test_non_amazon_query_is_not_logged(ivyea_home):
+def test_non_amazon_query_is_not_logged(awen_home):
     """编码类问题不该进这份清单——它压根不是亚马逊检索。"""
     knowledge.evidence_context("编译链接报错 undefined symbol", limit=4)
     assert knowledge.knowledge_gaps()["total_events"] == 0
 
 
-def test_logging_failure_never_breaks_retrieval(ivyea_home, monkeypatch):
+def test_logging_failure_never_breaks_retrieval(awen_home, monkeypatch):
     """记日志失败也必须把证据正常返回。"""
     def boom(*args, **kwargs):
         raise OSError("disk full")
@@ -242,7 +242,7 @@ def test_logging_failure_never_breaks_retrieval(ivyea_home, monkeypatch):
     assert evidence["citations"]
 
 
-def test_evidence_standard_guard_attached_for_invented_mechanism(ivyea_home):
+def test_evidence_standard_guard_attached_for_invented_mechanism(awen_home):
     """问一个具名机制（某某认证/等级）时必须挂上证据标准护栏卡。
 
     最容易出事的不是答不出来，是顺着问题把一个不存在的机制编圆。

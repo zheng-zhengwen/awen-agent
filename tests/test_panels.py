@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from ivyea_agent import panels
+from awen_agent import panels
 
 
 def _plain(s: str) -> str:
@@ -59,7 +59,7 @@ def test_render_diff_batches_highlighting_per_file(monkeypatch):
         calls.append(code)
         return code
 
-    monkeypatch.setattr("ivyea_agent.terminal_theme.highlight_code", fake)
+    monkeypatch.setattr("awen_agent.terminal_theme.highlight_code", fake)
     old = "\n".join(f"x{i} = {i}" for i in range(40))
     new = "\n".join(f"x{i} = {i + 1}" for i in range(40))
     panels.render_diff(old, new, "demo.py")
@@ -91,8 +91,8 @@ def test_panels_respect_no_color_environment(monkeypatch):
 
 
 def test_todo_write_tool(tmp_path):
-    from ivyea_agent import tools_general as tg
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import tools_general as tg
+    from awen_agent.agent_tools import ToolContext
     ctx = ToolContext(workspace=str(tmp_path))
     r = tg.t_todo_write({"todos": [
         {"content": "a", "status": "completed"},
@@ -104,27 +104,27 @@ def test_todo_write_tool(tmp_path):
 
 
 def test_todo_write_registered():
-    from ivyea_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
+    from awen_agent.agent_tools import TOOL_SCHEMAS, _DISPATCH
     names = {t["function"]["name"] for t in TOOL_SCHEMAS}
     assert "todo_write" in names and "todo_write" in _DISPATCH
 
 
 def test_edit_file_preview_shows_diff(tmp_path):
     """edit_file 审批预览应含彩色 diff（用 session_allow 放行后不弹）。"""
-    from ivyea_agent import panels as p
+    from awen_agent import panels as p
     d = p.render_diff("1.00", "0.85", "f")
     assert "- 1.00" in _plain(d) and "+ 0.85" in _plain(d)
 
 
 def test_markdown_no_color(monkeypatch):
-    from ivyea_agent import markdown
+    from awen_agent import markdown
     monkeypatch.setenv("NO_COLOR", "1")
     out = markdown.render("# 标题\n**粗体**")
     assert "\033[" not in out and "标题" in out and "粗体" in out
 
 
 def test_ui_message_and_panel_no_color(monkeypatch):
-    from ivyea_agent import ui
+    from awen_agent import ui
     monkeypatch.setenv("NO_COLOR", "1")
     msg = ui.message("warn", "检查配置")
     box = ui.panel("标题", "很长的内容 " * 10, kind="warn", width=48)
@@ -133,7 +133,7 @@ def test_ui_message_and_panel_no_color(monkeypatch):
 
 
 def test_ui_tool_result_distinguishes_success_warning_and_error(monkeypatch):
-    from ivyea_agent import ui
+    from awen_agent import ui
     monkeypatch.delenv("NO_COLOR", raising=False)
     success = ui.tool_result("✓ 测试通过", ok=True)
     warning = ui.tool_result("⚠ 搜索根可能错误", ok=True)
@@ -145,13 +145,13 @@ def test_ui_tool_result_distinguishes_success_warning_and_error(monkeypatch):
 
 
 def test_ui_tool_call_truncates_args():
-    from ivyea_agent import ui
+    from awen_agent import ui
     out = ui.tool_call("read_file", {"path": "/tmp/" + "x" * 100}, color=False)
     assert "读取文件" in out and "..." in out      # 友好动词 + 超长明细截断
 
 
 def test_ui_tool_call_friendly_verb_and_stage_no_color():
-    from ivyea_agent import ui
+    from awen_agent import ui
     call = ui.tool_call("read_file", {"path": "a.py"}, color=False)
     stage = ui.stage("Code", "计划 → 测试", color=False)
     assert "读取文件" in call and "a.py" in call and "└" in call   # 动词 + └ 明细行
@@ -160,7 +160,7 @@ def test_ui_tool_call_friendly_verb_and_stage_no_color():
 
 
 def test_chat_input_style_avoids_block_backgrounds():
-    from ivyea_agent.chat_input import ChatInput
+    from awen_agent.chat_input import ChatInput
     styles = ChatInput._style_dict()
     combined = " ".join(styles.values())
     assert "bg:" not in combined
@@ -168,18 +168,18 @@ def test_chat_input_style_avoids_block_backgrounds():
 
 
 def test_chat_input_boxed_mode_default_on(monkeypatch):
-    from ivyea_agent.chat_input import ChatInput
-    monkeypatch.delenv("IVYEA_BOXED_INPUT", raising=False)
+    from awen_agent.chat_input import ChatInput
+    monkeypatch.delenv("AWEN_BOXED_INPUT", raising=False)
     assert ChatInput._boxed_enabled() is True            # 默认带框
     for off in ("0", "false", "Off", "NO"):
-        monkeypatch.setenv("IVYEA_BOXED_INPUT", off)
+        monkeypatch.setenv("AWEN_BOXED_INPUT", off)
         assert ChatInput._boxed_enabled() is False        # 显式关闭
-    monkeypatch.setenv("IVYEA_BOXED_INPUT", "1")
+    monkeypatch.setenv("AWEN_BOXED_INPUT", "1")
     assert ChatInput._boxed_enabled() is True
 
 
 def test_chat_input_echo_indents_multiline(capsys, monkeypatch):
-    from ivyea_agent.chat_input import ChatInput
+    from awen_agent.chat_input import ChatInput
     monkeypatch.setenv("NO_COLOR", "1")
     ChatInput._echo_submitted("第一行\n第二行")
     ChatInput._echo_submitted("   ")                      # 纯空白不回显
@@ -190,7 +190,7 @@ def test_chat_input_echo_indents_multiline(capsys, monkeypatch):
 
 def test_ui_icons_fallback_to_ascii_on_non_utf8(monkeypatch):
     import types
-    from ivyea_agent import ui
+    from awen_agent import ui
     monkeypatch.setattr(ui.sys, "stdout", types.SimpleNamespace(encoding="gbk"))
     assert ui._unicode_glyphs_ok() is False               # Windows GBK 回退 ASCII
     monkeypatch.setattr(ui.sys, "stdout", types.SimpleNamespace(encoding="utf-8"))

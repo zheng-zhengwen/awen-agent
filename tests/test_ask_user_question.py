@@ -12,8 +12,8 @@ import time
 
 import pytest
 
-from ivyea_agent import agent_tools, ask
-from ivyea_agent.agent_tools import ToolContext
+from awen_agent import agent_tools, ask
+from awen_agent.agent_tools import ToolContext
 
 
 def teardown_function():
@@ -182,8 +182,8 @@ def test_a_partly_answered_card_still_records_what_was_auto_filled():
     实测栽过：真跑那一轮里模型问了四问，脚本只答了第一问，另外三问被按推荐项
     填掉却没进 auto_decisions —— 收尾说明里一个字都不会提，用户永远不知道。
     """
-    from ivyea_agent import agent_tools
-    from ivyea_agent.agent_tools import ToolContext
+    from awen_agent import agent_tools
+    from awen_agent.agent_tools import ToolContext
 
     qs = [
         {"question": "口径按哪个？", "header": "口径",
@@ -209,7 +209,7 @@ def test_skip_is_not_reported_as_timeout():
 
     两者的答案完全一样（都按推荐项），区别只在通道回的是 dict 还是 None。
     """
-    from ivyea_agent import ask
+    from awen_agent import ask
 
     qs = ask.normalize([{"question": "走哪条", "options": [
         {"label": "A", "recommended": True}, {"label": "B"}]}])
@@ -225,7 +225,7 @@ def test_skip_is_not_reported_as_timeout():
 
 
 def test_tool_wording_for_skip_does_not_blame_the_user(tmp_path, monkeypatch):
-    from ivyea_agent import agent_tools
+    from awen_agent import agent_tools
 
     ctx = agent_tools.ToolContext(workspace=str(tmp_path))
     ctx.ask_fn = lambda questions, timeout: {"answers": {}}      # 人在场，全跳过
@@ -243,7 +243,7 @@ def _tty(monkeypatch):
 
 def test_terminal_free_text_becomes_the_answer(monkeypatch):
     """给的选项都不对时，用户写的那句话就是答案 —— 后端对值不做校验。"""
-    from ivyea_agent import ask, tui
+    from awen_agent import ask, tui
 
     _tty(monkeypatch)
     monkeypatch.setattr(tui, "select", lambda *a, **k: ask.OTHER_KEY)
@@ -255,7 +255,7 @@ def test_terminal_free_text_becomes_the_answer(monkeypatch):
 
 def test_terminal_free_text_left_empty_counts_as_unanswered(monkeypatch):
     """打开输入又改主意（空串）＝这题没答，交给 resolve 按推荐补。"""
-    from ivyea_agent import ask, tui
+    from awen_agent import ask, tui
 
     _tty(monkeypatch)
     monkeypatch.setattr(tui, "select", lambda *a, **k: ask.OTHER_KEY)
@@ -267,7 +267,7 @@ def test_terminal_free_text_left_empty_counts_as_unanswered(monkeypatch):
 
 def test_terminal_skip_returns_a_dict_not_none(monkeypatch):
     """跳过必须回**空 dict**，不是 None —— None 会被 resolve 当成"没人答"。"""
-    from ivyea_agent import ask, tui
+    from awen_agent import ask, tui
 
     _tty(monkeypatch)
     monkeypatch.setattr(tui, "select", lambda *a, **k: ask.SKIP_KEY)
@@ -280,7 +280,7 @@ def test_terminal_skip_returns_a_dict_not_none(monkeypatch):
 
 def test_terminal_menu_always_offers_both_ways_out(monkeypatch):
     """菜单末尾固定两项，顺序也钉住：跳过在最后（降级菜单的空输入落到它）。"""
-    from ivyea_agent import ask, tui
+    from awen_agent import ask, tui
 
     _tty(monkeypatch)
     seen: list = []
@@ -295,7 +295,7 @@ def test_terminal_menu_always_offers_both_ways_out(monkeypatch):
 
 def test_terminal_ctrl_c_still_means_nobody_answered(monkeypatch):
     """整张卡按 Ctrl-C 掉 ≠ 跳过：那是没人答，reason 要落到 timeout。"""
-    from ivyea_agent import ask, tui
+    from awen_agent import ask, tui
 
     _tty(monkeypatch)
     def _boom(*a, **k):
@@ -310,7 +310,7 @@ def test_prompt_text_never_blocks_a_pipe(monkeypatch):
     """非 tty 直接返回空串 —— 在管道里等 input() 会把整轮吊死。"""
     import sys
 
-    from ivyea_agent import tui
+    from awen_agent import tui
 
     monkeypatch.setattr(sys, "stdin", type("S", (), {"isatty": staticmethod(lambda: False)})())
     monkeypatch.setattr(tui, "_ACTIVE_PROMPT", None)
@@ -321,7 +321,7 @@ def test_prompt_text_never_blocks_a_pipe(monkeypatch):
 def test_tui_prompt_is_marshalled_to_the_running_app(monkeypatch):
     """挂了 active prompt 就必须走它，不能自己 input() —— 终端归 app 管，
     工具线程直接 input() 打出来的字会串进画面。"""
-    from ivyea_agent import tui
+    from awen_agent import tui
 
     monkeypatch.setattr(tui, "_ACTIVE_PROMPT", lambda title, body: "  从 app 收到的  ")
     assert tui.prompt_text("问题", "说明") == "从 app 收到的"
@@ -331,7 +331,7 @@ def test_chat_tui_prompt_round_trip():
     """`_prompt_text` 阻塞工具线程，主 app 提交那一行把它唤醒。"""
     import threading
 
-    from ivyea_agent.chat_tui import ChatTUI
+    from awen_agent.chat_tui import ChatTUI
 
     app = ChatTUI(status_fn=lambda: "", turn_fn=lambda *a, **k: {"text": ""})
     got: list[str] = []
@@ -351,7 +351,7 @@ def test_chat_tui_empty_submission_is_a_valid_non_answer():
     """空回车＝这题不答。必须收下并唤醒，不能当成"什么都没发生"卡住工具线程。"""
     import threading
 
-    from ivyea_agent.chat_tui import ChatTUI
+    from awen_agent.chat_tui import ChatTUI
 
     app = ChatTUI(status_fn=lambda: "", turn_fn=lambda *a, **k: {"text": ""})
     got: list[str] = []
@@ -374,7 +374,7 @@ def test_chat_tui_free_answer_outranks_queueing_while_running():
     """
     from pathlib import Path
 
-    from ivyea_agent import chat_tui
+    from awen_agent import chat_tui
 
     src = Path(chat_tui.__file__).read_text(encoding="utf-8")
     body = src[src.index('@kb.add("enter")'):]
@@ -386,7 +386,7 @@ def test_chat_tui_registers_and_clears_the_prompt_channel():
     app 就是死锁（选择器那条早就踩过，这里照抄它的成对写法）。"""
     from pathlib import Path
 
-    from ivyea_agent import chat_tui
+    from awen_agent import chat_tui
 
     # 只数真调用：那段注释里也写着 `set_active_selector(None)`，按整份文本 count
     # 会把它算进去（第一版就是这么写错的）。

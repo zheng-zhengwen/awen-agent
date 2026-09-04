@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import json
 
-from ivyea_agent import workspace
+from awen_agent import workspace
 
 
 def test_build_index_skips_noise_and_extracts_symbols(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / ".git").mkdir()
     (tmp_path / ".git" / "config").write_text("secret", encoding="utf-8")
     (tmp_path / "app.py").write_text("class App:\n    pass\n\ndef run():\n    return 1\n", encoding="utf-8")
@@ -28,7 +28,7 @@ def test_build_index_skips_noise_and_extracts_symbols(tmp_path, monkeypatch):
 
 
 def test_python_ast_index_extracts_methods_and_calls(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "svc.py").write_text(
         "import json\n\n"
         "class Service:\n"
@@ -49,7 +49,7 @@ def test_python_ast_index_extracts_methods_and_calls(tmp_path, monkeypatch):
 
 
 def test_javascript_typescript_semantic_index(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "ui.ts").write_text(
         "export class Panel {}\n\n"
         "export function renderPanel() {\n"
@@ -73,7 +73,7 @@ def test_javascript_typescript_semantic_index(tmp_path, monkeypatch):
 
 
 def test_save_load_search_map_and_explain(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "pkg").mkdir()
     (tmp_path / "pkg" / "service.py").write_text(
         "def optimize_campaign():\n    return 'search term budget'\n",
@@ -105,7 +105,7 @@ def test_save_load_search_map_and_explain(tmp_path, monkeypatch):
 
 
 def test_renderers_are_stable(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "README.md").write_text("hello workspace", encoding="utf-8")
     idx = workspace.build_index(tmp_path)
     out = workspace.render_index(idx)
@@ -117,7 +117,7 @@ def test_renderers_are_stable(tmp_path, monkeypatch):
 
 
 def test_dependency_graph_and_project_inspect(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "pkg").mkdir()
     (tmp_path / "tests").mkdir()
     (tmp_path / ".github" / "workflows").mkdir(parents=True)
@@ -147,12 +147,12 @@ def test_dependency_graph_and_project_inspect(tmp_path, monkeypatch):
     assert any(e.get("name") == "demo" for e in inspected["entrypoints"])
     assert "tests/test_core.py" in inspected["tests"]
     assert "python -m pytest" in inspected["suggested_commands"]
-    assert "ivyea gitops ci --root ." in inspected["suggested_commands"]
+    assert "awen gitops ci --root ." in inspected["suggested_commands"]
     assert "Workspace Inspect" in workspace.render_inspect(inspected)
 
 
 def test_symbol_index_and_impact_analysis(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "pkg").mkdir()
     (tmp_path / "tests").mkdir()
     (tmp_path / "pkg" / "__init__.py").write_text("", encoding="utf-8")
@@ -175,7 +175,7 @@ def test_symbol_index_and_impact_analysis(tmp_path, monkeypatch):
 
 
 def test_index_json_is_serializable(tmp_path, monkeypatch):
-    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".ivyea" / "workspaces")
+    monkeypatch.setattr(workspace, "WORKSPACE_DIR", tmp_path / ".awen" / "workspaces")
     (tmp_path / "a.txt").write_text("abc", encoding="utf-8")
     idx = workspace.build_index(tmp_path)
     assert json.loads(json.dumps(idx, ensure_ascii=False))["files"][0]["path"] == "a.txt"
