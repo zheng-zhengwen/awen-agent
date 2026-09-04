@@ -437,30 +437,6 @@ ivyea self status / backup / upgrade / uninstall   # 安装识别 / 备份 / 升
 - [docs/使用与操作文档.md](docs/使用与操作文档.md) —— 各命令与本地 API 详解
 - [docs/IvyeaAgent产品化路线图.md](docs/IvyeaAgent产品化路线图.md) —— 产品规划
 
-如有问题，欢迎到 [Issues](https://github.com/Hector-xue/ivyea-agent/issues) 反馈，或扫码进群交流。
 
 ---
 
-## 许可证
-
-[MIT](LICENSE) © 2026 Hector
-
-可以自由使用、修改、分发，包括商用；保留版权声明即可。
-
----
-
-## ☕ 请作者喝杯咖啡
-
-Ivyea Agent 一直是免费开源的。如果感觉对你起到了帮助，欢迎请作者喝杯咖啡——一杯咖啡就是下个版本的动力。当然，点个 Star，同样是很大的支持。
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="docs/assets/wechat-pay-qr.png" alt="微信收款码" width="300" />
-      <br />
-      <strong>微信扫码 · 支持作者</strong>
-      <br />
-      <sub>金额随意，心意都收到了</sub>
-    </td>
-  </tr>
-</table>
