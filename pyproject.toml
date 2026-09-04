@@ -23,6 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business",
 ]
 dependencies = [
@@ -37,13 +39,15 @@ dependencies = [
     # T3 本地视觉（local_vision）的图像解码。纯 wheel、约 3MB，各平台都有。
     "Pillow>=10.0",
     # T3 的 OCR 引擎（PP-OCR 系模型的 ONNX 封装，模型内置在 wheel 里，中英电商图
-    # 明显强于 tesseract）。onnxruntime 上面已经有了，这里主要多出 opencv-python。
+    # 明显强于 tesseract）。旧包只支持 Python <3.13；Python 3.13+ 使用仍在维护的
+    # rapidocr v3。onnxruntime 上面已经有了，这里主要多出 opencv-python。
     #
     # **精简 Linux 镜像的坑**：opencv-python 依赖 libGL.so.1，slim/alpine 基础镜像
     # 默认没有，`import cv2` 会直接抛。ocr.py 的引擎探测是**运行时**做的，抛了会
     # 自动落到 tesseract、再落到"无 OCR"，T3 的几何/色彩度量不受影响。要修就装
     # 系统包 mesa-libGL（RHEL 系）/ libgl1（Debian 系）。
-    "rapidocr-onnxruntime>=1.4",
+    "rapidocr-onnxruntime>=1.4; python_version < '3.13'",
+    "rapidocr>=3.0,<4; python_version >= '3.13'",
     "openpyxl>=3.1",
     # 技能的 SKILL.md frontmatter 用它解析。业界通行的技能格式（Anthropic Agent
     # Skills / Claude Code）就是 Markdown + YAML frontmatter，要认这个格式就绕不开

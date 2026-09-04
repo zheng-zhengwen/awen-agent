@@ -15,14 +15,17 @@ ONNX 封装，中英电商图明显更强，模型内置在 wheel 里（14.9MB�
 """
 from __future__ import annotations
 
+import importlib
 import shutil
 import subprocess
+import sys
 from typing import Any
 
 from . import image_audit, security
 
 _RAPID_CACHE: Any = None
 _RAPID_FAILED = ""
+_RAPID_DISTRIBUTION = ""
 
 
 def _rapidocr():
@@ -31,16 +34,33 @@ def _rapidocr():
     必须惰性：模型初始化要几百毫秒，而绝大多数请求根本不看图；更要紧的是
     `import cv2` 在缺 libGL 的机器上会抛，放在模块顶层会让整个 ocr 模块不可导入。
     """
-    global _RAPID_CACHE, _RAPID_FAILED
+    global _RAPID_CACHE, _RAPID_FAILED, _RAPID_DISTRIBUTION
     if _RAPID_CACHE is not None or _RAPID_FAILED:
         return _RAPID_CACHE
-    try:
-        from rapidocr_onnxruntime import RapidOCR
-        _RAPID_CACHE = RapidOCR()
-    except Exception as e:  # noqa: BLE001 — 缺包/缺 libGL/模型损坏都走同一条降级路
-        _RAPID_FAILED = str(e)
-        return None
-    return _RAPID_CACHE
+    failures = []
+    # rapidocr-onnxruntime 1.x stops at Python 3.12.  Its maintained successor
+    # is rapidocr 3.x, whose import path and result object are both different.
+    # Try both so upgraded environments and manually managed installations work
+    # even if they temporarily contain the non-default distribution.
+    for module_name, distribution in (
+        ("rapidocr_onnxruntime", "rapidocr-onnxruntime"),
+        ("rapidocr", "rapidocr"),
+    ):
+        try:
+            module = importlib.import_module(module_name)
+            _RAPID_CACHE = module.RapidOCR()
+            _RAPID_DISTRIBUTION = distribution
+            return _RAPID_CACHE
+        except Exception as e:  # noqa: BLE001 — 缺包/缺 libGL/模型损坏都走同一条降级路
+            failures.append(f"{distribution}: {e}")
+    _RAPID_FAILED = "; ".join(failures)
+    return None
+
+
+def _rapidocr_install_hint() -> str:
+    if sys.version_info >= (3, 13):
+        return "pip install rapidocr onnxruntime"
+    return "pip install rapidocr-onnxruntime"
 
 
 def _tesseract() -> str:
@@ -50,11 +70,10 @@ def _tesseract() -> str:
 def available() -> tuple[bool, str]:
     """(能否 OCR, 引擎描述)。描述里带引擎名，调用方直接透传给用户看。"""
     if _rapidocr() is not None:
-        # 版本从包元数据取：rapidocr_onnxruntime 并不导出 __version__，
-        # 按属性拿只会一直显示 "?"。
+        # 版本从包元数据取：两个 RapidOCR 包都不保证导出 __version__。
         try:
             from importlib.metadata import version as _pkg_version
-            ver = _pkg_version("rapidocr-onnxruntime")
+            ver = _pkg_version(_RAPID_DISTRIBUTION or "rapidocr-onnxruntime")
         except Exception:  # noqa: BLE001
             ver = "?"
         return True, f"RapidOCR (ONNX) {ver}"
@@ -67,7 +86,7 @@ def available() -> tuple[bool, str]:
             return True, first
         except Exception as e:  # noqa: BLE001
             return False, f"tesseract 不可用：{e}"
-    detail = "未找到 OCR 引擎：建议 pip install rapidocr-onnxruntime，或安装系统包 tesseract。"
+    detail = f"未找到 OCR 引擎：建议 {_rapidocr_install_hint()}，或安装系统包 tesseract。"
     if _RAPID_FAILED:
         detail += f"（RapidOCR 加载失败：{_RAPID_FAILED}）"
     return False, detail
@@ -82,7 +101,19 @@ def _run_rapidocr(engine, images: list[dict[str, Any]]) -> list[dict[str, Any]]:
     results = []
     for img in images:
         try:
-            out, _elapse = engine(img["path"])
+            output = engine(img["path"])
+            if all(hasattr(output, name) for name in ("boxes", "txts", "scores")):
+                # rapidocr 3.x returns RapidOCROutput.  Avoid boolean tests on
+                # boxes because the real value is a numpy array.
+                raw_boxes = output.boxes
+                raw_texts = output.txts
+                raw_scores = output.scores
+                out = [] if any(value is None for value in (raw_boxes, raw_texts, raw_scores)) else zip(
+                    raw_boxes, raw_texts, raw_scores,
+                )
+            else:
+                # rapidocr-onnxruntime 1.x returns (rows, elapsed).
+                out, _elapse = output
             boxes: list[dict[str, Any]] = []
             texts: list[str] = []
             for item in out or []:
@@ -162,7 +193,7 @@ def render(result: dict[str, Any]) -> str:
     if not result.get("available"):
         lines.append("## 状态")
         lines.append("OCR 不可用。可先用 `awen image audit` 做本地资产诊断，"
-                     "或 `pip install rapidocr-onnxruntime` / 安装 tesseract 后重试。")
+                     f"或 `{_rapidocr_install_hint()}` / 安装 tesseract 后重试。")
         return "\n".join(lines) + "\n"
     lines.append("## 识别结果")
     rows = result.get("results") or []

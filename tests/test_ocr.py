@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from tests.test_image_audit import _png
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -93,3 +98,59 @@ def test_rapidocr_branch_emits_boxes(tmp_path, monkeypatch):
     assert row["text"] == "SALE 50%"
     assert row["boxes"][0]["bbox"] == [10.0, 20.0, 110.0, 60.0]
     assert row["image_width"] == 1000 and row["image_height"] == 500
+
+
+def test_python_313_plus_uses_the_supported_rapidocr_distribution():
+    """Python 3.13+ cannot resolve rapidocr-onnxruntime, so packaging must select v3."""
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert 'rapidocr-onnxruntime>=1.4; python_version < \'3.13\'' in pyproject
+    assert 'rapidocr>=3.0,<4; python_version >= \'3.13\'' in pyproject
+
+
+def test_modern_rapidocr_result_emits_boxes(tmp_path, monkeypatch):
+    """RapidOCR v3 returns an object instead of the legacy ``(rows, elapsed)`` tuple."""
+    from awen_agent import ocr
+
+    _png(tmp_path / "modern.png", 640, 480)
+
+    class ModernResult:
+        boxes = [[[12, 24], [112, 24], [112, 64], [12, 64]]]
+        txts = ("新品上市",)
+        scores = (0.985,)
+
+    monkeypatch.setattr(ocr, "_RAPID_CACHE", lambda path: ModernResult())
+    monkeypatch.setattr(ocr, "_RAPID_FAILED", "")
+
+    res = ocr.run([str(tmp_path)])
+
+    assert res["available"] is True
+    row = res["results"][0]
+    assert row["ok"] is True
+    assert row["text"] == "新品上市"
+    assert row["boxes"] == [{
+        "text": "新品上市",
+        "score": 0.985,
+        "bbox": [12.0, 24.0, 112.0, 64.0],
+    }]
+
+
+def test_loader_falls_back_to_the_modern_rapidocr_package(monkeypatch):
+    """The v3 dependency is useful only if runtime probing imports its new module name."""
+    from awen_agent import ocr
+
+    engine = object()
+
+    def fake_import(name):
+        if name == "rapidocr_onnxruntime":
+            raise ModuleNotFoundError(name)
+        assert name == "rapidocr"
+        return SimpleNamespace(RapidOCR=lambda: engine)
+
+    monkeypatch.setattr(ocr, "_RAPID_CACHE", None)
+    monkeypatch.setattr(ocr, "_RAPID_FAILED", "")
+    monkeypatch.setattr(ocr, "_RAPID_DISTRIBUTION", "")
+    monkeypatch.setattr(ocr.importlib, "import_module", fake_import)
+
+    assert ocr._rapidocr() is engine
+    assert ocr._RAPID_DISTRIBUTION == "rapidocr"
