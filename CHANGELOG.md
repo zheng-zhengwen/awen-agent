@@ -36,6 +36,13 @@
   `AWEN_*`；嵌入式工作台名称同步改为 `awenOps`，安装、部署、CI、Release、站点、
   文档和测试均使用同一套命名。本次为明确的破坏性身份迁移，不保留旧入口兼容。
 
+### 修复
+
+- **Python 3.13/3.14 可以正常安装并保留本地 OCR。** 旧的 `rapidocr-onnxruntime` 只支持
+  Python 3.12 及以下，此前却被所有 Python 版本无条件依赖，导致新版 Python 上 pip 必然报
+  `No matching distribution found`。现在按解释器版本选择旧包或仍在维护的 `rapidocr` v3，
+  并兼容两代返回结构；CI 同步加入 Python 3.14 的 Linux、macOS、Windows 门禁。
+
 ## [v1.16.8] - 2026-09-03
 
 ### 新增
