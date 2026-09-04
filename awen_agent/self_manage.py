@@ -270,7 +270,11 @@ def service_start(
             stdout=log_fh,
             stderr=subprocess.STDOUT,
             env=env,
-            close_fds=os.name != "nt",
+            # Python 3.7+ supports close_fds=True with redirected std handles on
+            # Windows.  Without it, pythonw inherits the parent PowerShell/SSE
+            # pipe as an unrelated handle; the service starts, but the installer
+            # waits forever for an EOF that can only arrive when the service dies.
+            close_fds=True,
             start_new_session=start_new_session,
             creationflags=creationflags,
         )
