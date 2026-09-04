@@ -15,32 +15,6 @@
 - **仓库**：<https://github.com/Hector-xue/ivyea-agent>
 - **最新 Release**：`v1.4.1`（`main` 分支可能包含尚未打包的新改动）
 
----
-
-## 交流与反馈
-
-欢迎扫码加入微信群，反馈 Bug、交流 Ivyea Agent 使用经验、AI 工具与亚马逊运营相关知识。**也欢迎提改进建议**——功能需求、交互优化、文档纠错都行，可在群里直接说，或到 GitHub 提 [Issue](https://github.com/Hector-xue/ivyea-agent/issues) / PR。群二维码可能会过期；如果扫码失效，可先关注公众号，再获取最新群二维码。
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/assets/wechat-group-qr.png" alt="Ivyea 微信交流群二维码" width="300" />
-      <br />
-      <strong>微信群：Ivyea 的精神股东们</strong>
-      <br />
-      <sub>反馈 Bug / 交流 AI 与运营 / 提改进建议</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/assets/wechat-official-account-qr.jpg" alt="Ivyea 公众号二维码" width="220" />
-      <br />
-      <strong>公众号</strong>
-      <br />
-      <sub>群二维码失效时，关注后获取最新版</sub>
-    </td>
-  </tr>
-</table>
-
----
 
 ## 目录
 
