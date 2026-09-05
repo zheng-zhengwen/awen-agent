@@ -199,13 +199,15 @@ def test_destructive_board_tool_requires_approval(awen_home, monkeypatch, decisi
                 {"name": "market_history", "title": "市场调研历史",
                  "module": "market", "destructive": False},
             ]}
+        if path == "/prepare":
+            return {"ok": True, "protocol_version": 2, "call_id": "prepared", "approval_required": True}
         called.append(str(payload.get("name")))
         return {"ok": True, "result": "done"}
 
     monkeypatch.setattr(agent_tools, "_ops_bridge_request", _fake_bridge)
 
-    ctx = agent_tools.ToolContext(session_id="sid-board")
-    ctx.ops_bridge = {"base_url": "http://x/api", "token": "t"}
+    ctx = agent_tools.ToolContext(session_id="sid-board", execute=True)
+    ctx.ops_bridge = {"base_url": "http://x/api", "token": "t", "protocol_version": 2}
     ctx.perm.prompt_fn = lambda title, body, options, meta: decision
 
     msgs = [{"role": "system", "content": "x"}, {"role": "user", "content": "开一下写开关"}]
@@ -236,15 +238,15 @@ def test_readonly_board_tool_is_not_gated(awen_home, monkeypatch):
     assert asked == []
 
 
-def test_board_tool_unchanged_when_no_approval_channel(awen_home, monkeypatch):
-    """没有审批通道时保持既有行为：嵌入式对话一直这么跑的，这次不改它。"""
+def test_board_tool_denied_when_no_approval_channel(awen_home, monkeypatch):
+    """没有审批通道时 fail closed，不能把无人审批当作已经批准。"""
     from awen_agent import agent_tools
 
     called: list[str] = []
 
     def _fake_bridge(ctx, path, payload, timeout=80.0):
         if path == "/tools":
-            raise AssertionError("没有审批通道时不该去查目录")
+            return {"ok": True, "tools": [{"name": "lingxing_operate_enable", "destructive": True}]}
         called.append(str(payload.get("name")))
         return {"ok": True, "result": "done"}
 
@@ -252,7 +254,7 @@ def test_board_tool_unchanged_when_no_approval_channel(awen_home, monkeypatch):
     ctx = agent_tools.ToolContext()            # perm.prompt_fn 为 None
     ctx.ops_bridge = {"base_url": "http://x/api", "token": "t"}
     agent_tools._t_awen_ops_call_tool({"name": "lingxing_operate_enable", "arguments": {}}, ctx)
-    assert called == ["lingxing_operate_enable"]
+    assert called == []
 
 
 # ── 工作区目录（ctx.workspace）──────────────────────────────────────────────

@@ -946,6 +946,8 @@ def _ops_tool_catalog(ctx: ToolContext) -> dict[str, dict[str, Any]]:
         return cached
     catalog: dict[str, dict[str, Any]] = {}
     data = _ops_bridge_request(ctx, "/tools", {}, timeout=20.0)
+    if data.get("ok") is not True or not isinstance(data.get("tools"), list):
+        return {}  # unknown metadata never means read-only
     for row in (data.get("tools") or []):
         if isinstance(row, dict) and row.get("name"):
             catalog[str(row["name"])] = row
@@ -1028,26 +1030,41 @@ def _t_awen_ops_call_tool(args: dict, ctx: ToolContext) -> str:
         return "错误：需要提供工具名 name。"
     arguments = args.get("arguments") if isinstance(args.get("arguments"), dict) else {}
 
-    # 写类板块能力（建项目、启动审计、开领星可写开关…）在**有人可问**的时候必须
-    # 先过审批。只在接了审批通道（serve 的远程确认卡）时才拦：没有通道就说明
-    # 没人能确认，此时保持既有行为不变——嵌入式对话一直是这么跑的，这里不改。
-    if ctx.perm.prompt_fn is not None:
-        meta = _ops_tool_catalog(ctx).get(name) or {}
-        if meta.get("destructive"):
+    payload = {"name": name, "arguments": arguments}
+    meta = _ops_tool_catalog(ctx).get(name) or {}
+    if not isinstance(meta.get("destructive"), bool):
+        return "未执行：无法确认工具权限元数据，请刷新能力目录或升级 awenOps。"
+    if meta["destructive"]:
+        if ctx.plan_mode or not ctx.execute or ctx.perm.aborted:
+            return "只读/计划模式：未执行写操作；请切换到需审批或完全放行模式。"
+        if ctx.perm.prompt_fn is None and not ctx.perm.accept_edits:
+            return "未执行：没有可用的写操作审批通道。"
+        if ctx.ops_bridge.get("protocol_version") != 2:
+            return "未执行：写操作需要 awenOps 桥接协议 v2，请同步升级主系统和 awenAgent。"
+        prepared = _ops_bridge_request(ctx, "/prepare", payload, timeout=20.0)
+        if (prepared.get("ok") is not True or prepared.get("protocol_version") != 2
+                or not prepared.get("call_id") or not isinstance(prepared.get("approval_required"), bool)):
+            return _compact_json_text({"ok": False, "error": "approval_unavailable", "detail": prepared})
+        payload["call_id"] = prepared["call_id"]
+        if prepared["approval_required"]:
+            if ctx.perm.prompt_fn is None:
+                return "未执行：主系统要求人工审批，但当前没有审批通道。"
             title = str(meta.get("title") or name)
-            preview_lines = [f"调用板块能力：{title}（{name}）"]
-            for key, val in list(arguments.items())[:8]:
-                preview_lines.append(f"- {key}: {str(val)[:120]}")
+            # Ops is authoritative for session grants. Do not reuse local generic
+            # ops_tool_call approvals for a different board tool or turn.
+            state = permission.PermissionState(prompt_fn=ctx.perm.prompt_fn)
             decision = permission.request_intent(
                 {"op_type": "ops_tool_call", "tool": name},
-                "\n".join(preview_lines), ctx.perm,
-            )
+                f"调用板块能力：{title}（{name}）\n" + json.dumps(arguments, ensure_ascii=False, indent=2),
+                state, approval_meta={"bridge_call_id": prepared["call_id"]})
+            if state.aborted:
+                ctx.perm.aborted = True
             if decision != permission.APPROVE:
                 return f"已取消：用户未批准调用板块能力「{title}」。"
-
-    payload = {"name": name, "arguments": arguments}
     # 板块工具里有长任务（如生成市场调研/打法报告，要采集+AI合成），给宽限超时。
     data = _ops_bridge_request(ctx, "/call", payload, timeout=300.0)
+    if meta["destructive"] and data.get("ok") is True:
+        ctx.executed_writes = True
     return _compact_json_text(data)
 
 

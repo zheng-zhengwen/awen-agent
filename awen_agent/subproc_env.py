@@ -90,6 +90,11 @@ def build_env(
         keep = allowlist()
         out = {k: v for k, v in os.environ.items() if k.upper() in keep}
 
+    # Do not rely on the launcher to set these (Windows commonly defaults to GBK).
+    # Explicit per-server overrides below remain available for legacy programs.
+    out.setdefault("PYTHONUTF8", "1")
+    out.setdefault("PYTHONIOENCODING", "utf-8")
+
     for key in passthrough or ():
         name = str(key).strip()
         if not name:
