@@ -117,7 +117,8 @@ def request(a: Action, state: PermissionState,
 
 def request_intent(intent: dict, preview_text: str, state: PermissionState,
                    input_fn: Callable[[str], str] = _default_input,
-                   edit_fn: Callable[[dict, Callable], None] = None) -> str:
+                   edit_fn: Callable[[dict, Callable], None] = None,
+                   approval_meta: dict | None = None) -> str:
     """通用写 intent 审批（领星等）。复用 session_allow（按 op_type）与 abort。
     返回 APPROVE/DENY/ABORT。[4]改 委托给 edit_fn（可选）。"""
     if state.aborted:
@@ -128,12 +129,13 @@ def request_intent(intent: dict, preview_text: str, state: PermissionState,
     if state.policy_auto:
         return _policy_decide(intent)   # 无人值守：按 policy.json 判定，不弹交互
     has_edit = edit_fn is not None
-    options = [("approve", "批准本次"), ("session", "本会话同类都批准"), ("deny", "拒绝")]
+    session_label = "本轮同一工具都批准" if (approval_meta or {}).get("bridge_call_id") else "本会话同类都批准"
+    options = [("approve", "批准本次"), ("session", session_label), ("deny", "拒绝")]
     if has_edit:
         options.append(("edit", "修改"))
     options.append(("abort", "全部停止"))
     choice = _ask(state, "需要确认写操作", preview_text, options, input_fn,
-                  {"op_type": op_type, "destructive": True})
+                  {**(approval_meta or {}), "op_type": op_type, "destructive": True})
     if choice == "approve":
         return APPROVE
     if choice == "session":

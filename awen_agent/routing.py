@@ -133,7 +133,9 @@ _BOARD_INTENTS: tuple[tuple[tuple[str, ...], str, str], ...] = (
      "deep_generate_report", "关键词竞争"),
     (("asin 审计", "asin审计", "深度审计", "listing 诊断", "listing诊断"),
      "asin_audit_start", "ASIN / Listing 审计"),
-    (("广告审计", "广告巡检", "广告浪费", "浪费诊断"),
+    (("广告巡检", "巡检广告", "领星优化", "领星巡检"),
+     "lingxing_optimizer", "领星广告巡检"),
+    (("广告审计", "广告报表审计", "广告浪费", "浪费诊断"),
      "ad_audit_start", "广告审计"),
 )
 
@@ -166,6 +168,10 @@ def _said(message: str) -> str:
 
 
 def _board_intent(text: str) -> tuple[str, str]:
+    # 自然语序里时间窗口常插在两个关键词之间，例如“巡检最近 3/7/14 天广告”。
+    # 只匹配固定短语“广告巡检”会把这类真实请求漏回 work 路线。
+    if "巡检" in text and "广告" in text:
+        return "lingxing_optimizer", "领星广告巡检"
     for words, tool, label in _BOARD_INTENTS:
         if any(w in text for w in words):
             return tool, label
@@ -279,6 +285,14 @@ def board_hint(route: Route) -> str:
     """板块直达提示。点名到具体工具，省掉"先分析一轮再想起来该调工具"那几步。"""
     if not route.is_board or not route.board_tool:
         return ""
+    if route.board_tool == "lingxing_optimizer":
+        return (
+            "\n\n[本轮直达] 这是「领星广告巡检」任务。缺少店铺 `sid` 时先只询问 sid；"
+            "拿到后通过 `awen_ops_call_tool` 调用 `lingxing_optimizer`，参数使用 "
+            "`sid` 和 `days`，多个周期分别调用。为了同时取得账户 KPI，可对相同周期调用 "
+            "`lingxing_dashboard`。**不要调用** awenAgent 独立数据通道 `run_patrol`，也不要调用"
+            "需要已上传报表 job_id 的 `ad_audit_start`。只返回观测和候选动作，不执行写操作。"
+        )
     return (
         f"\n\n[本轮直达] 这是「{route.board_label}」板块任务。"
         f"**第一步就调用** `awen_ops_call_tool`，name=`{route.board_tool}`，"

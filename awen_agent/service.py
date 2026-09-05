@@ -119,6 +119,8 @@ class RemoteApproval:
                 "options": [{"key": str(k), "label": str(label)} for k, label in options],
                 "destructive": bool(meta.get("destructive", True)),
                 "expires_at": deadline,
+                # Opaque Ops-issued ID, not model text or an agent assertion of approval.
+                "bridge_call_id": str(meta.get("bridge_call_id") or ""),
             })
             # 分段等待而不是一次 get(timeout=600)：这样客户端一断开就能尽早收摊，
             # 不用把那一步在服务端干挂十分钟。
@@ -169,6 +171,7 @@ def health() -> dict[str, Any]:
         "ok": True,
         "name": "awen-agent",
         "version": __version__,
+        "ops_bridge_protocol_version": 2,
         "data_dir": str(config.AWEN_DIR),
         "model": _model_snapshot(model_cfg),
         "knowledge": {

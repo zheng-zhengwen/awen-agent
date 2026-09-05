@@ -59,6 +59,7 @@ git log 记得住「改了什么」，记不住「为什么不选另一条路」
 | [0039](./0039-goal-mode-holds-the-verdict.md) | 目标模式：判定权归运行时，不归模型 | 2026-09-03 |
 | [0040](./0040-awen-project-identity.md) | 项目标识统一为 awen | 2026-09-04 |
 | [0041](./0041-adjustment-ledger-and-observational-review.md) | 广告调整事实与效果复盘分层，不做因果冒充 | 2026-09-04 |
+| [0042](./0042-ops-bridge-write-grants.md) | 主系统与 Agent 双端确认桥接写操作 | 2026-09-06 |
 
 相关的工作台侧决策见
 [awenOps 的 ADR 目录](https://github.com/zheng-zhengwen/wen-System/tree/main/docs/decisions)，
